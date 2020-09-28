@@ -75,7 +75,7 @@ if(flag){\
 namespace tfboost {
 
 
-void SaveCanvas(TString const& title, TString const& xtitle, TString const& ytitle, TH1D& hist)
+void SaveCanvas(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, TH1D& hist)
 {
     TCanvas canv(title, title, 800,800);
     hist.SetLineWidth(2);
@@ -84,7 +84,8 @@ void SaveCanvas(TString const& title, TString const& xtitle, TString const& ytit
     hist.GetYaxis()->SetLabelSize(0.03);
     hist.GetYaxis()->SetTitleOffset(1.5);
     hist.Draw();
-    canv.SaveAs( TString("plots/")+title+TString(".pdf") );
+    canv.SaveAs( directory+title+TString(".pdf") );
+
 }
 
 

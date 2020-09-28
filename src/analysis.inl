@@ -101,6 +101,7 @@
 #include <tfboost/functions/TIA_MOS.h>
 #include <tfboost/functions/DoConvolution.h>
 #include <tfboost/noise/Noise.h>
+#include <tfboost/ReadConvolution.h>
 #include <tfboost/Algorithms.h>
 #include <tfboost/Utils.h>
 
@@ -128,11 +129,13 @@ int main(int argv, char** argc)
     const TString TransferFunction          = (const char*) cfg_root["TransferFunction"];
     const TString InputDirectory            = (const char*) cfg_root["InputDirectory"];
     const TString OutputDirectory           = (const char*) cfg_root["OutputDirectory"];
+    const TString conv_inputfile            = (const char*) cfg_root["ConvolutionFile"]; 
+
     const char*   token                     = (const char*) cfg_root["token"];
     const int     column                    = (int)    cfg_root["column"];
     const size_t  offset                    = (int)    cfg_root["offset"];
     
-    
+    const bool MakeConvolution              = (bool) cfg_root["MakeConvolution"];
     const bool SaveSinglePlotConvolution    = (bool) cfg_root["SaveSinglePlotConvolution"];
     const bool MakeLinearFitNearThreshold   = (bool) cfg_root["MakeLinearFitNearThreshold"];
     const bool MakeGaussianFitNearVmax      = (bool) cfg_root["MakeGaussianFitNearVmax"];
@@ -155,6 +158,8 @@ int main(int argv, char** argc)
     const double CFD_fr                     = (double) cfg_tf["CFD_fr"];
     const double sigma_noise                = (double) cfg_tf["sigma_noise"];
     const double r_rednoise                 = (double) cfg_tf["r_rednoise"];
+    const TString tf_inputfile              = (const char*) cfg_tf["TFFile"];
+
     
     tfboost::CreateDirectories( OutputDirectory + "plots");
     tfboost::CreateDirectories( OutputDirectory + "data");
@@ -285,6 +290,7 @@ int main(int argv, char** argc)
         /* ----------------------------------------------
          * Performing the convolution
          * --------------------------------------------*/
+
         #if HYDRA_DEVICE_SYSTEM!=CUDA
         auto fft_backend = hydra::fft::fftw_f64;
         #endif
@@ -292,6 +298,8 @@ int main(int argv, char** argc)
         hydra::host::vector<double >    conv_data_h(Nsamples);
         hydra::device::vector<double >  conv_data_d(Nsamples);
         
+        if(MakeConvolution){
+
         switch(ID) 
         {
             case 0:{
@@ -334,6 +342,21 @@ int main(int argv, char** argc)
                         hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
                 }
                 }break;
+            case 5:{
+                hydra::device::vector<double> time2;
+                hydra::device::vector<double> current2;
+
+                tfboost::ReadTF( tf_inputfile, time2, current2);
+
+                auto kernel = hydra::make_spiline<double>(time2, current2 );
+                
+                conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal, min, max, Nsamples);
+                if(SaveSinglePlotConvolution && INDEX==IdxConvtoSave) {
+                    for(size_t i=1;  i < (size_t) Nsamples+1; ++i) 
+                        hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+                }
+
+            }break;
             default:
                 SAFE_EXIT( true , "In analysis.inl: bad transfer function ID.")
         }//end switch
@@ -342,7 +365,11 @@ int main(int argv, char** argc)
         hydra::copy(conv_data_h , conv_data_d);
 
         tfboost::SaveConvToFile(conv_data_h, dT, OutputDirectory + "data/" +currentfilename );
-     
+
+        } else {
+            tfboost::ReadConvolution( conv_inputfile, conv_data_h);
+            hydra::copy(conv_data_h , conv_data_d);
+        }
           
           
         /* ----------------------------------------------
@@ -355,7 +382,6 @@ int main(int argv, char** argc)
                 hist_convol->SetBinContent(i, conv_data_h[i-1] );
                 hist_signal->SetBinContent(i, signal(hist_signal->GetBinCenter(i)) );
             }
-
         }
         
         
@@ -437,7 +463,7 @@ int main(int argv, char** argc)
             
             if(MakeLinearFitNearThreshold)
             {
-                double par1_fit = tfboost::algo::LinearFitNearThr( ID, TOA_CFD, conv_data_h );
+                double par1_fit = tfboost::algo::LinearFitNearThr( ID, TOA_CFD, conv_data_h, true );
                 std::cout << "dv/dt at CFD fitted      = " << 1e-6*par1_fit/dT << "  (uV/ps)" << "\n";
                 hist_dVdt_CFD_noise->Fill(1e-6*par1_fit/dT);
                 
@@ -495,25 +521,39 @@ int main(int argv, char** argc)
     }//end loop on files
     
 
-    /*
-    tfboost::SaveCanvas(OutputDirectory + "plots/TOA_LE.pdf",       "Time [s]", "counts", *hist_TOA);
-    tfboost::SaveCanvas(OutputDirectory + "plots/TOA_CFD.pdf",      "Time [s]", "counts", *hist_TOACFD);
-    tfboost::SaveCanvas(OutputDirectory + "plots/TOA_CFDnoise.pdf", "Time [s]", "counts", *hist_TOACFDnoise);
-    tfboost::SaveCanvas(OutputDirectory + "plots/TOA_LEnoise.pdf",  "Time [s]", "counts", *hist_TOALEnoise);
     
-    tfboost::SaveCanvas(OutputDirectory + "plots//Vmax.pdf",       "Voltage [mV]", "counts", *hist_Vmax);
-    tfboost::SaveCanvas(OutputDirectory + "plots/TimeatVmax.pdf", "Time [ps]", "counts", *hist_TimeatVmax);
-    tfboost::SaveCanvas(OutputDirectory + "plots/Vmax_noise.pdf", "Voltage [mV]", "counts", *hist_Vmax_noise);
-    tfboost::SaveCanvas(OutputDirectory + "plots/Vth_CFD.pdf",    "Voltage [mV]", "counts", *hist_Vth_CFD);
-    tfboost::SaveCanvas(OutputDirectory + "plots/Vth_LE.pdf",     "Voltage [mV]", "counts", *hist_Vth_LE);
-    tfboost::SaveCanvas(OutputDirectory + "plots/VonTh_CFDnoise.pdf", "Voltage [mV]", "counts", *hist_Vth_CFD_noise);
-    tfboost::SaveCanvas(OutputDirectory + "plots/VonTh_LEnoise.pdf",  "Voltage [mV]", "counts",  *hist_Vth_LE_noise);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_LE",    "Time [s]",      "counts", *hist_TOA);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_CFD",   "Time [s]",      "counts", *hist_TOACFD);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_LE",   "Slope [uV/ps]", "counts", *hist_dVdt_LE);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_CFD",  "Slope [uV/ps]", "counts", *hist_dVdt_CFD);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "Vmax",      "Voltage [mV]",  "counts", *hist_Vmax);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "TimeatVmax","Time [ps]",     "counts", *hist_TimeatVmax);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "Vth_CFD",   "Voltage [mV]",  "counts", *hist_Vth_CFD);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "Vth_LE",    "Voltage [mV]",  "counts", *hist_Vth_LE);
     
-    tfboost::SaveCanvas(OutputDirectory + "plots/dVdT_LE.pdf", "Slope [uV/ps]", "counts", *hist_dVdt_LE);
-    tfboost::SaveCanvas(OutputDirectory + "plots/dVdT_CFD.pdf", "Slope [uV/ps]", "counts", *hist_dVdt_CFD);
-    tfboost::SaveCanvas(OutputDirectory + "plots/dVdT_CFDnoise.pdf", "Slope [uV/ps]", "counts", *hist_dVdt_CFD_noise);
-    tfboost::SaveCanvas(OutputDirectory + "plots/dVdT_LEnoise.pdf",  "Slope [uV/ps]", "counts", *hist_dVdt_LE_noise);
-    */
+
+    if(AddNoise)
+    {
+        tfboost::SaveCanvas(OutputDirectory + "plots/", "VonTh_LEnoise", "Voltage [mV]", "counts",  *hist_Vth_LE_noise);
+        tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_LEnoise",   "Time [s]",     "counts",  *hist_TOALEnoise);
+
+        if(MakeGaussianFitNearVmax)
+        {
+            tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_CFDnoise",   "Time [s]",     "counts", *hist_TOACFDnoise);
+            tfboost::SaveCanvas(OutputDirectory + "plots/", "Vmax_noise",     "Voltage [mV]", "counts", *hist_Vmax_noise);
+            tfboost::SaveCanvas(OutputDirectory + "plots/", "VonTh_CFDnoise", "Voltage [mV]", "counts", *hist_Vth_CFD_noise);
+        }
+
+        if(MakeLinearFitNearThreshold)
+        {
+            tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_CFDnoise", "Slope [uV/ps]", "counts", *hist_dVdt_CFD_noise);
+            tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_LEnoise",  "Slope [uV/ps]", "counts", *hist_dVdt_LE_noise);    
+        }
+    }
+
+
+
+    
 
 
     if(MakeTheoreticalTOA)

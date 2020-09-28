@@ -111,6 +111,7 @@ inline double LinearFitNearThr(int const& kernel_id, size_t const& TOA, Iterable
     }
             
     TFitResultPtr r = graph.Fit("pol1","S");
+    if(!r) {WARNING_LINE("Error in Linear fit.") return -1.0;}
             
     double par1_fit = r->Parameter(1);
     
@@ -118,7 +119,7 @@ inline double LinearFitNearThr(int const& kernel_id, size_t const& TOA, Iterable
     {
         TCanvas p("","",800,800);
         graph.Draw("APL");
-        p.SaveAs("plots/LinearFitNearThr.pdf");
+        p.SaveAs("LinearFitNearThr.pdf");
     }
             
     return par1_fit;
@@ -143,7 +144,8 @@ inline double GaussianFitNearVmax(int const& kernel_id, size_t const& time, Iter
 
 
     TFitResultPtr r = graph.Fit("gaus","S");
-
+    if(!r) {WARNING_LINE("Error in Linear fit.") return -1.0;}
+    
     double par1_fit = r->Parameter(0);
     
     if(plot)
