@@ -46,6 +46,8 @@ inline size_t LeadingEdge(Iterable const& vout, double const& Vthr)
         if (Vthr < vout[k]){ Tth = k; break; }
     }
 
+    if(Tth==vout.size() -1 ) return 0;
+
     return Tth;
 }
 
@@ -111,7 +113,7 @@ inline double LinearFitNearThr(int const& kernel_id, size_t const& TOA, Iterable
     }
             
     TFitResultPtr r = graph.Fit("pol1","S");
-    if(!r) {WARNING_LINE("Error in Linear fit.") return -1.0;}
+    //if(!r) {WARNING_LINE("Error in Linear fit.") return -1.0;}
             
     double par1_fit = r->Parameter(1);
     
@@ -144,7 +146,7 @@ inline double GaussianFitNearVmax(int const& kernel_id, size_t const& time, Iter
 
 
     TFitResultPtr r = graph.Fit("gaus","S");
-    if(!r) {WARNING_LINE("Error in Linear fit.") return -1.0;}
+    //if(!r) {WARNING_LINE("Error in Linear fit.") return -1.0;}
     
     double par1_fit = r->Parameter(0);
     

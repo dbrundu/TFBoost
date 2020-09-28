@@ -183,4 +183,4 @@ MESSAGE(STATUS "Project build dir: ${PROJECT_BINARY_DIR}" )
 include(${TFBOOST_CMAKE_DIR}/AddTarget.cmake)
 
 ADD_TARGET(analysis)
-
+ADD_TARGET(deconvolution)

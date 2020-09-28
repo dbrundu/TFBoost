@@ -44,11 +44,9 @@
 #include <hydra/Lambda.h>
 #include <hydra/Algorithm.h>
 #include <hydra/Convolution.h>
-#include <hydra/DeConvolution.h>
 #include <hydra/functions/Gaussian.h>
 #include <hydra/device/System.h>
 #include <hydra/functions/ConvolutionFunctor.h>
-#include <hydra/functions/DeConvolutionFunctor.h>
 #include <hydra/functions/SpilineFunctor.h>
 #include <hydra/functions/Polynomial.h>
 #include <hydra/LogLikelihoodFCN.h>
@@ -125,7 +123,7 @@ int main(int argv, char** argc)
     Cfg.readFile("../etc/configuration.cfg");
     const libconf::Setting& cfg_root  = Cfg.getRoot();
     
-    
+    const TString tf_inputfile              = (const char*) cfg_root["TFFile"];
     const TString TransferFunction          = (const char*) cfg_root["TransferFunction"];
     const TString InputDirectory            = (const char*) cfg_root["InputDirectory"];
     const TString OutputDirectory           = (const char*) cfg_root["OutputDirectory"];
@@ -158,7 +156,6 @@ int main(int argv, char** argc)
     const double CFD_fr                     = (double) cfg_tf["CFD_fr"];
     const double sigma_noise                = (double) cfg_tf["sigma_noise"];
     const double r_rednoise                 = (double) cfg_tf["r_rednoise"];
-    const TString tf_inputfile              = (const char*) cfg_tf["TFFile"];
 
     
     tfboost::CreateDirectories( OutputDirectory + "plots");
@@ -389,10 +386,12 @@ int main(int argv, char** argc)
         /* ----------------------------------------------
          * Measurements without noise
          * --------------------------------------------*/
+        size_t TOA_LE     = tfboost::algo::LeadingEdge(conv_data_h, LEthr);
+        if(TOA_LE==0) continue;
+
         size_t timeatth_0 = tfboost::algo::GetTimeAtPeak(conv_data_h);
         double Vpeak      = tfboost::algo::GetVAtPeak(conv_data_d);
         
-        size_t TOA_LE     = tfboost::algo::LeadingEdge(conv_data_h, LEthr);
         size_t TOA_CFD    = tfboost::algo::ConstantFraction(conv_data_h , CFD_fr , Vpeak);
         double VonThLE    = conv_data_h[TOA_LE];
         double VonThCFD   = conv_data_h[TOA_CFD];
@@ -448,7 +447,7 @@ int main(int argv, char** argc)
             hist_TOALEnoise      -> Fill(TOA_LE_noise);
             hist_Vth_LE_noise    -> Fill(VonThLE);
             
-            if(MakeGaussianFitNearVmax)
+            if(MakeGaussianFitNearVmax && TOA_CFD>1)
             {
                 size_t timeatth      = tfboost::algo::GetTimeAtPeak(conv_data_h);
                 double vmax          = tfboost::algo::GaussianFitNearVmax( ID, timeatth, conv_data_h );
@@ -461,7 +460,7 @@ int main(int argv, char** argc)
             }
             
             
-            if(MakeLinearFitNearThreshold)
+            if(MakeLinearFitNearThreshold && TOA_LE>1)
             {
                 double par1_fit = tfboost::algo::LinearFitNearThr( ID, TOA_CFD, conv_data_h, true );
                 std::cout << "dv/dt at CFD fitted      = " << 1e-6*par1_fit/dT << "  (uV/ps)" << "\n";

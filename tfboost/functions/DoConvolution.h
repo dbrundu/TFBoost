@@ -49,6 +49,13 @@
 #include <hydra/functions/Utils.h>
 #include <hydra/functions/Math.h>
 
+#include <hydra/Convolution.h>
+#include <hydra/functions/ConvolutionFunctor.h>
+
+
+#include <tfboost/detail/external/hydra/DeConvolution.h>
+#include <tfboost/detail/external/hydra/functions/DeConvolutionFunctor.h>
+
 
 namespace tfboost {
 
@@ -68,7 +75,6 @@ hydra::host::vector<double> Do_Convolution(FFT_BACKEND fft_backend,
        
         auto convolution = hydra::make_convolution<double>(  hydra::device::sys,  fft_backend, signal, kernel, min, max,  N, true, true );
         
-        //auto deconvolution = hydra::make_deconvolution<double>(  hydra::device::sys,  fft_backend, signal, GMConvolution, min, max,  N2, true, true );
         auto end_c = std::chrono::high_resolution_clock::now();
         
         std::chrono::duration<double, std::milli> elapsed_c = end_c - start_c;
@@ -88,7 +94,45 @@ hydra::host::vector<double> Do_Convolution(FFT_BACKEND fft_backend,
 }
 
 
+
+template<typename CONVOL, typename FFT_BACKEND, typename SIGNAL>
+hydra::host::vector<double> Do_DeConvolution(FFT_BACKEND fft_backend, 
+                                           CONVOL const& conv, 
+                                           SIGNAL const& signal, 
+                                           double const& min,
+                                           double const& max,
+                                           size_t const& N)
+{
+
+        hydra::host::vector<double >  conv_data_h(N);
+
+        auto start_c = std::chrono::high_resolution_clock::now();
+       
+        auto deconvolution = hydra::make_deconvolution<double>(  hydra::device::sys,  fft_backend, signal, conv, min, max,  N, true, true );
+        //auto deconvolution = hydra::make_deconvolution<double>(  hydra::device::sys,  fft_backend, signal, GMConvolution, min, max,  N2, true, true );
+
+        auto end_c = std::chrono::high_resolution_clock::now();
+        
+        std::chrono::duration<double, std::milli> elapsed_c = end_c - start_c;
+        std::cout << "-----------------------------------------\n";
+        std::cout << "| Time conv. (ms) ="<< elapsed_c.count() <<"\n";
+        std::cout << "-----------------------------------------\n";
+
+
+        auto conv_data    = hydra::make_range(deconvolution.GetDeviceData(), deconvolution.GetDeviceData()+N);
+        
+        hydra::copy(conv_data, conv_data_h);
+        
+        deconvolution.Dispose();
+
+        return conv_data_h;
+
+}
+
+
 }  // namespace tfboost
 
 
 #endif /* DO_CONVOLUTION_H_ */
+
+
