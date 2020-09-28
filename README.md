@@ -5,7 +5,7 @@ TFboost is a C++14 compliant application, highly based on [HYDRA v.3](https://gi
 
 
 ## Dependencies
-TFboost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/). For the best performances at least TBB or OMP backends are needed. Optionally  [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. [GCC >= v.8] is needed.
+TFboost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/). For the best performances at least TBB or OMP backends are needed. Optionally  [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. [GCC >= v.8](https://gcc.gnu.org/) is needed.
 
 
 ## Installation and Run
@@ -40,5 +40,5 @@ Please setup the configuration using the file `configuration.cgf` inside the `et
 ```
 
 ## Authors
-TFboost was created by [Davide Brundu](https://github.com/dbrundu) and [Gian Matteo Cossu], within the TIMESPOT collaboration.
+TFboost was created by [Davide Brundu](https://github.com/dbrundu) and Gian Matteo Cossu, within the TIMESPOT collaboration.
 
