@@ -94,6 +94,11 @@ TList* GetFileList(TString dirname_string)
     const char* dirname = dirname_string.Data();
     TSystemDirectory dir(dirname, dirname);
 
+    if( !dir.GetListOfFiles() ) { // dir does not exist
+        std::cerr << "Error: input dir does not exist" << std::endl;
+        std::exit(1);
+    }
+
     return dir.GetListOfFiles();
 
 }
@@ -126,6 +131,40 @@ void CreateDirectories(TString path)
         dir =  dir + TString(element->GetString()) + "/";
         mkdir( dir.Data() ,S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH);
     }
+}
+
+
+void TFBoostHeader()
+{
+    std::cout << "=====================================================" << "\n";
+    std::cout << " TFBOOST, fast signals convolution and analyzer      " << "\n";
+    std::cout << "-----------------------------------------------------" << "\n";
+    std::cout << "  Developed by D.Brundu and G.M. Cossu               " << "\n";
+    std::cout << "    Powered by HYDRA, developed by A.A.A Junior,     " << "\n";
+    std::cout << "    https://github.com/MultithreadCorner             " << "\n";
+    std::cout << "=====================================================" << "\n\n";
+}
+
+
+
+// This is a custom function to extract the hit position
+// information using the TCoDe software for signal inputs
+inline std::pair< int , int > GetHitPosition(TString const& filename)
+{
+
+    size_t i = filename.First("_");
+    size_t k = filename.First(".");
+
+    TString str = (TString) filename(i+1, k-i-1);
+    DEBUG(str)
+
+    int pos  = atoi(str);
+
+    int y    = std::floor(pos/56);
+    int x    = pos % 56;
+
+    return std::pair<int,int>(x,y); 
+
 }
 
 } //namespace tfboost

@@ -49,11 +49,8 @@
 #include <hydra/functions/ConvolutionFunctor.h>
 #include <hydra/functions/SpilineFunctor.h>
 #include <hydra/functions/Polynomial.h>
-#include <hydra/LogLikelihoodFCN.h>
 #include <hydra/Filter.h>
 #include <hydra/Parameter.h>
-#include <hydra/UserParameters.h>
-#include <hydra/Pdf.h>
 #include <hydra/Random.h>
 #include <hydra/Plain.h>
 #include <hydra/Sobol.h>
@@ -109,32 +106,33 @@ namespace libconf = libconfig;
 
 int main(int argv, char** argc)
 {
+    tfboost::TFBoostHeader();
 
     std::cout.precision(10);
     
-
-
-    
     /* ----------------------------------------------
-     * Get configuration and initialize
+     * Get global configuration
      * --------------------------------------------*/
-    
     libconf::Config Cfg;
     Cfg.readFile("../etc/configuration.cfg");
     const libconf::Setting& cfg_root  = Cfg.getRoot();
     
+    TString InputDirectory                  = (const char*) cfg_root["InputDirectory"];
+    TString OutputDirectory                 = (const char*) cfg_root["OutputDirectory"];
+
     const TString tf_inputfile              = (const char*) cfg_root["TFFile"];
     const TString TransferFunction          = (const char*) cfg_root["TransferFunction"];
-    const TString InputDirectory            = (const char*) cfg_root["InputDirectory"];
-    const TString OutputDirectory           = (const char*) cfg_root["OutputDirectory"];
+    const TString InputFileExtension        = (const char*) cfg_root["InputFileExtension"];
     const TString conv_inputfile            = (const char*) cfg_root["ConvolutionFile"]; 
 
     const char*   token                     = (const char*) cfg_root["token"];
-    const int     column                    = (int)    cfg_root["column"];
-    const size_t  offset                    = (int)    cfg_root["offset"];
-    
+    const int     column                    = (int)         cfg_root["column"];
+    const size_t  offset                    = (int)         cfg_root["offset"]; 
+    const size_t  NlinesToSkip              = (int)         cfg_root["NlinesToSkip"];
+
     const bool MakeConvolution              = (bool) cfg_root["MakeConvolution"];
     const bool SaveSinglePlotConvolution    = (bool) cfg_root["SaveSinglePlotConvolution"];
+    const bool SaveConvDataToFile           = (bool) cfg_root["SaveConvDataToFile"];
     const bool MakeLinearFitNearThreshold   = (bool) cfg_root["MakeLinearFitNearThreshold"];
     const bool MakeGaussianFitNearVmax      = (bool) cfg_root["MakeGaussianFitNearVmax"];
     const bool AddNoise                     = (bool) cfg_root["AddNoise"];
@@ -146,6 +144,13 @@ int main(int argv, char** argc)
 
     const size_t Nfiles                     = (int)  cfg_root["MaxInputFiles"];
  
+    if(!InputDirectory.EndsWith("/")) InputDirectory   = InputDirectory+"/";
+    if(!OutputDirectory.EndsWith("/")) OutputDirectory = OutputDirectory+"/";
+
+
+     /* ----------------------------------------------
+     * Configuration of the Transfer Function
+     * --------------------------------------------*/
     const libconf::Setting& cfg_tf          = cfg_root[TransferFunction];
 
     const size_t Nsamples                   = (int)    cfg_tf["Nsamples"];
@@ -157,7 +162,11 @@ int main(int argv, char** argc)
     const double sigma_noise                = (double) cfg_tf["sigma_noise"];
     const double r_rednoise                 = (double) cfg_tf["r_rednoise"];
 
+
     
+    /* ----------------------------------------------
+     * Initialization of variables and histograms
+     * --------------------------------------------*/
     tfboost::CreateDirectories( OutputDirectory + "plots");
     tfboost::CreateDirectories( OutputDirectory + "data");
 
@@ -193,15 +202,19 @@ int main(int argv, char** argc)
     TH1D* hist_dVdt_CFD_noise  = new TH1D("hist_dVdt_CFD_noise","Slope (dV/dT) on CFD threshold with noise",Nbins,0,-1);
     TH1D* hist_dVdt_LE_noise   = new TH1D("hist_dVdt_LE_noise","Slope (dV/dT) on LE threshold with noise",Nbins,0,-1);
 
-    TH1D *hist_convol         = new TH1D("hist_convol;Time[s];Vout [V]","hist_convol", Nsamples, min, max );
-    TH1D *hist_signal         = new TH1D("hist_signal;Time[s];Vout [V]","hist_signal", Nsamples, min, max );
-    TH1D *hist_kernel         = new TH1D("hist_kernel;Time[s];Vout [V]","hist_kernel", Nsamples, min, max);
-    
+    TH1D *hist_convol          = new TH1D("hist_convol;Time[s];Vout [V]","hist_convol", Nsamples, min, max );
+    TH1D *hist_signal          = new TH1D("hist_signal;Time[s];Vout [V]","hist_signal", Nsamples, min, max );
+    TH1D *hist_kernel          = new TH1D("hist_kernel;Time[s];Vout [V]","hist_kernel", Nsamples, min, max);
+
+    //TH2D *TOAmaps              = new TH2D("TOAmaps;Y;X","TOAmaps", 200, 0, 200, 56, 0, 56);
+    //TH2D *Vmaxmaps             = new TH2D("Vmaxmaps;Y;X","Vmaxmaps", 200, 0, 200, 56, 0, 56);
+
     hydra::host::vector<double> th_jitter_withTOA(120, 0.0);
 
     
+
     /* ----------------------------------------------
-     * Main loop on files
+     * Main loop on input files
      * --------------------------------------------*/
     while( (currentfile = (TSystemFile*) nextfile() ) && INDEX < Nfiles )
     {
@@ -227,23 +240,29 @@ int main(int argv, char** argc)
 
         if(UseSameCurve) currentfilename = SingleFile;
         
-        //const double position = ((TString)currentfilename(12,8)).Atof();
-        //if(position<7.0 || position>20) continue;
-        //std::cout << position << "\n";
-        
-        if (currentfile->IsDirectory() || !currentfilename.EndsWith(".txt")) continue;
+        //std::pair<double,double> pos = tfboost::GetHitPosition(currentfilename);
+        //int pos_x = pos.first;
+        //int pos_y = pos.second;
 
-        std::cout << "=================================" << "\n";
-        std::cout << "|  FILE  : "<<currentfilename<<" "  << "\n";
-        std::cout << "|  INDEX : "<<INDEX<<" "            << "\n";
-        std::cout << "=================================" << "\n\n";
+        
+        if ( currentfile->IsDirectory() || !currentfilename.EndsWith(InputFileExtension) ) continue;
+
+        std::cout << "========================================" << "\n";
+        std::cout << "|  FILE  : "<<currentfilename<<" " << "\n";
+        std::cout << "|  INDEX : "<<INDEX<<" "           << "\n";
+        std::cout << "========================================" << "\n\n";
+        ++INDEX;
+
 
         std::ifstream myFile( (InputDirectory+currentfilename).Data() );
-        line.ReadLine(myFile);
+        for(size_t j=0; j<NlinesToSkip; ++j) line.ReadLine(myFile);
         
+
         // Actual loop on file lines
         if (myFile.is_open()) 
         {
+            size_t s = offset;
+
             for(size_t j = offset; j < Nsamples ; ++j)
             {
                 line.ReadLine(myFile);
@@ -252,17 +271,23 @@ int main(int argv, char** argc)
                 TObjArray *tokens = line.Tokenize( token );
             
                 TString data_str  = ((TObjString*) tokens->At( column ) )->GetString();
+                if(data_str == "0" && s==offset) continue;
                 
                 const double data = atof(data_str);
                 
-                idx.push_back(j);
-                time.push_back(j*dT);
+                idx.push_back(s);
+                time.push_back(s*dT);
                 current.push_back(data);
                 
                 tokens->Delete();
                 delete tokens;
+
+                ++s;
             }
+        } else {
+            SAFE_EXIT( true , "In analysis.inl: input file cannot be open. ")
         }
+
         myFile.close();
 
 
@@ -276,7 +301,7 @@ int main(int argv, char** argc)
                 current.push_back(0.0);
             }
         }
-     
+        
         SAFE_EXIT( current.size() != Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
 
         auto signal = hydra::make_spiline<double>(time, current );
@@ -307,6 +332,7 @@ int main(int argv, char** argc)
                         hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
                 }
                 }break;
+
             case 1:{
                 auto kernel = tfboost::TIA_BJT_2stages<double>( cfg_tf );
                 conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal, min, max, Nsamples);
@@ -315,6 +341,7 @@ int main(int argv, char** argc)
                         hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
                 }
                 }break;
+
             case 2:{
                 auto kernel = tfboost::TIA_BJT_2stages_GM<double>( cfg_tf );
                 conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal, min, max, Nsamples);
@@ -323,6 +350,7 @@ int main(int argv, char** argc)
                         hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
                 }
                 }break;
+
             case 3:{
                 auto kernel = tfboost::TIA_BJT_1stage<double>( cfg_tf );
                 conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal, min, max, Nsamples);
@@ -331,6 +359,7 @@ int main(int argv, char** argc)
                         hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
                 }
                 }break;
+
             case 4:{
                 auto kernel = tfboost::TIA_IdealInt<double>( cfg_tf );
                 conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal, min, max, Nsamples);
@@ -339,6 +368,7 @@ int main(int argv, char** argc)
                         hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
                 }
                 }break;
+
             case 5:{
                 hydra::device::vector<double> time2;
                 hydra::device::vector<double> current2;
@@ -354,20 +384,21 @@ int main(int argv, char** argc)
                 }
 
             }break;
+
             default:
                 SAFE_EXIT( true , "In analysis.inl: bad transfer function ID.")
         }//end switch
 
-
         hydra::copy(conv_data_h , conv_data_d);
-
-        tfboost::SaveConvToFile(conv_data_h, dT, OutputDirectory + "data/" +currentfilename );
 
         } else {
             tfboost::ReadConvolution( conv_inputfile, conv_data_h);
             hydra::copy(conv_data_h , conv_data_d);
         }
           
+
+
+
           
         /* ----------------------------------------------
          * Filling histogram for visualization
@@ -380,14 +411,23 @@ int main(int argv, char** argc)
                 hist_signal->SetBinContent(i, signal(hist_signal->GetBinCenter(i)) );
             }
         }
-        
-        
+               
         
         /* ----------------------------------------------
          * Measurements without noise
          * --------------------------------------------*/
+
+        // Condition to avoid to process empty signal
+        // reject signal with amplitude < 1 mV
+        if( tfboost::algo::LeadingEdge(conv_data_h, 0.001) == 0) 
+        { 
+            //TOAmaps->SetBinContent( pos_y+1, pos_x+1, 0.0 ); 
+            //Vmaxmaps->SetBinContent( pos_y+1, pos_x+1, 0.0 );
+            continue;
+        }
+
+
         size_t TOA_LE     = tfboost::algo::LeadingEdge(conv_data_h, LEthr);
-        if(TOA_LE==0) continue;
 
         size_t timeatth_0 = tfboost::algo::GetTimeAtPeak(conv_data_h);
         double Vpeak      = tfboost::algo::GetVAtPeak(conv_data_d);
@@ -395,6 +435,10 @@ int main(int argv, char** argc)
         size_t TOA_CFD    = tfboost::algo::ConstantFraction(conv_data_h , CFD_fr , Vpeak);
         double VonThLE    = conv_data_h[TOA_LE];
         double VonThCFD   = conv_data_h[TOA_CFD];
+
+        //TOAmaps->SetBinContent( pos_y+1, pos_x+1, (double)dT*TOA_CFD );
+        //Vmaxmaps->SetBinContent( pos_y+1, pos_x+1, 1e3 * Vpeak );
+ 
                 
         double dvdt_CFD   = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
         double dvdt_LE    = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_LE);
@@ -514,13 +558,18 @@ int main(int argv, char** argc)
 
         }
 
+        if(SaveConvDataToFile) tfboost::SaveConvToFile(conv_data_h, dT, OutputDirectory + "data/" +currentfilename );
 
-        ++INDEX;
+        
 
     }//end loop on files
     
 
-    
+
+
+    /*-------------------------------------------------
+     *  Save all the plots
+     *------------------------------------------------*/  
     tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_LE",    "Time [s]",      "counts", *hist_TOA);
     tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_CFD",   "Time [s]",      "counts", *hist_TOACFD);
     tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_LE",   "Slope [uV/ps]", "counts", *hist_dVdt_LE);
@@ -551,10 +600,6 @@ int main(int argv, char** argc)
     }
 
 
-
-    
-
-
     if(MakeTheoreticalTOA)
     {
 
@@ -570,8 +615,17 @@ int main(int argv, char** argc)
         canv_thjitter_withTOA.SaveAs(OutputDirectory + "plots/thjitter_differentcurves.pdf");
     } 
 
+/*
+    gStyle->SetOptStat(0);
 
+    TCanvas canv_TOAmaps("canv_TOAmaps", "canv_TOAmaps", 4*200, 4*56);
+    TOAmaps->Draw("colz");
+    canv_TOAmaps.SaveAs("canv_TOAmaps.pdf");
 
+    TCanvas canv_Vmaxmaps("canv_Vmaxmaps", "canv_Vmaxmaps", 4*200, 4*56);
+    Vmaxmaps->Draw("colz");
+    canv_Vmaxmaps.SaveAs("canv_Vmaxmaps.pdf");
+*/
 
     return 0;
 }

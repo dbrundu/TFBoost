@@ -80,7 +80,8 @@ public:
     TIA_IdealInt(libconfig::Setting const& cfg) : 
         ThisBaseFunctor({(double) cfg["z0"], 
                          (double) cfg["tau1"], 
-                         (double) cfg["tau2"]}), 
+                         (double) cfg["tau2"],
+                         (double) cfg["tauz"]}), 
         fdT( (double) cfg["dT"] )
     {}
     
