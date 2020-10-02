@@ -62,6 +62,8 @@ inline size_t ConstantFraction(Iterable const& vout, double const& fraction, dou
 
 
 
+
+
 template<typename Iterable>
 inline size_t GetTimeAtPeak(Iterable const& vout)
 {
@@ -102,9 +104,13 @@ template<typename Iterable>
 inline double LinearFitNearThr(int const& kernel_id, size_t const& TOA, Iterable const& data, bool const& plot=false ) {
         
     const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
+    
             
     const size_t min_fit = (TOA - bound_fit); //-200
     const size_t max_fit = (TOA + bound_fit); //+200
+    
+    SAFE_EXIT(min_fit < 0 , "In LinearFitNearThr(), out of range limit. Please insert an offset.")
+    SAFE_EXIT(max_fit > data.size() , "In LinearFitNearThr(), out of range limit. Please insert an offset.")
             
     TGraph graph;
     for(size_t i=min_fit; i<max_fit+1; ++i)
@@ -113,7 +119,6 @@ inline double LinearFitNearThr(int const& kernel_id, size_t const& TOA, Iterable
     }
             
     TFitResultPtr r = graph.Fit("pol1","S");
-    //if(!r) {WARNING_LINE("Error in Linear fit.") return -1.0;}
             
     double par1_fit = r->Parameter(1);
     
@@ -131,12 +136,17 @@ inline double LinearFitNearThr(int const& kernel_id, size_t const& TOA, Iterable
 
 
 template<typename Iterable>
-inline double GaussianFitNearVmax(int const& kernel_id, size_t const& time, Iterable const& data, bool const& plot=false ) {
+inline double GaussianFitNearVmax(int const& kernel_id, Iterable const& data, bool const& plot=false ) {
         
     const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
+    
+    const size_t time = GetTimeAtPeak(data);
             
     const size_t min_fit = (time - bound_fit); 
     const size_t max_fit = (time + bound_fit);
+    
+    SAFE_EXIT(min_fit < 0 , "In GaussianFitNearVmax(), out of range limit. Please insert an offset.")
+    SAFE_EXIT(max_fit > data.size() , "In GaussianFitNearVmax(), out of range limit. Please insert an offset.")
             
     TGraph graph;
     for(size_t i=min_fit; i<max_fit+1; ++i)
@@ -144,9 +154,7 @@ inline double GaussianFitNearVmax(int const& kernel_id, size_t const& time, Iter
         graph.SetPoint(graph.GetN(), i , data[i]);
     }
 
-
     TFitResultPtr r = graph.Fit("gaus","S");
-    //if(!r) {WARNING_LINE("Error in Linear fit.") return -1.0;}
     
     double par1_fit = r->Parameter(0);
     
@@ -154,10 +162,34 @@ inline double GaussianFitNearVmax(int const& kernel_id, size_t const& time, Iter
     {
         TCanvas p("","",800,800);
         graph.Draw("APL");
-        p.SaveAs("plots/GaussianFitNearVmax.pdf");
+        p.SaveAs("GaussianFitNearVmax.pdf");
     }
             
     return par1_fit;
+}
+
+
+
+
+template<typename Iterable>
+inline size_t TimeRefMethod(int const& kernel_id, Iterable const& vout, double const& vmax)
+{
+
+    size_t TOA80 = LeadingEdge(vout , vmax*0.8);
+    size_t TOA20 = LeadingEdge(vout , vmax*0.2);
+    
+    size_t delay = (TOA80-TOA20)/2;
+    
+     hydra::host::vector<double> subtr( vout.size() );
+     
+     for(size_t i=0; i<delay; ++i) subtr[i] = vout[i] - 0.0;
+     
+     for(size_t i=delay; i<vout.size()-delay; ++i) subtr[i] = vout[i] - vout[i-delay];
+     
+     double newthr = 0.5 * GaussianFitNearVmax( kernel_id,  subtr );
+     
+     
+     return LeadingEdge(subtr , newthr);
 }
 
 

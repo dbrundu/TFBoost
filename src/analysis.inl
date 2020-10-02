@@ -271,7 +271,7 @@ int main(int argv, char** argc)
                 TObjArray *tokens = line.Tokenize( token );
             
                 TString data_str  = ((TObjString*) tokens->At( column ) )->GetString();
-                if(data_str == "0" && s==offset) continue;
+                if(data_str == "0" && s==offset) continue; //to avoid misaligned TCoDe input files 
                 
                 const double data = atof(data_str);
                 
@@ -475,15 +475,11 @@ int main(int argv, char** argc)
          *------------------------------------------------*/
         if(AddNoise)
         {
-            if(UseRedNoise)
-            {
-                auto rednoise = tfboost::noise::RedNoise(sigma_noise, r_rednoise);
-                rednoise.AddNoiseToSignal( conv_data_h, S() );
-                
-            } else {
-                auto wnoise = tfboost::noise::WhiteNoise(sigma_noise);
-                wnoise.AddNoiseToSignal( conv_data_h, S() );
-            }
+        
+            auto noise = tfboost::noise::Noise(sigma_noise, UseRedNoise, r_rednoise);
+            
+            noise.AddNoiseToSignal( conv_data_h, S() );
+            
             
             size_t TOA_LE_noise  = tfboost::algo::LeadingEdge(conv_data_h , LEthr);
             double VonThLE       = conv_data_h[TOA_LE_noise];
@@ -494,7 +490,7 @@ int main(int argv, char** argc)
             if(MakeGaussianFitNearVmax && TOA_CFD>1)
             {
                 size_t timeatth      = tfboost::algo::GetTimeAtPeak(conv_data_h);
-                double vmax          = tfboost::algo::GaussianFitNearVmax( ID, timeatth, conv_data_h );
+                double vmax          = tfboost::algo::GaussianFitNearVmax( ID,  conv_data_h );
                 size_t TOA_CFD_noise = tfboost::algo::ConstantFraction(conv_data_h , CFD_fr , vmax);
                 double VonThCFD = conv_data_h[TOA_CFD_noise];
 

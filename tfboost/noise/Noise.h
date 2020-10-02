@@ -36,99 +36,36 @@ namespace noise {
 
 
 
+
 /*
- *  @class WhiteNoise
- *  Class that implments a white noise and
+ *  @class Noise
+ *  Class that implments a white or red noise and
  *  add it to an input signal
  *
  */
-class WhiteNoise 
+class Noise 
 {
 
 public:
 
-    WhiteNoise() = delete;
+    Noise() = delete;
     
-    WhiteNoise(double sigmanoise) : fsigmanoise(sigmanoise)
+    Noise(double sigmanoise, bool userednoise=false, double correlation=0.0) :
+         fsigmanoise(sigmanoise), fuserednoise(userednoise), fcorrelation(correlation)
     {}
     
     
-    WhiteNoise(WhiteNoise const& other):
-    fsigmanoise(other.GetSigmaNoise())
-    {}
-    
-    
-    WhiteNoise& operator=( WhiteNoise const& other){
-        if(this == &other) return *this;
-        fsigmanoise = other.GetSigmaNoise();
-        return *this;
-    }
-    
-    
-    inline double GetSigmaNoise() const { return fsigmanoise; }
-    
-    inline void SetSigmaNoise(double sigmanoise) { fsigmanoise = sigmanoise; }
-    
-    
-    inline void AddNoiseToSignal(hydra::host::vector<double>& data_h, size_t rng_seed) 
-    {
-        const size_t N = data_h.size();
-        
-        auto gauss   = hydra::Gaussian<double>(0.0, fsigmanoise);
-        
-        auto noise_d = hydra::device::vector<double>(N);
-        auto data_d  = hydra::device::vector<double>(N);
-        
-        hydra::copy(data_h , data_d);
-        
-        hydra::fill_random(noise_d , gauss, rng_seed );
-        
-        auto zipped_range = hydra::zip(  data_d, noise_d);
-        
-        hydra::for_each( zipped_range, [] __hydra_dual__ ( hydra::tuple<double&, double&> X){
-                hydra::get<0>(X) += hydra::get<1>(X);
-        });
-            
-        hydra::copy(data_d, data_h);
-    
-    }
-
-private:
-
-    double fsigmanoise;
-
-};
-
-
-
-
-/*
- *  @class RedNoise
- *  Class that implments a red noise and
- *  add it to an input signal
- *
- */
-class RedNoise 
-{
-
-public:
-
-    RedNoise() = delete;
-    
-    RedNoise(double sigmanoise, double correlation) :
-         fsigmanoise(sigmanoise), fcorrelation(correlation)
-    {}
-    
-    
-    RedNoise(RedNoise const& other):
+    Noise(Noise const& other):
         fsigmanoise(other.GetSigmaNoise()),
+        fuserednoise(other.GetUseRedNoise()),
         fcorrelation(other.GetCorrelation())
     {}
     
     
-    RedNoise& operator=( RedNoise const& other){
+    Noise& operator=( Noise const& other){
         if(this == &other) return *this;
         fsigmanoise  = other.GetSigmaNoise();
+        fuserednoise = other.GetUseRedNoise();
         fcorrelation = other.GetCorrelation();
         return *this;
     }
@@ -138,9 +75,13 @@ public:
     
     inline double GetCorrelation() const { return fcorrelation; }
     
+    inline bool GetUseRedNoise() const { return fuserednoise; }
+    
     inline void SetSigmaNoise(double sigmanoise) { fsigmanoise = sigmanoise; }
     
     inline void SetCorrelation(double correlation) { fcorrelation = correlation; }
+    
+    inline void SetUseRedNoise(double userednoise) { fuserednoise = userednoise; }
     
     
     
@@ -158,19 +99,22 @@ public:
         hydra::copy(data_h , data_d);
         
         hydra::fill_random(noise_d , gauss, rng_seed );
-        hydra::copy(noise_d , noise_h);
         
-        auto noise_h_final = hydra::host::vector<double>(N);
-        noise_h_final[0]   = noise_h[0];
+        if(fuserednoise){
         
-        
-        for(size_t i=1; i<N ; ++i)
-        {
-            noise_h_final[i] = fcorrelation * noise_h_final[i-1] + ::sqrt(1.0 - fcorrelation*fcorrelation)*noise_h[i];
+            hydra::copy(noise_d , noise_h);
+            
+            auto noise_h_final = hydra::host::vector<double>(N);
+            noise_h_final[0]   = noise_h[0];
+            
+            #pragma unroll
+            for(size_t i=1; i<N ; ++i)
+            {
+                noise_h_final[i] = fcorrelation * noise_h_final[i-1] + ::sqrt(1.0 - fcorrelation*fcorrelation)*noise_h[i];
+            }
+                    
+            hydra::copy(noise_h_final , noise_d);
         }
-                
-        hydra::copy(noise_h_final , noise_d);
-        
         
         auto zipped_range = hydra::zip( data_d, noise_d);
         
@@ -185,6 +129,7 @@ public:
 private:
 
     double fsigmanoise;
+    bool  fuserednoise;
     double fcorrelation;
 
 };
