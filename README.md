@@ -48,7 +48,11 @@ make analysis_tbb
 ```
 
 ## Build and Run the examples
-In preparation
+An example of a simple analysis is available. The input files are obtained from an ideal silicon sensor and the files are in the `examples/input_files` directory. The configuration file named `config.cfg` is inside the `examples/` directory, while the rusults will be saved inside `<build>/results/`.  After the `cmake` command the example and can be run simply as:
+```bash
+make simple_analysis_tbb
+./simple_analysis_tbb 
+```
 
 ## Authors
 TFBoost was created by [Davide Brundu](https://github.com/dbrundu) and Gian Matteo Cossu, within the TIMESPOT collaboration.

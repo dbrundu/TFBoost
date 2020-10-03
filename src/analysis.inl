@@ -58,7 +58,12 @@
 #include <hydra/Zip.h>
 #include <hydra/Range.h>
 #include <hydra/SeedRNG.h>
+#if HYDRA_DEVICE_SYSTEM == CUDA
+#include <hydra/CuFFT.h>
+#endif
+#if HYDRA_DEVICE_SYSTEM != CUDA
 #include <hydra/FFTW.h>
+#endif
 
 
 // ROOT
@@ -179,26 +184,24 @@ int main(int argv, char** argc)
     
     hydra::SeedRNG S{};
 
-    TList* listoffiles = tfboost::GetFileList(InputDirectory); 
-    listoffiles->Sort();
-    TIter nextfile( listoffiles );
-    TSystemFile *currentfile;
-    TString currentfilename;
-    TString line;
-
     TH1D* hist_TOA             = new TH1D("hist_TOA","Time of arrival Leading Edge",Nbins,0,-1);
     TH1D* hist_TOACFD          = new TH1D("hist_TOACFD","Time of arrival CFD at 0.35 of V max",Nbins,0,-1);
+    TH1D* hist_TOARM           = new TH1D("hist_TOARM","Time of arrival Ref.Method",Nbins,0,-1);
     TH1D* hist_TOACFDnoise     = new TH1D("hist_TOACFDnoise","Time of arrival CFD with noise",Nbins,0,-1);
     TH1D* hist_TOALEnoise      = new TH1D("hist_TOALEnoise","Time of arrival LE with noise",Nbins,0,-1);
+    TH1D* hist_TOARMnoise      = new TH1D("hist_TOARMnoise","Time of arrival RM with noise",Nbins,0,-1);
     TH1D* hist_Vmax            = new TH1D("hist_Vmax","V on peak",Nbins,0,-1);
     TH1D* hist_TimeatVmax      = new TH1D("hist_TimeatVmax","Time at V max",Nbins,0,-1);
     TH1D* hist_Vmax_noise      = new TH1D("hist_Vmax_noise","V on peak with noise",Nbins,0,-1);
     TH1D* hist_Vth_CFD         = new TH1D("hist_Vth_CFD","V on CFD threshold",Nbins,0,-1);
     TH1D* hist_Vth_LE          = new TH1D("hist_Vth_LE","V on LE threshold",Nbins,0,-1);
+    TH1D* hist_Vth_RM          = new TH1D("hist_Vth_RM","V on RM threshold",Nbins,0,-1);
     TH1D* hist_Vth_CFD_noise   = new TH1D("hist_Vth_CFD_noise","V on CFD threshold with noise",Nbins,0,-1);
+    TH1D* hist_Vth_RM_noise    = new TH1D("hist_Vth_RM_noise","V on RM threshold with noise",Nbins,0,-1);
     TH1D* hist_Vth_LE_noise    = new TH1D("hist_Vth_LE_noise","V on LE threshold with noise",Nbins,0,-1);
     TH1D* hist_dVdt_LE         = new TH1D("hist_dVdt_LE","Slope (dV/dT) on LE threshold",Nbins,0,-1);
     TH1D* hist_dVdt_CFD        = new TH1D("hist_dVdt_CFD","Slope (dV/dT) on CFD threshold",Nbins,0,-1);
+    TH1D* hist_dVdt_RM         = new TH1D("hist_dVdt_RM","Slope (dV/dT) on RM threshold",Nbins,0,-1);
     TH1D* hist_dVdt_CFD_noise  = new TH1D("hist_dVdt_CFD_noise","Slope (dV/dT) on CFD threshold with noise",Nbins,0,-1);
     TH1D* hist_dVdt_LE_noise   = new TH1D("hist_dVdt_LE_noise","Slope (dV/dT) on LE threshold with noise",Nbins,0,-1);
 
@@ -212,6 +215,17 @@ int main(int argv, char** argc)
     hydra::host::vector<double> th_jitter_withTOA(120, 0.0);
 
     
+    
+    /* ----------------------------------------------
+     * Preparing the list of input files
+     * --------------------------------------------*/
+    TList* listoffiles = tfboost::GetFileList(InputDirectory); 
+    listoffiles->Sort();
+    TIter nextfile( listoffiles );
+    TSystemFile *currentfile;
+    TString currentfilename;
+    TString line;
+
 
     /* ----------------------------------------------
      * Main loop on input files
@@ -259,6 +273,7 @@ int main(int argv, char** argc)
         
 
         // Actual loop on file lines
+        
         if (myFile.is_open()) 
         {
             size_t s = offset;
@@ -284,10 +299,10 @@ int main(int argv, char** argc)
 
                 ++s;
             }
-        } else {
-            SAFE_EXIT( true , "In analysis.inl: input file cannot be open. ")
-        }
-
+        } 
+        
+        SAFE_EXIT( !myFile.is_open() , "In analysis.inl: input file cannot be open. ")
+                
         myFile.close();
 
 
@@ -315,6 +330,10 @@ int main(int argv, char** argc)
 
         #if HYDRA_DEVICE_SYSTEM!=CUDA
         auto fft_backend = hydra::fft::fftw_f64;
+        #endif
+        
+        #if HYDRA_DEVICE_SYSTEM==CUDA
+        auto fft_backend = hydra::fft::cufft_f64;
         #endif
         
         hydra::host::vector<double >    conv_data_h(Nsamples);
@@ -413,6 +432,8 @@ int main(int argv, char** argc)
         }
                
         
+        
+        
         /* ----------------------------------------------
          * Measurements without noise
          * --------------------------------------------*/
@@ -423,6 +444,7 @@ int main(int argv, char** argc)
         { 
             //TOAmaps->SetBinContent( pos_y+1, pos_x+1, 0.0 ); 
             //Vmaxmaps->SetBinContent( pos_y+1, pos_x+1, 0.0 );
+            WARNING_LINE("Skipping empty event...")
             continue;
         }
 
@@ -430,11 +452,16 @@ int main(int argv, char** argc)
         size_t TOA_LE     = tfboost::algo::LeadingEdge(conv_data_h, LEthr);
 
         size_t timeatth_0 = tfboost::algo::GetTimeAtPeak(conv_data_h);
+        
         double Vpeak      = tfboost::algo::GetVAtPeak(conv_data_d);
         
         size_t TOA_CFD    = tfboost::algo::ConstantFraction(conv_data_h , CFD_fr , Vpeak);
+        
+        size_t TOA_RM     = tfboost::algo::TimeRefMethod(ID, conv_data_h, Vpeak, /*noise?*/false );
+        
         double VonThLE    = conv_data_h[TOA_LE];
         double VonThCFD   = conv_data_h[TOA_CFD];
+        double VonThRM    = conv_data_h[TOA_RM];
 
         //TOAmaps->SetBinContent( pos_y+1, pos_x+1, (double)dT*TOA_CFD );
         //Vmaxmaps->SetBinContent( pos_y+1, pos_x+1, 1e3 * Vpeak );
@@ -442,6 +469,7 @@ int main(int argv, char** argc)
                 
         double dvdt_CFD   = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
         double dvdt_LE    = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_LE);
+        double dvdt_RM    = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_RM);
         
         if(MakeTheoreticalTOA){
             auto prob_curve = tfboost::noise::ComputeTOAcurve( TOA_CFD, TOA_CFD-100, TOA_CFD+100, CFD_fr, Vpeak, sigma_noise, idx, conv_data_h, "th_jitter.pdf");
@@ -450,21 +478,27 @@ int main(int argv, char** argc)
         
         hist_TOA        -> Fill( (double) dT*TOA_LE );
         hist_TOACFD     -> Fill( (double) dT*TOA_CFD);
+        hist_TOARM      -> Fill( (double) dT*TOA_RM);
         hist_Vmax       -> Fill(1e3 * Vpeak);
         hist_TimeatVmax -> Fill(timeatth_0);
         hist_Vth_CFD    -> Fill(1e3*VonThCFD);
         hist_Vth_LE     -> Fill(1e3*VonThLE);
+        hist_Vth_RM     -> Fill(1e3*VonThRM);
         hist_dVdt_CFD   -> Fill(1e-6 * dvdt_CFD/dT);
         hist_dVdt_LE    -> Fill(1e-6 * dvdt_LE/dT);
+        hist_dVdt_RM    -> Fill(1e-6 * dvdt_RM/dT);
 
         std::cout << "========================================" << "\n";
         std::cout << "Time on thresholds (LE)  = " << dT*TOA_LE  << "  (s)"<< "\n";
         std::cout << "Time on thresholds (CFD) = " << dT*TOA_CFD << "  (s)"<< "\n";
+        std::cout << "Time on thresholds (RM)  = " << dT*TOA_RM  << "  (s)"<< "\n";
         std::cout << "V on thresholds (CFD)    = " << 1e3*VonThCFD << "  (mV)"<< "\n";
         std::cout << "V on thresholds (LE)     = " << 1e3*VonThLE << "  (mV)"<< "\n";
+        std::cout << "V on thresholds (RM)     = " << 1e3*VonThRM << "  (mV)"<< "\n";
         std::cout << "Vpeak                    = " << 1e3*Vpeak << "  (mV)"<< "\n";
         std::cout << "dv/dt CFD                = " << 1e-6*dvdt_CFD/dT << "  (uV/ps)"<< "\n";
         std::cout << "dv/dt LE                 = " << 1e-6*dvdt_LE/dT  << "  (uV/ps)"<< "\n";    
+        std::cout << "dv/dt RM                 = " << 1e-6*dvdt_RM/dT  << "  (uV/ps)"<< "\n";    
         std::cout << "========================================" << "\n";
 
 
@@ -480,6 +514,8 @@ int main(int argv, char** argc)
             
             noise.AddNoiseToSignal( conv_data_h, S() );
             
+            auto signalnoise = hydra::make_spiline<double>(time, conv_data_h );
+            
             
             size_t TOA_LE_noise  = tfboost::algo::LeadingEdge(conv_data_h , LEthr);
             double VonThLE       = conv_data_h[TOA_LE_noise];
@@ -492,11 +528,16 @@ int main(int argv, char** argc)
                 size_t timeatth      = tfboost::algo::GetTimeAtPeak(conv_data_h);
                 double vmax          = tfboost::algo::GaussianFitNearVmax( ID,  conv_data_h );
                 size_t TOA_CFD_noise = tfboost::algo::ConstantFraction(conv_data_h , CFD_fr , vmax);
+                size_t TOA_RM_noise  = tfboost::algo::TimeRefMethod(ID, conv_data_h, vmax, /*noise?*/true );
+                
                 double VonThCFD = conv_data_h[TOA_CFD_noise];
+                double VonThRM  = conv_data_h[TOA_RM_noise];
 
+                hist_TOARMnoise      -> Fill(TOA_RM_noise);
                 hist_TOACFDnoise     -> Fill(TOA_CFD_noise);
                 hist_Vmax_noise      -> Fill(vmax);
-                hist_Vth_CFD_noise   -> Fill(VonThCFD);                
+                hist_Vth_CFD_noise   -> Fill(VonThCFD);
+                hist_Vth_RM_noise    -> Fill(VonThRM);
             }
             
             
@@ -568,31 +609,39 @@ int main(int argv, char** argc)
      *------------------------------------------------*/  
     tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_LE",    "Time [s]",      "counts", *hist_TOA);
     tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_CFD",   "Time [s]",      "counts", *hist_TOACFD);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_RM",    "Time [s]",      "counts", *hist_TOARM);
+    
     tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_LE",   "Slope [uV/ps]", "counts", *hist_dVdt_LE);
     tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_CFD",  "Slope [uV/ps]", "counts", *hist_dVdt_CFD);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_RM",  "Slope [uV/ps]", "counts", *hist_dVdt_RM);
+
     tfboost::SaveCanvas(OutputDirectory + "plots/", "Vmax",      "Voltage [mV]",  "counts", *hist_Vmax);
     tfboost::SaveCanvas(OutputDirectory + "plots/", "TimeatVmax","Time [ps]",     "counts", *hist_TimeatVmax);
     tfboost::SaveCanvas(OutputDirectory + "plots/", "Vth_CFD",   "Voltage [mV]",  "counts", *hist_Vth_CFD);
     tfboost::SaveCanvas(OutputDirectory + "plots/", "Vth_LE",    "Voltage [mV]",  "counts", *hist_Vth_LE);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "Vth_RM",    "Voltage [mV]",  "counts", *hist_Vth_RM);
+
+    if(AddNoise){
+        
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "VonTh_LEnoise", "Voltage [mV]", "counts",  *hist_Vth_LE_noise);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_LEnoise",   "Time [s]",     "counts",  *hist_TOALEnoise);
+
+    if(MakeGaussianFitNearVmax){
     
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_CFDnoise",   "Time [s]",     "counts", *hist_TOACFDnoise);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_RMnoise",    "Time [s]",     "counts", *hist_TOARMnoise);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "Vmax_noise",     "Voltage [mV]", "counts", *hist_Vmax_noise);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "VonTh_CFDnoise", "Voltage [mV]", "counts", *hist_Vth_CFD_noise);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "VonTh_RMnoise", "Voltage [mV]", "counts",  *hist_Vth_RM_noise);
+    
+    }
 
-    if(AddNoise)
-    {
-        tfboost::SaveCanvas(OutputDirectory + "plots/", "VonTh_LEnoise", "Voltage [mV]", "counts",  *hist_Vth_LE_noise);
-        tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_LEnoise",   "Time [s]",     "counts",  *hist_TOALEnoise);
-
-        if(MakeGaussianFitNearVmax)
-        {
-            tfboost::SaveCanvas(OutputDirectory + "plots/", "TOA_CFDnoise",   "Time [s]",     "counts", *hist_TOACFDnoise);
-            tfboost::SaveCanvas(OutputDirectory + "plots/", "Vmax_noise",     "Voltage [mV]", "counts", *hist_Vmax_noise);
-            tfboost::SaveCanvas(OutputDirectory + "plots/", "VonTh_CFDnoise", "Voltage [mV]", "counts", *hist_Vth_CFD_noise);
-        }
-
-        if(MakeLinearFitNearThreshold)
-        {
-            tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_CFDnoise", "Slope [uV/ps]", "counts", *hist_dVdt_CFD_noise);
-            tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_LEnoise",  "Slope [uV/ps]", "counts", *hist_dVdt_LE_noise);    
-        }
+    if(MakeLinearFitNearThreshold){
+            
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_CFDnoise", "Slope [uV/ps]", "counts", *hist_dVdt_CFD_noise);
+    tfboost::SaveCanvas(OutputDirectory + "plots/", "dVdT_LEnoise",  "Slope [uV/ps]", "counts", *hist_dVdt_LE_noise);    
+    
+    } 
     }
 
 

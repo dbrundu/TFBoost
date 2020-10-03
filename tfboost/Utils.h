@@ -58,7 +58,7 @@ if(flag){\
 
 #define SAFE_EXIT(x, message)\
     if(x) {\
-        std::cout<< "\033[1;33m[EXIT:] \033[0m" << message << std::endl;\
+        std::cout<< "\033[1;33m[EXIT:] \033[0m" << message << "\n";\
         std::exit(0);\
     }
 
@@ -66,7 +66,11 @@ if(flag){\
     for( size_t i=0; i<n; i++ ) std::cout << elements[i] << "\n";\
     std::cout << "\n";
     
-    
+#define ERROR_RETURN(x, message, val)\
+    if(x) {\
+        std::cout<< "\033[1;33mWarning: \033[0m" << message << "\n";\
+        return val;\
+    }
     
     
     
