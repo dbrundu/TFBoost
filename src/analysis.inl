@@ -135,6 +135,7 @@ int main(int argv, char** argc)
     const size_t  offset                    = (int)         cfg_root["offset"]; 
     const size_t  NlinesToSkip              = (int)         cfg_root["NlinesToSkip"];
 
+    const bool LandauFluctuation            = (bool) cfg_root["LandauFluctuation"];
     const bool MakeConvolution              = (bool) cfg_root["MakeConvolution"];
     const bool SaveSinglePlotConvolution    = (bool) cfg_root["SaveSinglePlotConvolution"];
     const bool SaveConvDataToFile           = (bool) cfg_root["SaveConvDataToFile"];
@@ -183,6 +184,7 @@ int main(int argv, char** argc)
     size_t INDEX = 0;
     
     hydra::SeedRNG S{};
+    TRandom3 root_rng( S() );
 
     TH1D* hist_TOA             = new TH1D("hist_TOA","Time of arrival Leading Edge",Nbins,0,-1);
     TH1D* hist_TOACFD          = new TH1D("hist_TOACFD","Time of arrival CFD at 0.35 of V max",Nbins,0,-1);
@@ -273,6 +275,7 @@ int main(int argv, char** argc)
         
 
         // Actual loop on file lines
+        double landau = root_rng.Landau(1,0.15);
         
         if (myFile.is_open()) 
         {
@@ -288,7 +291,8 @@ int main(int argv, char** argc)
                 TString data_str  = ((TObjString*) tokens->At( column ) )->GetString();
                 if(data_str == "0" && s==offset) continue; //to avoid misaligned TCoDe input files 
                 
-                const double data = atof(data_str);
+                const double data = LandauFluctuation? landau*atof(data_str) : atof(data_str);
+                 
                 
                 idx.push_back(s);
                 time.push_back(s*dT);
