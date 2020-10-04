@@ -11,18 +11,12 @@ TFBoost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra
 
 
 ## Installation, Build and Run
-The first step is checkout [HYDRA v.3](https://github.com/MultithreadCorner/Hydra). Please create a Hydra folder somewhere and clone the repository:
+The first step is checkout [HYDRA v.3](https://github.com/MultithreadCorner/Hydra) and TFBoost:
 ```bash
-mkdir Hydra
-cd Hydra
-git clone https://github.com/MultithreadCorner/Hydra.git
-```
-Then you can clone the TFBoost repository:
-```bash
-cd ..
-mkdir TFBoost
-cd TFBoost
-git clone https://github.com/dbrundu/TFBoost.git
+mkdir <TFBoostDev>
+cd <TFBoostDev>
+git clone https://github.com/MultithreadCorner/Hydra.git Hydra
+git clone https://github.com/dbrundu/TFBoost.git TFBoost
 ```
 
 Then you can setup the corresponding enveironment variables:
@@ -35,10 +29,10 @@ export HYDRA_INCLUDE_DIR=<path-to-hydra>
 
 Starting from the TFBoost folder, please create a `build` directory for convenience and run the cmake command:
 ```bash
+cd TFBoost
 mkdir build
 cd build
 cmake -DHYDRA_INCLUDE_DIR=$HYDRA_INCLUDE_DIR ../
-
 ```
 
 At this point you can run the examples: please read at the examples section for a description on how to setup and run them. If you want to run the actual application please setup the proper configuration using the file `configuration.cgf` inside the `etc/` folder, then build and run the application as:
