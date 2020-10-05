@@ -186,9 +186,8 @@ inline double GaussianFitNearVmax(int const& kernel_id, Iterable const& data, bo
     
     #pragma unroll
     for(size_t i=min_fit; i<max_fit+1; ++i)
-    {
         graph.SetPoint(graph.GetN(), i , data[i]);
-    }
+    
 
     TFitResultPtr r = graph.Fit("gaus","S");
 

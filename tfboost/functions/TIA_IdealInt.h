@@ -152,12 +152,6 @@ private:
 };
 
 
-/**
- * Convenience function to get the proper kernel
- * based on the funtor index
- */
-template<int I, typename T, typename dummy = typename std::enable_if<I==TIA_IdealInt<T>::IDX, void>::type>
-TIA_IdealInt<T> get_kernel(){ return TIA_IdealInt<T>(); }
 
 
 

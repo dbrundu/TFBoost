@@ -153,12 +153,7 @@ private:
 };
 
 
-/**
- * Convenience function to get the proper kernel
- * based on the funtor index
- */
-template<int I, typename T, typename dummy = typename std::enable_if<I==TIA_BJT_1stage<T>::IDX, void>::type>
-TIA_BJT_1stage<T> get_kernel(){ return TIA_BJT_1stage<T>(); }
+
 
 }  // namespace tfboost
 

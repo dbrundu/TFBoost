@@ -109,9 +109,8 @@ public:
             
             #pragma unroll
             for(size_t i=1; i<N ; ++i)
-            {
                 noise_h_final[i] = fcorrelation * noise_h_final[i-1] + ::sqrt(1.0 - fcorrelation*fcorrelation)*noise_h[i];
-            }
+            
                     
             hydra::copy(noise_h_final , noise_d);
         }

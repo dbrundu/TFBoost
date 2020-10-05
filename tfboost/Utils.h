@@ -89,6 +89,7 @@ void SaveCanvas(TString const& directory, TString const& title, TString const& x
     hist.GetYaxis()->SetTitleOffset(1.5);
     hist.Draw();
     canv.SaveAs( directory+title+TString(".pdf") );
+    canv.SaveAs( directory+title+TString(".C") );
 
 }
 
