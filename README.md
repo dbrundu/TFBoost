@@ -24,10 +24,11 @@ git clone https://github.com/MultithreadCorner/Hydra.git Hydra
 git clone https://github.com/dbrundu/TFBoost.git TFBoost
 ```
 
-Then you can setup the corresponding enveironment variables:
+Then you have to setup the proper enveironment variables:
 ```bash
 export CC=/usr/bin/gcc-8
 export CXX=/usr/bin/g++-8
+export ROOTSYS=<path-to-root-build>
 export HYDRA_INCLUDE_DIR=<path-to-hydra>
 ...
 ```
