@@ -28,6 +28,8 @@
 #ifndef CONFIGPARSER_H
 #define CONFIGPARSER_H
     
+#include <tfboost/Utils.h>
+
     
 namespace tfboost { 
 
@@ -61,10 +63,18 @@ struct ConfigParser
         UseSameCurve                 = (bool) cfg_root["UseSameCurve"];
         IdxConvtoSave                = (int)  cfg_root["IdxConvtoSave"];
         Nfiles                       = (int)  cfg_root["MaxInputFiles"];
+        MakeDigitization             = (bool) cfg_root["MakeDigitization"];
+        randomphase                  = (bool) cfg_root["randomphase"];
+
+        LE_reject_nonoise  = (double) cfg_root["LE_reject_nonoise"];
+        LE_reject_noise    = (double) cfg_root["LE_reject_noise"]; 
 
         const libconfig::Setting& cfg_tf  = cfg_root[TransferFunction];
 
         Nsamples     = (int)    cfg_tf["Nsamples"];
+        Nsamples     = (int)    tfboost::upper_power_of_two((size_t) Nsamples);
+      
+        bound_fit    = (int)    cfg_tf["bound_fit"];
         ID           = (int)    cfg_tf["ID"];
         Nbins        = (int)    cfg_tf["Nbins"];
         dT           = (double) cfg_tf["dT"];
@@ -72,10 +82,23 @@ struct ConfigParser
         CFD_fr       = (double) cfg_tf["CFD_fr"];
         sigma_noise  = (double) cfg_tf["sigma_noise"];
         r_rednoise   = (double) cfg_tf["r_rednoise"];
+        sampling_dT  = (double) cfg_tf["sampling_dT"];
+        minplot      = (double) cfg_tf["minplot"];
+        maxplot      = (double) cfg_tf["maxplot"]; 
         
         if(!InputDirectory.EndsWith("/")) InputDirectory   = InputDirectory+"/";
         if(!OutputDirectory.EndsWith("/")) OutputDirectory = OutputDirectory+"/";
         
+        Nsamples_0 = Nsamples;
+        dT_0 = dT;
+        sampling_dT_0 = sampling_dT;
+    }
+    
+    
+    inline void ResetInitialValues(){
+        Nsamples = Nsamples_0;
+        dT = dT_0;
+        sampling_dT = sampling_dT_0;
     }
 
 
@@ -84,14 +107,21 @@ struct ConfigParser
 
     bool LandauFluctuation, MakeConvolution, SaveSinglePlotConvolution;
     bool SaveConvDataToFile, MakeLinearFitNearThreshold, MakeGaussianFitNearVmax;
-    bool AddNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve;
+    bool AddNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeDigitization, randomphase;
     
     int column, ID, Nbins;
     
-    size_t offset, NlinesToSkip, IdxConvtoSave, Nfiles, Nsamples;
+    size_t offset, NlinesToSkip, IdxConvtoSave, Nfiles, Nsamples, bound_fit;
     
-
-    double dT, LEthr, CFD_fr, sigma_noise, r_rednoise;
+    double dT, LEthr, CFD_fr, sigma_noise, r_rednoise, sampling_dT, LE_reject_nonoise, LE_reject_noise;
+    double minplot, maxplot;
+    
+    
+    
+    private: // for initial configurations
+    
+    size_t Nsamples_0;
+    double dT_0, sampling_dT_0;
 
 
 };

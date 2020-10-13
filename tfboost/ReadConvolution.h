@@ -29,7 +29,8 @@
 #define READ_CONVOLUTION_H_
  
     
-    
+#include <tfboost/Utils.h>
+
     
 namespace tfboost {
 
@@ -62,64 +63,100 @@ void ReadConvolution(TString const& file, Iterable& iterable)
                 tokens->Delete();
                 delete tokens;
             }
-        }
+        }  else { SAFE_EXIT(true, "Input file cannot be open.") }
         myFile.close();
 
         const size_t diff = Nsamples - k - 1;
         if(diff>0)
         {
-            for(size_t j = k; j < Nsamples; ++j)
-            {
+            for(size_t j = k; j < Nsamples; ++j) 
                 iterable[j] = 0.0;
-            }
         }
 
 }
 
 
 template<typename Iterable>
-void ReadTF(TString const& file, Iterable& iterable_t, Iterable& iterable_V, double dT = 1e-12)
+void ReadTF(TString const& file, int Nlinestoskip, Iterable& iterable_t, Iterable& iterable_V, bool doublerange=false)
 {
 
-        size_t Nsamples = iterable_t.size();
         TString line;
         std::ifstream myFile( file.Data() );
         line.ReadLine(myFile);
+        double scale = 1;
         size_t k = 0;
+        double dT = 0.0;
+        double time0 = 0.0;
+       
+        
+        Iterable iterable_t_temp, iterable_V_temp;
 
         if (myFile.is_open()) 
         {
-            for(size_t j = 0; j < Nsamples ; ++j)
+        
+            for(size_t i=0; i<(size_t)Nlinestoskip; ++i) line.ReadLine(myFile);
+            
+            while(1)
             {
-                k = j;
-
                 line.ReadLine(myFile);
                 if (!myFile.good()) break;
             
                 TObjArray *tokens = line.Tokenize( " " );
             
+                TString time_str  = ((TObjString*) tokens->At( 0 ) )->GetString();
                 TString data_str  = ((TObjString*) tokens->At( 1 ) )->GetString();
                 
-                const double data = atof(data_str);
+                const double time = atof(time_str);
+                const double data = scale*atof(data_str);
                 
-                iterable_t[j] = data;
-                iterable_V[j] = data;
+                //if(k==0) time0 = time;
+                if(k==1) dT = time - iterable_t_temp[0];
+                
+                iterable_t_temp.push_back(time - time0);
+                iterable_V_temp.push_back(data);
                 
                 tokens->Delete();
                 delete tokens;
+                ++k;
+                
             }
-        }
-        myFile.close();
+            
+        } else { SAFE_EXIT(true, "In ReadTF(): Input file cannot be open.") }
+        
+        
+        
+        if(doublerange){
+        
+            double last_t = iterable_t_temp.back();
+            
+            for(size_t i=0; i<100; ++i ){
+                iterable_t_temp.push_back( last_t + i*dT );
+                iterable_V_temp.push_back(0.0);
+            } 
+        
+            Iterable time_rev(iterable_t_temp.size());
+            Iterable V_rev(iterable_V_temp.size(), 0.0);
+            
+            hydra::copy(iterable_t_temp, time_rev);
+            
+            for(double& x : time_rev) x *= -1.0 ;
+            
+            hydra_thrust::reverse(time_rev.begin() , time_rev.end() ); 
 
-        const size_t diff = Nsamples - k - 1;
-        if(diff>0)
-        {
-            for(size_t j = k; j < Nsamples; ++j)
-            {
-                iterable_t[j] = j*dT;
-                iterable_V[j] = 0.0;
-            }
+            iterable_t.insert( iterable_t.begin(), time_rev.begin(), time_rev.end() );
+            iterable_t.insert( iterable_t.end(), iterable_t_temp.begin(), iterable_t_temp.end() );
+            
+            iterable_V.insert( iterable_V.begin(), V_rev.begin(), V_rev.end() );
+            iterable_V.insert( iterable_V.end(), iterable_V_temp.begin(), iterable_V_temp.end() );
+            
+        } else {
+
+            iterable_t.insert( iterable_t.begin(), iterable_t_temp.begin(), iterable_t_temp.end() );
+            iterable_V.insert( iterable_V.begin(), iterable_V_temp.begin(), iterable_V_temp.end() );
+        
         }
+
+        myFile.close();
 
 }
 

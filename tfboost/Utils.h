@@ -90,8 +90,81 @@ void SaveCanvas(TString const& directory, TString const& title, TString const& x
     hist.Draw();
     canv.SaveAs( directory+title+TString(".pdf") );
     canv.SaveAs( directory+title+TString(".C") );
+}
+
+
+void SaveCanvasAndFit(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, TH1D& hist, TF1* tf1)
+{
+    TCanvas canv(title, title, 800,800);
+    hist.SetLineWidth(2);
+    hist.GetXaxis()->SetTitle(xtitle);
+    hist.GetYaxis()->SetTitle(ytitle);
+    hist.GetYaxis()->SetLabelSize(0.03);
+    hist.GetYaxis()->SetTitleOffset(1.5);
+    hist.Draw("E1");
+    hist.Fit( tf1 , "R" );
+    //tf1->Draw("same");
+    canv.SaveAs( directory+title+TString(".pdf") );
+    canv.SaveAs( directory+title+TString(".C") );
+}
+
+
+
+void SaveConvolutionCanvas(TString const& directory, TString const& title, 
+                          TH1D& hist_convol, TH1D& hist_signal, TH1D& hist_kernel)
+{
+    TCanvas canvas(title, title, 4000,1000);
+    canvas.Divide(3,1);
+    canvas.cd(1);
+    hist_convol.SetStats(0);
+    hist_convol.SetLineColor(4);
+    hist_convol.SetLineWidth(1);
+    hist_convol.GetXaxis()->SetTitle("sec");
+    hist_convol.GetYaxis()->SetTitle("V");
+    hist_convol.GetYaxis()->SetLabelSize(0.03);
+    hist_convol.GetYaxis()->SetTitleOffset(1.5);
+    hist_convol.Draw("L");
+
+    canvas.cd(2);
+    hist_signal.SetStats(0);
+    hist_signal.SetLineColor(4);
+    hist_signal.SetLineWidth(1);
+    hist_signal.GetXaxis()->SetTitle("sec");
+    hist_signal.GetYaxis()->SetTitle("A");
+    hist_signal.GetYaxis()->SetLabelSize(0.03);
+    hist_signal.GetYaxis()->SetTitleOffset(1.5);
+    hist_signal.Draw("C");
+            
+    canvas.cd(3);
+    hist_kernel.SetStats(0);
+    hist_kernel.SetLineColor(4);
+    hist_kernel.SetLineWidth(1);
+    hist_kernel.GetXaxis()->SetTitle("sec");
+    hist_kernel.GetYaxis()->SetLabelSize(0.03);
+    hist_kernel.GetYaxis()->SetTitleOffset(1.5);
+    hist_kernel.Draw("C");
+    hist_convol.SetLineColor(1);
+    hist_convol.Draw("same");
+
+    //canvas.SaveAs(c.OutputDirectory + "plots/hist_convol_functor.pdf");
+    canvas.SaveAs( directory+title+TString(".pdf") );
 
 }
+
+
+size_t upper_power_of_two(size_t v)
+{
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+
+}
+
 
 
 TList* GetFileList(TString dirname_string)

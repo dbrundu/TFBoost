@@ -90,6 +90,7 @@
 #include <sys/stat.h>
 
 // TFBOOST
+#include <tfboost/Utils.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
 #include <tfboost/functions/TIA_BJT_2stages_GM.h>
@@ -99,7 +100,6 @@
 #include <tfboost/noise/Noise.h>
 #include <tfboost/ReadConvolution.h>
 #include <tfboost/Algorithms.h>
-#include <tfboost/Utils.h>
 
 
 namespace libconf = libconfig;
@@ -120,11 +120,7 @@ int main(int argv, char** argc)
     Cfg.readFile("../etc/deconvolution.cfg");
     const libconf::Setting& cfg_root  = Cfg.getRoot();
     
-    
-    const TString TransferFunction          = (const char*) cfg_root["TransferFunction"];
-    const TString InputDirectory            = (const char*) cfg_root["InputDirectory"];
-
-    const TString OutputDirectory           = (const char*) cfg_root["OutputDirectory"];
+    TString OutputDirectory           = (const char*) cfg_root["OutputDirectory"];
     const TString conv_inputfile            = (const char*) cfg_root["InputFileConv"]; 
     const TString InputFile_current         = (const char*) cfg_root["InputFileCurrent"]; 
 
@@ -132,7 +128,9 @@ int main(int argv, char** argc)
     const int     column                    = (int)    cfg_root["column"];
     const size_t  offset                    = (int)    cfg_root["offset"];
     const size_t Nsamples                   = (int)    cfg_root["Nsamples"];
+    const size_t Nlinestoskip               = (int)    cfg_root["Nlinestoskip"];
 
+    if(!OutputDirectory.EndsWith("/")) OutputDirectory = OutputDirectory+"/";
     
     tfboost::CreateDirectories( OutputDirectory + "plots");
     tfboost::CreateDirectories( OutputDirectory + "data");
@@ -145,7 +143,7 @@ int main(int argv, char** argc)
     
     hydra::SeedRNG S{};
 
-    TH1D *hist_convol         = new TH1D("hist_convol;Time[s];Vout [V]","hist_convol", Nsamples, min, max );
+    TH1D *hist_convol         = new TH1D("hist_convol;Time[s];Vout [V]","hist_convol", Nsamples/30, min, max );
     TH1D *hist_signal         = new TH1D("hist_signal;Time[s];Vout [V]","hist_signal", Nsamples, min, max );
     TH1D *hist_kernel         = new TH1D("hist_kernel;Time[s];Vout [V]","hist_kernel", Nsamples, min, max);
     
@@ -190,7 +188,7 @@ int main(int argv, char** argc)
             tokens->Delete();
             delete tokens;
         }
-    }
+    } else { SAFE_EXIT(true, "Input file cannot be open.") }
     myFile.close();
 
 
@@ -207,7 +205,7 @@ int main(int argv, char** argc)
      
     SAFE_EXIT( current.size() != Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
 
-    auto signal = hydra::make_spiline<double>(time, current );
+    auto signal = hydra::make_spiline<double>(time, current);
         
         
         
@@ -220,23 +218,30 @@ int main(int argv, char** argc)
     auto fft_backend = hydra::fft::fftw_f64;
     #endif
         
-    hydra::host::vector<double >    conv_data_h(Nsamples);
-    hydra::device::vector<double >  conv_data_d(Nsamples);
+    #if HYDRA_DEVICE_SYSTEM==CUDA
+    auto fft_backend = hydra::fft::cufft_f64;
+    #endif
         
-    
-    hydra::device::vector<double> time2;
-    hydra::device::vector<double> current2;
+    hydra::host::vector<double>   conv_data_h(Nsamples);
+    hydra::device::vector<double> conv_data_d(Nsamples);
+        
+    hydra::host::vector<double> time2;
+    hydra::host::vector<double> voltage2;
+    time2.reserve(Nsamples);
+    voltage2.reserve(Nsamples);
 
-    tfboost::ReadTF( conv_inputfile, time2, current2);
+    tfboost::ReadTF( conv_inputfile, Nlinestoskip, time2, voltage2);
 
-    auto kernel = hydra::make_spiline<double>(time2, current2 );
+    auto kernel = hydra::make_spiline<double>(time2, voltage2);
                 
     conv_data_h = tfboost::Do_DeConvolution(fft_backend, kernel, signal, min, max, Nsamples);
 
-    
+    auto conv = hydra::make_spiline<double>(time, conv_data_h);
+
+
     for(size_t i=1;  i < (size_t) Nsamples+1; ++i) {
         hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) ); 
-        hist_convol->SetBinContent(i, conv_data_h[i-1] );
+        hist_convol->SetBinContent(i, conv(hist_convol->GetBinCenter(i)));// conv_data_h[i-1] );
         hist_signal->SetBinContent(i, signal(hist_signal->GetBinCenter(i)) ); 
     }
 
@@ -244,9 +249,11 @@ int main(int argv, char** argc)
     canvas.Divide(3,1);
     canvas.cd(1);
     hist_convol->SetStats(0);
+    hist_convol->Rebuild();
     hist_convol->SetLineColor(4);
     hist_convol->SetLineWidth(1);
-    hist_convol->Draw();
+    //hist_convol->Fit("chebyshev9","S");
+    hist_convol->Draw("C");
             
     canvas.cd(2);
     hist_signal->SetStats(0);
@@ -259,16 +266,13 @@ int main(int argv, char** argc)
     hist_kernel->SetLineColor(4);
     hist_kernel->SetLineWidth(1);
     hist_kernel->Draw();
-    hist_convol->SetLineColor(1);
-    hist_convol->Draw("same");
+    //hist_convol->SetLineColor(1);
+    //hist_convol->Draw("same");
             
     canvas.SaveAs(OutputDirectory + "plots/hist_convol_functor.pdf");
     
-
     tfboost::SaveConvToFile(conv_data_h, dT, OutputDirectory + "TF.txt" );
         
-
-
     return 0;
 }
 

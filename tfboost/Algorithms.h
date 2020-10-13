@@ -130,9 +130,12 @@ inline double SlopeOnThrs(Iterable const& vout, size_t const& Tth)
  * If errors return -1
  */
 template<typename Iterable>
-inline double LinearFitNearThr(int const& kernel_id, size_t const& TOA, Iterable const& data, bool const& plot=false ) {
+inline double LinearFitNearThr(size_t const& TOA, 
+                               Iterable const& data, 
+                               size_t const& bound_fit, 
+                               bool const& plot=false ) {
         
-    const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
+    //const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
     
     const size_t min_fit = (TOA - bound_fit); 
     const size_t max_fit = (TOA + bound_fit); 
@@ -170,9 +173,9 @@ inline double LinearFitNearThr(int const& kernel_id, size_t const& TOA, Iterable
  * If errors return -1
  */
 template<typename Iterable>
-inline double GaussianFitNearVmax(int const& kernel_id, Iterable const& data, bool const& plot=false ) {
+inline double GaussianFitNearVmax(Iterable const& data, size_t const& bound_fit, bool const& plot=false ) {
         
-    const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
+    //const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
     
     const size_t time = GetTimeAtPeak(data);
             
@@ -215,7 +218,7 @@ inline double GaussianFitNearVmax(int const& kernel_id, Iterable const& data, bo
  * If error returns 0
  */
 template<typename Iterable>
-inline size_t TimeRefMethod(int const& kernel_id, Iterable const& vout, double const& vmax, bool const& noise=false)
+inline size_t TimeRefMethod(Iterable const& vout, double const& vmax, size_t const& bound_fit, bool const& noise=false)
 {
 
     const size_t N = vout.size();
@@ -237,9 +240,9 @@ inline size_t TimeRefMethod(int const& kernel_id, Iterable const& vout, double c
         
     PRINT_ELEMENTS(10, subtr)
      
-    double newthr = (noise)? 0.5 * GaussianFitNearVmax( kernel_id,  subtr ) : 0.5 * GetVAtPeak(subtr);
+    double newthr = (noise)? 0.5 * GaussianFitNearVmax( subtr, bound_fit ) : 0.5 * GetVAtPeak(subtr);
 
-    const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
+    //const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
      
     const size_t min_fit   = LeadingEdge(subtr , newthr) - bound_fit;
     const size_t max_fit   = LeadingEdge(subtr , newthr) + bound_fit;
@@ -273,16 +276,23 @@ inline size_t TimeRefMethod(int const& kernel_id, Iterable const& vout, double c
 template<typename Iterable, typename SPLINE, typename RNG>
 inline void DigitizeSignal(Iterable& data, Iterable& time, 
                            SPLINE const& signal, double dT, double Tmax, RNG& rng, bool rndmphase=true){
+    
+    SAFE_EXIT( !data.empty() || !time.empty(), "In DigitizeSignal: the containers must be empty.")
 
     hydra_thrust::uniform_real_distribution<double> uniDist(0.0, 1.0);
-    double offset = rndmphase? uniDist(rng) / dT : 0 ;
+
+    double offset = rndmphase? uniDist(rng) * dT : 0 ;
     
-    size_t Nsamples = (size_t) Tmax/dT;
+    size_t Nsamples = Tmax/dT;
+
+    data.push_back( 0.0 ); 
+    time.push_back( 0.0 );
     
-    for(size_t i=0; i<Nsamples; ++i){
+    for(size_t i=1; i<Nsamples; ++i){
         data.push_back( signal(offset + i*dT) ); 
         time.push_back( offset + i*dT );
     }
+
 
 }
 
