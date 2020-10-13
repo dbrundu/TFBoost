@@ -106,7 +106,6 @@
 #include <tfboost/ReadConvolution.h>
 #include <tfboost/Algorithms.h>
 #include <tfboost/ConfigParser.h>
-#include <tfboost/functions/BaseTrFunction.h>
 
 namespace libconf = libconfig;
 
@@ -670,7 +669,7 @@ int main(int argv, char** argc)
             double norm  = hist_TOACFDnoise->Integral("width");
             double sigma = 0.37*hist_TOACFDnoise->GetStdDev();
 
-            tfboost::ExpModifiedGaussian f(0.15e-9, 0.6e-9);
+            tfboost::ExpModifiedGaussian f(0.15e-9, 0.35e-9);
             f.SetParameters( norm, mean, sigma, 0.1e-9, 0.8, 1);
             f.SetParLimits(0, 0.6*norm, 1.4*norm);
             f.SetParLimits(1, 0.6*mean, 1.4*mean);
