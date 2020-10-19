@@ -129,6 +129,7 @@ int main(int argv, char** argc)
     const size_t  offset                    = (int)    cfg_root["offset"];
     const size_t Nsamples                   = (int)    cfg_root["Nsamples"];
     const size_t Nlinestoskip               = (int)    cfg_root["Nlinestoskip"];
+    const double scale                      = (double) cfg_root["scale_factor"];
 
     if(!OutputDirectory.EndsWith("/")) OutputDirectory = OutputDirectory+"/";
     
@@ -230,7 +231,7 @@ int main(int argv, char** argc)
     time2.reserve(Nsamples);
     voltage2.reserve(Nsamples);
 
-    tfboost::ReadTF( conv_inputfile, Nlinestoskip, time2, voltage2);
+    tfboost::ReadTF( conv_inputfile, Nlinestoskip, time2, voltage2, scale);
 
     auto kernel = hydra::make_spiline<double>(time2, voltage2);
                 

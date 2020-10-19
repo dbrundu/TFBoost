@@ -77,13 +77,12 @@ void ReadConvolution(TString const& file, Iterable& iterable)
 
 
 template<typename Iterable>
-void ReadTF(TString const& file, int Nlinestoskip, Iterable& iterable_t, Iterable& iterable_V, bool doublerange=false)
+void ReadTF(TString const& file, int Nlinestoskip, Iterable& iterable_t, Iterable& iterable_V, double scale = 1.0, bool doublerange=false)
 {
 
         TString line;
         std::ifstream myFile( file.Data() );
         line.ReadLine(myFile);
-        double scale = 1;
         size_t k = 0;
         double dT = 0.0;
         double time0 = 0.0;

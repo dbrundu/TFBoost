@@ -65,6 +65,7 @@ struct ConfigParser
         Nfiles                       = (int)  cfg_root["MaxInputFiles"];
         MakeDigitization             = (bool) cfg_root["MakeDigitization"];
         randomphase                  = (bool) cfg_root["randomphase"];
+        TimeReferenceResolution      = (bool) cfg_root["TimeReferenceResolution"];
 
         LE_reject_nonoise  = (double) cfg_root["LE_reject_nonoise"];
         LE_reject_noise    = (double) cfg_root["LE_reject_noise"]; 
@@ -106,7 +107,7 @@ struct ConfigParser
     TString tf_inputfile, TransferFunction, InputFileExtension, conv_inputfile, SingleFile, token;
 
     bool LandauFluctuation, MakeConvolution, SaveSinglePlotConvolution;
-    bool SaveConvDataToFile, MakeLinearFitNearThreshold, MakeGaussianFitNearVmax;
+    bool SaveConvDataToFile, MakeLinearFitNearThreshold, MakeGaussianFitNearVmax, TimeReferenceResolution;
     bool AddNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeDigitization, randomphase;
     
     int column, ID, Nbins;
@@ -125,6 +126,185 @@ struct ConfigParser
 
 
 };
+
+
+
+
+struct HistConfigParser
+{
+    HistConfigParser( libconfig::Setting const& cfg_root )
+    {
+
+    const libconfig::Setting& cfg_tf  = cfg_root["HistogramsPars"];
+
+    TOALE_min = (double) cfg_tf["TOALE_min"];
+    TOALE_max = (double) cfg_tf["TOALE_max"];
+    TOALE_Nbins = (int)  cfg_tf["TOALE_Nbins"];
+    
+    TOACFD_min = (double) cfg_tf["TOACFD_min"];
+    TOACFD_max = (double) cfg_tf["TOACFD_max"];
+    TOACFD_Nbins = (int)  cfg_tf["TOACFD_Nbins"];
+    
+    TOARM_min = (double) cfg_tf["TOARM_min"];
+    TOARM_max = (double) cfg_tf["TOARM_max"];
+    TOARM_Nbins = (int)  cfg_tf["TOARM_Nbins"];
+    
+    TOACFDnoise_min = (double) cfg_tf["TOACFDnoise_min"];
+    TOACFDnoise_max = (double) cfg_tf["TOACFDnoise_max"];
+    TOACFDnoise_Nbins = (int)  cfg_tf["TOACFDnoise_Nbins"];
+    
+
+    TOALEnoise_min = (double) cfg_tf["TOALEnoise_min"];
+    TOALEnoise_max = (double) cfg_tf["TOALEnoise_max"];
+    TOALEnoise_Nbins = (int)  cfg_tf["TOALEnoise_Nbins"];
+    
+
+    TOARMnoise_min = (double) cfg_tf["TOARMnoise_min"];
+    TOARMnoise_max = (double) cfg_tf["TOARMnoise_max"];
+    TOARMnoise_Nbins = (int)  cfg_tf["TOARMnoise_Nbins"];
+    
+
+    Vmax_min = (double) cfg_tf["Vmax_min"];
+    Vmax_max = (double) cfg_tf["Vmax_max"];
+    Vmax_Nbins = (int)  cfg_tf["Vmax_Nbins"];
+    
+
+    TimeatVmax_min = (double) cfg_tf["TimeatVmax_min"];
+    TimeatVmax_max = (double) cfg_tf["TimeatVmax_max"];
+    TimeatVmax_Nbins = (int)  cfg_tf["TimeatVmax_Nbins"];
+    
+
+    Vmax_noise_min = (double) cfg_tf["Vmax_noise_min"];
+    Vmax_noise_max = (double) cfg_tf["Vmax_noise_max"];
+    Vmax_noise_Nbins = (int)  cfg_tf["Vmax_noise_Nbins"];
+    
+
+    Vth_CFD_min = (double) cfg_tf["Vth_CFD_min"];
+    Vth_CFD_max = (double) cfg_tf["Vth_CFD_max"];
+    Vth_CFD_Nbins = (int)    cfg_tf["Vth_CFD_Nbins"];
+    
+
+    Vth_LE_min = (double) cfg_tf["Vth_LE_min"];
+    Vth_LE_max = (double) cfg_tf["Vth_LE_max"];
+    Vth_LE_Nbins = (int)    cfg_tf["Vth_LE_Nbins"];
+    
+
+    Vth_RM_min = (double) cfg_tf["Vth_RM_min"];
+    Vth_RM_max = (double) cfg_tf["Vth_RM_max"];
+    Vth_RM_Nbins = (int)    cfg_tf["Vth_RM_Nbins"];
+    
+
+    Vth_CFD_noise_min = (double) cfg_tf["Vth_CFD_noise_min"];
+    Vth_CFD_noise_max = (double) cfg_tf["Vth_CFD_noise_max"];
+    Vth_CFD_noise_Nbins = (int)    cfg_tf["Vth_CFD_noise_Nbins"];
+    
+
+    Vth_RM_noise_min = (double) cfg_tf["Vth_RM_noise_min"];
+    Vth_RM_noise_max = (double) cfg_tf["Vth_RM_noise_max"];
+    Vth_RM_noise_Nbins = (int)    cfg_tf["Vth_RM_noise_Nbins"];
+    
+
+    Vth_LE_noise_min = (double) cfg_tf["Vth_LE_noise_max"];
+    Vth_LE_noise_max = (double) cfg_tf["Vth_LE_noise_max"];
+    Vth_LE_noise_Nbins = (int)    cfg_tf["Vth_LE_noise_Nbins"];
+    
+
+    dVdt_LE_min = (double) cfg_tf["dVdt_LE_min"];
+    dVdt_LE_max = (double) cfg_tf["dVdt_LE_max"];
+    dVdt_LE_Nbins = (int)    cfg_tf["dVdt_LE_Nbins"];
+    
+
+    dVdt_CFD_min = (double) cfg_tf["dVdt_CFD_min"];
+    dVdt_CFD_max = (double) cfg_tf["dVdt_CFD_max"];
+    dVdt_CFD_Nbins = (int)    cfg_tf["dVdt_CFD_Nbins"];
+    
+
+    dVdt_RM_min = (double) cfg_tf["dVdt_RM_min"];
+    dVdt_RM_max = (double) cfg_tf["dVdt_RM_max"];
+    dVdt_RM_Nbins = (int)    cfg_tf["dVdt_RM_Nbins"];
+    
+
+    dVdt_CFD_noise_min = (double) cfg_tf["dVdt_CFD_noise_min"];
+    dVdt_CFD_noise_max = (double) cfg_tf["dVdt_CFD_noise_max"];
+    dVdt_CFD_noise_Nbins = (int)    cfg_tf["dVdt_CFD_noise_Nbins"];
+    
+
+    dVdt_LE_noise_min = (double) cfg_tf["dVdt_LE_noise_min"];
+    dVdt_LE_noise_max = (double) cfg_tf["dVdt_LE_noise_max"];
+    dVdt_LE_noise_Nbins = (int)    cfg_tf["dVdt_LE_noise_Nbins"];
+    
+
+
+        
+
+
+    }
+    
+
+
+
+    double TOALE_min,
+        TOALE_max,
+        TOACFD_min,
+        TOACFD_max,
+        TOARM_min,
+        TOARM_max,
+        TOACFDnoise_min,
+        TOACFDnoise_max,
+        TOALEnoise_min,
+        TOALEnoise_max,
+        TOARMnoise_min,
+        TOARMnoise_max,
+        Vmax_min,
+        Vmax_max,
+        TimeatVmax_min,
+        TimeatVmax_max,
+        Vmax_noise_min,
+        Vmax_noise_max,
+        Vth_CFD_min,
+        Vth_CFD_max,
+        Vth_LE_min,
+        Vth_LE_max,
+        Vth_RM_min,
+        Vth_RM_max,
+        Vth_CFD_noise_min,
+        Vth_CFD_noise_max,
+        Vth_RM_noise_min,
+        Vth_RM_noise_max,
+        Vth_LE_noise_min,
+        Vth_LE_noise_max,
+        dVdt_LE_min,
+        dVdt_LE_max,
+        dVdt_CFD_min,
+        dVdt_CFD_max,
+        dVdt_RM_min,
+        dVdt_RM_max,
+        dVdt_CFD_noise_min,
+        dVdt_CFD_noise_max,
+        dVdt_LE_noise_min,
+        dVdt_LE_noise_max;
+
+    int  TOALE_Nbins, TOACFD_Nbins, TOARM_Nbins, TOACFDnoise_Nbins, 
+        TOALEnoise_Nbins,
+        TOARMnoise_Nbins,
+        Vmax_Nbins,
+        TimeatVmax_Nbins,
+        Vmax_noise_Nbins,
+        Vth_CFD_Nbins,
+        Vth_LE_Nbins,
+        Vth_RM_Nbins,
+        Vth_CFD_noise_Nbins,
+        Vth_RM_noise_Nbins,
+        Vth_LE_noise_Nbins,
+        dVdt_LE_Nbins,
+        dVdt_CFD_Nbins,
+        dVdt_RM_Nbins,
+        dVdt_CFD_noise_Nbins,
+        dVdt_LE_noise_Nbins;
+
+
+};
+
 
 
 } //namespace tfboost 

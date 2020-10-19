@@ -106,6 +106,7 @@
 #include <tfboost/ReadConvolution.h>
 #include <tfboost/Algorithms.h>
 #include <tfboost/ConfigParser.h>
+#include <tfboost/Logger.h>
 
 namespace libconf = libconfig;
 
@@ -129,9 +130,12 @@ int main(int argv, char** argc)
     TString TransferFunction  = (const char*) cfg_root["TransferFunction"];
     const libconf::Setting& cfg_tf  = cfg_root[TransferFunction];
     
-    tfboost::ConfigParser c(cfg_root);
+    tfboost::ConfigParser      c(cfg_root);
+    tfboost::HistConfigParser  hc(cfg_root);
+
+    auto& LOG = tfboost::Logger::getInstance( (c.OutputDirectory+TString("LOG.log")).Data() );
     
-   
+    LOG.PrintConfig(c);
     
     /* ----------------------------------------------
      * Initialization of variables and histograms
@@ -151,27 +155,27 @@ int main(int argv, char** argc)
     hydra::SeedRNG S{};
     hydra::default_random_engine engine( S() );
     TRandom3 root_rng( S() );
-
-    TH1D* hist_TOA             = new TH1D("hist_TOA","Time of arrival Leading Edge", c.Nbins,0,-1);
-    TH1D* hist_TOACFD          = new TH1D("hist_TOACFD","Time of arrival CFD at 0.35 of V max", c.Nbins,0,-1);
-    TH1D* hist_TOARM           = new TH1D("hist_TOARM","Time of arrival Ref.Method", c.Nbins,0,-1);
-    TH1D* hist_TOACFDnoise     = new TH1D("hist_TOACFDnoise","Time of arrival CFD with noise", c.Nbins,0,-1);
-    TH1D* hist_TOALEnoise      = new TH1D("hist_TOALEnoise","Time of arrival LE with noise", c.Nbins,0,-1);
-    TH1D* hist_TOARMnoise      = new TH1D("hist_TOARMnoise","Time of arrival RM with noise", c.Nbins,0,-1);
-    TH1D* hist_Vmax            = new TH1D("hist_Vmax","V on peak", c.Nbins,0,-1);
-    TH1D* hist_TimeatVmax      = new TH1D("hist_TimeatVmax","Time at V max", c.Nbins,0,-1);
-    TH1D* hist_Vmax_noise      = new TH1D("hist_Vmax_noise","V on peak with noise",c.Nbins,0,-1);
-    TH1D* hist_Vth_CFD         = new TH1D("hist_Vth_CFD","V on CFD threshold",c.Nbins,0,-1);
-    TH1D* hist_Vth_LE          = new TH1D("hist_Vth_LE","V on LE threshold",c.Nbins,0,-1);
-    TH1D* hist_Vth_RM          = new TH1D("hist_Vth_RM","V on RM threshold",c.Nbins,0,-1);
-    TH1D* hist_Vth_CFD_noise   = new TH1D("hist_Vth_CFD_noise","V on CFD threshold with noise",c.Nbins,0,-1);
-    TH1D* hist_Vth_RM_noise    = new TH1D("hist_Vth_RM_noise","V on RM threshold with noise",c.Nbins,0,-1);
-    TH1D* hist_Vth_LE_noise    = new TH1D("hist_Vth_LE_noise","V on LE threshold with noise",c.Nbins,0,-1);
-    TH1D* hist_dVdt_LE         = new TH1D("hist_dVdt_LE","Slope (dV/dT) on LE threshold",c.Nbins,0,-1);
-    TH1D* hist_dVdt_CFD        = new TH1D("hist_dVdt_CFD","Slope (dV/dT) on CFD threshold",c.Nbins,0,-1);
-    TH1D* hist_dVdt_RM         = new TH1D("hist_dVdt_RM","Slope (dV/dT) on RM threshold",c.Nbins,0,-1);
-    TH1D* hist_dVdt_CFD_noise  = new TH1D("hist_dVdt_CFD_noise","Slope (dV/dT) on CFD threshold with noise",c.Nbins,0,-1);
-    TH1D* hist_dVdt_LE_noise   = new TH1D("hist_dVdt_LE_noise","Slope (dV/dT) on LE threshold with noise",c.Nbins,0,-1);
+    
+    TH1D* hist_TOA             = new TH1D("hist_TOA","Time of arrival Leading Edge", hc.TOALE_Nbins, hc.TOALE_min, hc.TOALE_max);
+    TH1D* hist_TOACFD          = new TH1D("hist_TOACFD","Time of arrival CFD at 0.35 of V max", hc.TOACFD_Nbins, hc.TOACFD_min, hc.TOACFD_max);
+    TH1D* hist_TOARM           = new TH1D("hist_TOARM","Time of arrival Ref.Method", hc.TOARM_Nbins, hc.TOARM_min, hc.TOARM_max);
+    TH1D* hist_TOACFDnoise     = new TH1D("hist_TOACFDnoise","Time of arrival CFD with noise", hc.TOACFDnoise_Nbins, hc.TOACFDnoise_min, hc.TOACFDnoise_max);
+    TH1D* hist_TOALEnoise      = new TH1D("hist_TOALEnoise","Time of arrival LE with noise", hc.TOALEnoise_Nbins, hc.TOALEnoise_min, hc.TOALEnoise_max);
+    TH1D* hist_TOARMnoise      = new TH1D("hist_TOARMnoise","Time of arrival RM with noise", hc.TOARMnoise_Nbins, hc.TOARMnoise_min, hc.TOARMnoise_max);
+    TH1D* hist_Vmax            = new TH1D("hist_Vmax","V on peak", hc.Vmax_Nbins, hc.Vmax_min, hc.Vmax_max);
+    TH1D* hist_TimeatVmax      = new TH1D("hist_TimeatVmax","Time at V max", hc.TimeatVmax_Nbins, hc.TimeatVmax_min, hc.TimeatVmax_max);
+    TH1D* hist_Vmax_noise      = new TH1D("hist_Vmax_noise","V on peak with noise",hc.Vmax_noise_Nbins, hc.Vmax_noise_min, hc.Vmax_noise_max);
+    TH1D* hist_Vth_CFD         = new TH1D("hist_Vth_CFD","V on CFD threshold",hc.Vth_CFD_Nbins, hc.Vth_CFD_min, hc.Vth_CFD_max);
+    TH1D* hist_Vth_LE          = new TH1D("hist_Vth_LE","V on LE threshold",hc.Vth_LE_Nbins, hc.Vth_LE_min, hc.Vth_LE_max);
+    TH1D* hist_Vth_RM          = new TH1D("hist_Vth_RM","V on RM threshold",hc.Vth_RM_Nbins, hc.Vth_RM_min, hc.Vth_RM_max);
+    TH1D* hist_Vth_CFD_noise   = new TH1D("hist_Vth_CFD_noise","V on CFD threshold with noise",hc.Vth_CFD_noise_Nbins, hc.Vth_CFD_noise_min, hc.Vth_CFD_noise_max);
+    TH1D* hist_Vth_RM_noise    = new TH1D("hist_Vth_RM_noise","V on RM threshold with noise",hc.Vth_RM_noise_Nbins, hc.Vth_RM_noise_min, hc.Vth_RM_noise_max);
+    TH1D* hist_Vth_LE_noise    = new TH1D("hist_Vth_LE_noise","V on LE threshold with noise",hc.Vth_LE_noise_Nbins, hc.Vth_LE_noise_min, hc.Vth_LE_noise_max);
+    TH1D* hist_dVdt_LE         = new TH1D("hist_dVdt_LE","Slope (dV/dT) on LE threshold",hc.dVdt_LE_Nbins, hc.dVdt_LE_min, hc.dVdt_LE_max);
+    TH1D* hist_dVdt_CFD        = new TH1D("hist_dVdt_CFD","Slope (dV/dT) on CFD threshold",hc.dVdt_CFD_Nbins, hc.dVdt_CFD_min, hc.dVdt_CFD_max);
+    TH1D* hist_dVdt_RM         = new TH1D("hist_dVdt_RM","Slope (dV/dT) on RM threshold",hc.dVdt_RM_Nbins, hc.dVdt_RM_min, hc.dVdt_RM_max);
+    TH1D* hist_dVdt_CFD_noise  = new TH1D("hist_dVdt_CFD_noise","Slope (dV/dT) on CFD threshold with noise",hc.dVdt_CFD_noise_Nbins, hc.dVdt_CFD_noise_min, hc.dVdt_CFD_noise_max);
+    TH1D* hist_dVdt_LE_noise   = new TH1D("hist_dVdt_LE_noise","Slope (dV/dT) on LE threshold with noise",hc.dVdt_LE_noise_Nbins, hc.dVdt_LE_noise_min, hc.dVdt_LE_noise_max);
 
     TH1D *hist_convol          = new TH1D("hist_convol;Time[s];Vout [V]","hist_convol", c.Nsamples, minplot, maxplot );
     TH1D *hist_signal          = new TH1D("hist_signal;Time[s];Vout [V]","hist_signal", c.Nsamples, minplot, maxplot );
@@ -193,6 +197,24 @@ int main(int argv, char** argc)
     TSystemFile *currentfile;
     TString currentfilename;
     TString line;
+
+
+
+    /*-----------------------------------------------
+     * Check if the preload of a Tr.Function
+     * has to be done
+     *-----------------------------------------------*/
+     
+     hydra::host::vector<double> time_tf;
+     hydra::host::vector<double> current_tf;
+     
+    if(c.ID==5){
+    
+         int Nskip = (int) cfg_tf["NlinesToSkip"];
+         TString tf_infile = (const char*) cfg_tf["TFFile"];
+
+         tfboost::ReadTF( tf_infile, Nskip, time_tf, current_tf, 1.0, true);
+     }
 
 
     /* ----------------------------------------------
@@ -262,7 +284,6 @@ int main(int argv, char** argc)
                 
                 const double data = c.LandauFluctuation? landau*atof(data_str) : atof(data_str);
                  
-                
                 idx.push_back(s);
                 time.push_back( s * c.dT);
                 current.push_back(data);
@@ -289,6 +310,20 @@ int main(int argv, char** argc)
         }
         
         SAFE_EXIT( current.size() != c.Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
+
+
+
+        /* ----------------------------------------------
+         * Time Reference resolution
+         * --------------------------------------------*/ 
+        double TR_res = 0.0;
+        
+        if(c.TimeReferenceResolution){
+            TR_res = root_rng.Gaus( 0.0 , 12e-12);
+            for(size_t j=0; j<time.size(); ++j ) time[j] += TR_res;
+        }
+
+
 
         hydra::device::vector<double> time_d(time.size());
         hydra::device::vector<double> current_d(current.size());
@@ -321,119 +356,98 @@ int main(int argv, char** argc)
         hydra::host::vector<double> conv_data_h(c.Nsamples);
 
         
-        if(c.MakeConvolution){
-
-        switch(c.ID) 
-        {
-            case 0:{
-                auto kernel = tfboost::TIA_MOS<double>( cfg_tf );
-                SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
-                conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal_d, min, max, c.Nsamples);
-                if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
-                    for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-                        hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
-                }
-                }break;
-
-            case 1:{
-                auto kernel = tfboost::TIA_BJT_2stages<double>( cfg_tf );
-                SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
-                conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal_d, min, max, c.Nsamples);
-                if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
-                    for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-                        hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
-                }
-                }break;
-
-            case 2:{
-                auto kernel = tfboost::TIA_BJT_2stages_GM<double>( cfg_tf );
-                SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
-                conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal_d, min, max, c.Nsamples);
-                if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
-                    for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-                        hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
-                }
-                }break;
-
-            case 3:{
-                auto kernel = tfboost::TIA_BJT_1stage<double>( cfg_tf );
-                SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
-                conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal_d, min, max, c.Nsamples);
-                if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
-                    for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-                        hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
-                }
-                }break;
-
-            case 4:{
-                auto kernel = tfboost::TIA_IdealInt<double>( cfg_tf );
-                SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
-                conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal_d, min, max, c.Nsamples);
-                if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
-                    for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-                        hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
-                }
-                }break;
-
-            case 5:{
-
-                hydra::host::vector<double> time2;
-                hydra::host::vector<double> current2;
-
-                int Nskip = (int) cfg_tf["NlinesToSkip"];
-                TString tf_infile = (const char*) cfg_tf["TFFile"];
-
-                tfboost::ReadTF( tf_infile, Nskip, time2, current2, true);
-
-                auto kernel = hydra::make_spiline<double>(time2, current2 );
-                
-                conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal, min, max, c.Nsamples);
-
-                if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
-                    for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-                        hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
-                }
-
-            }break;
-
-            default:
-                SAFE_EXIT( true , "In analysis.inl: bad transfer function ID.")
-        }//end switch
-
+        if(!c.MakeConvolution){
         
-
-
-        // This step is done only if we are  not requesting noise
-        
-        if(c.MakeDigitization && !c.AddNoise)
-        {
-            hydra::host::vector<double> conv_dig;  
-            hydra::host::vector<double> time_dig; 
-
-            //time and conv_data_h are the not digitized ones
-            auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
-
-            tfboost::algo::DigitizeSignal(conv_dig, time_dig, 
-                            conv_spline, c.sampling_dT, max, engine, c.randomphase);
-
-            // Override all the conv information
-            PRINT_ELEMENTS(10,conv_dig)
-            c.Nsamples = conv_dig.size();
-            c.dT = c.sampling_dT;
-            hist_convol->SetBins(c.Nsamples, min, maxplot);
-
-            // override time and conv_data containers
-            conv_data_h.erase(conv_data_h.begin() + conv_dig.size(), conv_data_h.end());
-            time.erase(time.begin() + time_dig.size(), time.end());
-            hydra::copy(conv_dig , conv_data_h);
-            hydra::copy(time_dig , time);
-        }
-            
-            
-
-        } else {
             tfboost::ReadConvolution( c.conv_inputfile, conv_data_h);
-        }
+            
+        } else {
+
+            switch(c.ID) 
+            {
+                case 0:{
+                    auto kernel = tfboost::TIA_MOS<double>( cfg_tf );
+                    SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
+                    conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal_d, min, max, c.Nsamples);
+                    if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
+                        for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
+                            hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+                    }
+                    }break;
+
+                case 1:{
+                    auto kernel = tfboost::TIA_BJT_2stages<double>( cfg_tf );
+                    SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
+                    conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal_d, min, max, c.Nsamples);
+                    if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
+                        for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
+                            hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+                    }
+                    }break;
+
+                case 2:{
+                    auto kernel = tfboost::TIA_BJT_2stages_GM<double>( cfg_tf );
+                    SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
+                    conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal_d, min, max, c.Nsamples);
+                    if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
+                        for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
+                            hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+                    }
+                    }break;
+
+                case 3:{
+                    auto kernel = tfboost::TIA_BJT_1stage<double>( cfg_tf );
+                    SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
+                    conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal_d, min, max, c.Nsamples);
+                    if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
+                        for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
+                            hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+                    }
+                    }break;
+
+                case 4:{
+                    auto kernel = tfboost::TIA_IdealInt<double>( cfg_tf );
+                    SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
+                    conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal_d, min, max, c.Nsamples);
+                    if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
+                        for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
+                            hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+                    }
+                    }break;
+
+                case 5:{
+
+                    auto kernel = hydra::make_spiline<double>(time_tf, current_tf );
+                    
+                    conv_data_h = tfboost::Do_Convolution(fft_backend, kernel, signal, min, max, c.Nsamples);
+
+                    if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) {
+                        for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
+                            hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+                    }
+
+                } break;
+
+                default:
+                    SAFE_EXIT( true , "In analysis.inl: bad transfer function ID.")
+                    
+            }//end switch
+
+
+
+            // This step is done only if we are  not requesting noise
+            if(c.MakeDigitization && !c.AddNoise)
+            {
+                tfboost::algo::DigitizeSignal( conv_data_h, time, 
+                                                c.sampling_dT, max, engine, c.randomphase);
+
+                // Override all the conv information
+                c.Nsamples = conv_data_h.size();
+                c.dT = c.sampling_dT;
+                hist_convol->SetBins(c.Nsamples, min, maxplot);
+            }
+            
+
+        } // end MakeConvolution
           
 
 
@@ -447,7 +461,6 @@ int main(int argv, char** argc)
             for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i)
                  hist_convol->SetBinContent(i, conv_spline(hist_convol->GetBinCenter(i)) );  
                
-        
         
         
         /* ----------------------------------------------
@@ -473,7 +486,7 @@ int main(int argv, char** argc)
         
         size_t TOA_CFD    = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , Vpeak);
         
-        size_t TOA_RM     = tfboost::algo::TimeRefMethod( conv_data_h, Vpeak, c.bound_fit, /*noise?*/false );
+        size_t TOA_RM     = tfboost::algo::TimeRefMethod( conv_data_h, time, Vpeak, c.bound_fit, /*noise?*/false );
         
         double dvdt_CFD   = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
         
@@ -539,26 +552,13 @@ int main(int argv, char** argc)
             // This step is done only if we are requesting noise
             if(c.MakeDigitization)
             {
-                hydra::host::vector<double> time_dig;
-                hydra::host::vector<double> conv_dig;  
-
-                // time and conv_data_h are the not digitized ones
-                auto signalnoise = hydra::make_spiline<double>(time, conv_data_h );
-
-                tfboost::algo::DigitizeSignal(conv_dig, time_dig, 
-                                              signalnoise, c.sampling_dT, 
-                                              max, engine, c.randomphase);
+                tfboost::algo::DigitizeSignal( conv_data_h, time, 
+                                                c.sampling_dT, max, engine, c.randomphase);
 
                 // Override all the conv information
-                c.Nsamples = conv_dig.size();
+                c.Nsamples = conv_data_h.size();
                 c.dT = c.sampling_dT;
-                hist_convol->SetBins(c.Nsamples, min, max);
-
-                // override time and conv_data containers
-                conv_data_h.erase(conv_data_h.begin() + c.Nsamples, conv_data_h.end());
-                time.erase(time.begin() + time_dig.size(), time.end());
-                hydra::copy(conv_dig , conv_data_h);
-                hydra::copy(time_dig , time);
+                hist_convol->SetBins(c.Nsamples, min, maxplot);
 
             }
             
@@ -584,12 +584,12 @@ int main(int argv, char** argc)
                 size_t timeatth      = tfboost::algo::GetTimeAtPeak(conv_data_h);
                 double vmax          = tfboost::algo::GaussianFitNearVmax( conv_data_h, c.bound_fit );
                 size_t TOA_CFD_noise = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , vmax);
-                size_t TOA_RM_noise  = tfboost::algo::TimeRefMethod( conv_data_h, vmax, c.bound_fit, /*noise?*/true );
+                double TOA_RM_noise  = tfboost::algo::TimeRefMethod( conv_data_h, time, vmax, c.bound_fit, /*noise?*/true );
                 
                 double VonThCFD = conv_data_h[TOA_CFD_noise];
                 double VonThRM  = conv_data_h[TOA_RM_noise];
 
-                hist_TOARMnoise      -> Fill( time[TOA_RM_noise] );
+                hist_TOARMnoise      -> Fill( TOA_RM_noise );
                 hist_TOACFDnoise     -> Fill( time[TOA_CFD_noise] );
                 hist_Vmax_noise      -> Fill(vmax);
                 hist_Vth_CFD_noise   -> Fill(VonThCFD);
@@ -597,7 +597,7 @@ int main(int argv, char** argc)
 
                 if(c.MakeLinearFitNearThreshold && TOA_LE>1)
                 {
-                    double par1_fit = tfboost::algo::LinearFitNearThr( TOA_CFD_noise, conv_data_h, c.bound_fit, true );
+                    double par1_fit = tfboost::algo::LinearFitNearThr( TOA_CFD_noise, conv_data_h, c.bound_fit );
                     std::cout << "dv/dt at CFD fitted      = " << 1e-6*par1_fit/c.dT << "  (uV/ps)" << "\n";
                     hist_dVdt_CFD_noise->Fill(1e-6*par1_fit/c.dT);
                 }
@@ -627,7 +627,7 @@ int main(int argv, char** argc)
                           *hist_convol, *hist_signal, *hist_kernel);
 
 
-        if(c.SaveConvDataToFile) tfboost::SaveConvToFile(conv_data_h, c.dT, c.OutputDirectory + "data/" +currentfilename );
+        if(c.SaveConvDataToFile) tfboost::SaveConvToFile(conv_data_h, time, c.dT, c.OutputDirectory + "data/" +currentfilename );
 
         
 
@@ -661,26 +661,45 @@ int main(int argv, char** argc)
 
         if(c.MakeGaussianFitNearVmax){
             gStyle->SetOptFit(1);
-
+            /*
             double TOACFDmin = hist_TOACFDnoise->GetXaxis()->GetXmin();
             double TOACFDmax = hist_TOACFDnoise->GetXaxis()->GetXmax();
-
             double mean  = hist_TOACFDnoise->GetBinCenter( hist_TOACFDnoise->GetMaximumBin() );
             double norm  = hist_TOACFDnoise->Integral("width");
-            double sigma = 0.37*hist_TOACFDnoise->GetStdDev();
-
-            tfboost::ExpModifiedGaussian f(0.15e-9, 0.35e-9);
-            f.SetParameters( norm, mean, sigma, 0.1e-9, 0.8, 1);
-            f.SetParLimits(0, 0.6*norm, 1.4*norm);
-            f.SetParLimits(1, 0.6*mean, 1.4*mean);
-            f.SetParLimits(2, 0.6*sigma, 1.4*sigma);
+            double sigma = 0.2*hist_TOACFDnoise->GetStdDev();
+            double tau   = 0.05e-9;
+            double cst   = hist_TOACFDnoise->GetBinCenter( c.Nbins - 10 );
+            tfboost::ExpModifiedGaussian f(0.15e-9, 0.6e-9);
+            f.SetParameters( norm, mean, sigma, tau, 0.8, 1, cst);
+            f.SetParLimits(0, 0.3*norm, 3*norm);
+            f.SetParLimits(1, 0.3*mean, 2*mean);
+            f.SetParLimits(2, 0.3*sigma, 3*sigma);
             f.SetParLimits(4, 0., 1.);
             (f.fun)->FixParameter(5,1);
-
-
             tfboost::SaveCanvasAndFit(c.OutputDirectory + "plots/", "TOA_CFDnoise", "Time [s]",  "counts", *hist_TOACFDnoise, f.fun );
+            */
+            tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_CFDnoise", "Time [s]",  "counts", *hist_TOACFDnoise);
             
+            /*
+            TOACFDmin = hist_TOARMnoise->GetXaxis()->GetXmin();
+            TOACFDmax = hist_TOARMnoise->GetXaxis()->GetXmax();
+            mean  = hist_TOARMnoise->GetBinCenter( hist_TOARMnoise->GetMaximumBin() );
+            norm  = hist_TOARMnoise->Integral("width");
+            sigma = 0.2*hist_TOARMnoise->GetStdDev();
+            tau   = 0.05e-9;
+            cst   = hist_TOARMnoise->GetBinCenter( c.Nbins - 10 );
+            tfboost::ExpModifiedGaussian f2(0.1e-9, 0.6e-9);
+            f2.SetParameters( norm, mean, sigma, tau, 0.8, 1, cst);
+            f2.SetParLimits(0, 0.3*norm, 3*norm);
+            f2.SetParLimits(1, 0.3*mean, 2*mean);
+            f2.SetParLimits(2, 0.3*sigma, 3*sigma);
+            f2.SetParLimits(4, 0., 1.);
+            (f2.fun)->FixParameter(5,1);
+            tfboost::SaveCanvasAndFit(c.OutputDirectory + "plots/", "TOA_RMnoise", "Time [s]",  "counts", *hist_TOARMnoise, f2.fun );
+            */
             tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_RMnoise",    "Time [s]",     "counts", *hist_TOARMnoise);
+
+
             tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vmax_noise",     "Voltage [mV]", "counts", *hist_Vmax_noise);
             tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_CFDnoise", "Voltage [mV]", "counts", *hist_Vth_CFD_noise);
             tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_RMnoise", "Voltage [mV]", "counts",  *hist_Vth_RM_noise);  
@@ -706,6 +725,10 @@ int main(int argv, char** argc)
         hist_thjitter_withTOA.Draw("APL");
         canv_thjitter_withTOA.SaveAs(c.OutputDirectory + "plots/thjitter_differentcurves.pdf");
     } 
+    
+    
+    LOG.PrintMessage("Number of files analyzed: ", INDEX);
+    LOG.Exit();
 
 /*
     gStyle->SetOptStat(0);

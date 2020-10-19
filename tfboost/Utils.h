@@ -104,6 +104,8 @@ void SaveCanvasAndFit(TString const& directory, TString const& title, TString co
     hist.Draw("E1");
     hist.Fit( tf1 , "R" );
     //tf1->Draw("same");
+    //TGraph g(tf1);
+    //g.Draw("AL same");
     canv.SaveAs( directory+title+TString(".pdf") );
     canv.SaveAs( directory+title+TString(".C") );
 }
@@ -182,8 +184,8 @@ TList* GetFileList(TString dirname_string)
 }
 
 
-template<typename Iterable>
-void SaveConvToFile(Iterable data, double dT, TString filename )
+template<typename Iterable, typename Iterable_t>
+void SaveConvToFile(Iterable const& data, Iterable_t const& time, double dT, TString filename )
 {
    std::ofstream outdata( filename.Data() ); 
 
@@ -192,7 +194,11 @@ void SaveConvToFile(Iterable data, double dT, TString filename )
         std::exit(1);
     }
 
-    for (size_t i=0; i<data.size(); ++i) outdata << i*dT << " " << data[i] << std::endl;
+    auto it = hydra_thrust::max_element( data.begin() , data.end() );
+    size_t k = it - data.begin();
+    double vmax = data[k];
+
+    for (size_t i=0; i<data.size(); ++i) outdata << time[i] << " " << data[i] << " " << vmax <<  std::endl;
     outdata.close();
  
     return;

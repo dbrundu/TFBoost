@@ -217,8 +217,8 @@ inline double GaussianFitNearVmax(Iterable const& data, size_t const& bound_fit,
  * - apply a LE at half the obtained max value (with a linear fit)
  * If error returns 0
  */
-template<typename Iterable>
-inline size_t TimeRefMethod(Iterable const& vout, double const& vmax, size_t const& bound_fit, bool const& noise=false)
+template<typename Iterable, typename Iterablet>
+inline double TimeRefMethod(Iterable const& vout, Iterablet const& time, double const& vmax, size_t const& bound_fit, bool const& noise=false)
 {
 
     const size_t N = vout.size();
@@ -238,33 +238,34 @@ inline size_t TimeRefMethod(Iterable const& vout, double const& vmax, size_t con
     for(size_t i=delay; i<N; ++i) 
         subtr[i] = vout[i] - vout[i-delay];
         
-    PRINT_ELEMENTS(10, subtr)
      
     double newthr = (noise)? 0.5 * GaussianFitNearVmax( subtr, bound_fit ) : 0.5 * GetVAtPeak(subtr);
 
-    //const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
-     
-    const size_t min_fit   = LeadingEdge(subtr , newthr) - bound_fit;
-    const size_t max_fit   = LeadingEdge(subtr , newthr) + bound_fit;
+    auto spl = hydra::make_spiline<double>(time, subtr );
+    double exdT = time[2]-time[1];
+    double indT = 1e-12;
 
-    ERROR_RETURN( newthr<0 || min_fit < 0 || max_fit > N, 
+    int min_fit = LeadingEdge(subtr , newthr) - bound_fit;
+    int max_fit = LeadingEdge(subtr , newthr) + bound_fit;
+
+    ERROR_RETURN( newthr<0 || min_fit < 0 || max_fit > (int)N, 
                  "Error in TimeRefMethod(), Exit with 0.", 0)
-     
-    /*
-    TGraph graph;
-     
-    for(size_t i=min_fit; i<max_fit+1; ++i)
-        graph.SetPoint(graph.GetN(), i , subtr[i]);
-     
-    TFitResultPtr r = graph.Fit("pol1","S");
-
-    ERROR_RETURN( r==-1, "Error in TimeRefMethod. Exit with 0.", 0)
     
-    TF1 *func = graph.GetFunction("pol1");
-    return func->Eval(newthr);
+    double min = exdT*min_fit;
+    double max = exdT*max_fit;
+    size_t Np = (max-min)/indT;
+
+    
+    for(size_t i=0; i<Np; ++i)
+        if( spl(min + indT*i)>newthr ) return min + indT*i; 
+        
+    return -1;
+    
+    /*
+    return LeadingEdge(subtr , newthr);
     */
     
-    return LeadingEdge(subtr , newthr);
+
 
 }
 
@@ -274,8 +275,8 @@ inline size_t TimeRefMethod(Iterable const& vout, double const& vmax, size_t con
  * and a random phase clock
  */
 template<typename Iterable, typename SPLINE, typename RNG>
-inline void DigitizeSignal(Iterable& data, Iterable& time, 
-                           SPLINE const& signal, double dT, double Tmax, RNG& rng, bool rndmphase=true){
+inline void DoDigitization(Iterable& data, Iterable& time, 
+                           SPLINE const& signal, double  const& dT, double  const& Tmax, RNG& rng, bool  const& rndmphase=true){
     
     SAFE_EXIT( !data.empty() || !time.empty(), "In DigitizeSignal: the containers must be empty.")
 
@@ -297,7 +298,84 @@ inline void DigitizeSignal(Iterable& data, Iterable& time,
 }
 
 
+template<typename Iterable, typename RNG>
+inline void DigitizeSignal(Iterable& data, Iterable& time, 
+                            double const& dT, double const& Tmax, RNG& rng, bool const& rndmphase=false){
+
+    hydra::host::vector<double> conv_dig;  
+    hydra::host::vector<double> time_dig; 
+
+    //time and conv_data_h are the not digitized ones
+    auto conv_spline = hydra::make_spiline<double>(time, data );
+
+    tfboost::algo::DoDigitization(conv_dig, time_dig, 
+                                conv_spline, dT, Tmax, rng, rndmphase);
+
+    // override time and conv_data containers
+    data.erase(data.begin() + conv_dig.size(), data.end());
+    time.erase(time.begin() + time_dig.size(), time.end());
+    hydra::copy(conv_dig , data);
+    hydra::copy(time_dig , time);
+
+}
+
+
+
+struct BestTimeInterval {
+
+    BestTimeInterval(TH1D* h1) { 
+        m_h1 = h1 ; 
+        m_bin_max = h1->GetMaximumBin();
+        m_bin_l = m_bin_max;
+        m_bin_r = m_bin_max;
+    }
+
+    inline double Run(double frac){
+
+        double N = m_h1->GetEntries();
+        double M = frac * N;
+        double R = 0;
+
+        while(R<M) R = Compare();
+
+        double l  = m_h1->GetBinCenter( m_bin_l );
+        double r  = m_h1->GetBinCenter( m_bin_r );
+
+        return 0.5*(r-l);
+
+    }
+
+
+    inline double Compare(){
+        
+        double l  = m_h1->GetBinContent( m_bin_l-1 );
+        double r  = m_h1->GetBinContent( m_bin_r+1 );
+
+        if( l>r ) --m_bin_l;
+        if( l<=r) ++m_bin_r;
+
+        m_DeltaBin = m_bin_r - m_bin_l;
+
+        return m_h1->Integral(m_bin_l, m_bin_r);
+
+    }
+
+
+    TH1D* m_h1;
+    int m_bin_max;
+    int m_bin_l;
+    int m_bin_r;
+    int m_DeltaBin;
+    double m_frac;
+
+};
+
+
+
 } //namespace algo
 } //namespace tfboost
 
 #endif
+
+
+

@@ -61,7 +61,7 @@ namespace detail {
       double b = ::erfc((mu+sigma2*sigma2/tau -x0)/(Sqrt2*sigma2));
       double c = 1./Sqrt2*Sqrtpi*sigma * ::exp(-(x0-mu)*(x0-mu)/(2.*sigma*sigma));
 
-      return norm*( (1-frac)*a*b + frac*c) ;
+      return norm*( (1-frac)*a*b + frac*c) + par[6] ;
 
       
    }
@@ -76,15 +76,15 @@ struct ExpModifiedGaussian {
 
     ExpModifiedGaussian(double xmin, double xmax) {
     
-        fun = new TF1("fun", detail::expmodifiedgauss, xmin, xmax, 6 );
-        fun->SetParNames ("Norm","Mean_value","Sigma", "Tau", "Frac", "Scale");
+        fun = new TF1("fun", detail::expmodifiedgauss, xmin, xmax, 7 );
+        fun->SetParNames ("Norm","Mean","Sigma", "Tau", "Frac", "Scale", "Constant");
         initialized=true;
     
     }
     
     
-    inline void SetParameters(double norm, double mu, double sigma, double tau, double frac, double scale){
-       fun->SetParameters(norm, mu, sigma, tau, frac, scale);
+    inline void SetParameters(double norm, double mu, double sigma, double tau, double frac, double scale, double cst){
+       fun->SetParameters(norm, mu, sigma, tau, frac, scale, cst);
     }
 
 
