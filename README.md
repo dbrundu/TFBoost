@@ -6,7 +6,13 @@
 
 <img src="logo.svg" width="500">
 
-TFBoost is a C++14 compliant application, highly based on [HYDRA v.3](https://github.com/MultithreadCorner/Hydra), to perform the convolution between a signal (for example a voltage or current signal from a sensor) and a transfer function of a signal analyzer system (for example a readout electronics) in massively parallel platforms on Linux systems. The transfer function can be read from a file as a set of sampling points, or can be chosen from a set of analytical functions provided by the library and fully configurable. The available transfer functions are: two Transimpedance (with 1 and 2 stages), a CSA, an ideal integrator, described as the input impedance of a CSA, and an order-n Butterworth filter. The input signals are read from files as a set of sampling points. The application performs also a set of measurements on the convoluted output signals such as: arrival time, with leading edge and constant fraction discrimination, maximum value and its corresponding time, slope and voltange on discrimination thresholds, etc. Morover a simulated noise, white or red, can be added to the output signal. The computation of the convolution can be turned off, and the set of measurements can thus be applied to real signals.
+TFBoost is a C++14 compliant application, highly based on [HYDRA v.3](https://github.com/MultithreadCorner/Hydra), to perform the convolution between a signal (for example a voltage or current signal from a sensor) and a transfer function of a signal analyzer system (for example a readout electronics) in massively parallel platforms on Linux systems. The transfer function can be read from a file as a set of sampling points, or can be chosen from a set of analytical functions provided by the library and fully configurable. 
+The available transfer functions are: 
+- Two Transimpedance, with 1 and 2 stages, 
+- CSA, 
+- Ideal integrator, described as the input impedance of a CSA, 
+- Order-n Butterworth filter. 
+The input signals are read from files as a set of sampling points. The application performs also a set of measurements on the convoluted output signals such as: arrival time, with leading edge and constant fraction discrimination, maximum value and its corresponding time, slope and voltange on discrimination thresholds, etc. Morover a simulated noise, white or red, can be added to the output signal. The computation of the convolution can be turned off, and the set of measurements can thus be applied to real signals.
 
 Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, developed within the TIMESPOT collaboration to simulate the response of solid state sensors, TFBoost will be part of a complete software for simulation of signals in solid state detectors, from the generation in the sensor to the output of the readout electronics.
 
