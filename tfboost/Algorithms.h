@@ -214,8 +214,8 @@ inline double GaussianFitNearVmax(Iterable const& data, size_t const& bound_fit,
  * - shift of the signal by half the rise time
  * - calculate the difference between the original and shifted signals
  * - calculate the max value of the difference (with a gaussian fit)
- * - apply a LE at half the obtained max value (with a linear fit)
- * If error returns 0
+ * - apply a LE at half the obtained max value (interpolated)
+ * If error returns (-1.0 , 0)
  */
 template<typename Iterable, typename Iterablet>
 inline std::pair<double,size_t> TimeRefMethod(Iterable const& vout, 
@@ -278,9 +278,11 @@ inline std::pair<double,size_t> TimeRefMethod(Iterable const& vout,
 }
 
 
+
 /*
- * Re-sample the signal with a specified dT
- * and a random phase clock
+ * Re-sample a signal (spline) with a specified dT
+ * and a random phase clock.
+ * Fill the data and time containers
  */
 template<typename Iterable, typename SPLINE, typename RNG>
 inline void DoDigitization(Iterable& data, Iterable& time, 
@@ -301,11 +303,15 @@ inline void DoDigitization(Iterable& data, Iterable& time,
         data.push_back( signal(offset + i*dT) ); 
         time.push_back( offset + i*dT );
     }
-
-
 }
 
 
+
+/*
+ * Re-sample a signal (vector) with a specified dT
+ * and a random phase clock.
+ * Resize the original containers properly
+ */
 template<typename Iterable, typename RNG>
 inline void DigitizeSignal(Iterable& data, Iterable& time, 
                             double const& dT, double const& Tmax, RNG& rng, bool const& rndmphase=false){
@@ -318,6 +324,8 @@ inline void DigitizeSignal(Iterable& data, Iterable& time,
 
     tfboost::algo::DoDigitization(conv_dig, time_dig, 
                                 conv_spline, dT, Tmax, rng, rndmphase);
+                                
+    SAFE_EXIT( conv_dig.size() > data.size(), "In DigitizeSignal: requested an oversamplig. Not yet implemented")
 
     // override time and conv_data containers
     data.erase(data.begin() + conv_dig.size(), data.end());
@@ -329,6 +337,11 @@ inline void DigitizeSignal(Iterable& data, Iterable& time,
 
 
 
+/*
+ * Algorithm that calculates the best (smaller)
+ * time interval of a time distributions
+ * given a specific fraction of events to consider.
+ */
 struct BestTimeInterval {
 
     BestTimeInterval(TH1D* h1) { 
@@ -350,9 +363,7 @@ struct BestTimeInterval {
         double r  = m_h1->GetBinCenter( m_bin_r );
 
         return 0.5*(r-l);
-
     }
-
 
     inline double Compare(){
         
@@ -365,9 +376,7 @@ struct BestTimeInterval {
         m_DeltaBin = m_bin_r - m_bin_l;
 
         return m_h1->Integral(m_bin_l, m_bin_r);
-
     }
-
 
     TH1D* m_h1;
     int m_bin_max;
@@ -375,7 +384,6 @@ struct BestTimeInterval {
     int m_bin_r;
     int m_DeltaBin;
     double m_frac;
-
 };
 
 
