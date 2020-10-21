@@ -102,6 +102,7 @@
 #include <tfboost/functions/TIA_MOS.h>
 #include <tfboost/functions/DoConvolution.h>
 #include <tfboost/functions/ExpModifiedGaussian.h>
+#include <tfboost/functions/ButterworthFilter.h>
 #include <tfboost/noise/Noise.h>
 #include <tfboost/ReadConvolution.h>
 #include <tfboost/Algorithms.h>
@@ -118,8 +119,7 @@ int main(int argv, char** argc)
 
     std::cout.precision(10);
     
-    
-    
+
     /* ----------------------------------------------
      * Get Configuration
      * --------------------------------------------*/
@@ -137,8 +137,9 @@ int main(int argv, char** argc)
     
     LOG.PrintConfig(c);
     
+    
     /* ----------------------------------------------
-     * Initialization of variables and histograms
+     * Initialization of variables and RNGs
      * --------------------------------------------*/
     tfboost::CreateDirectories( c.OutputDirectory + "plots");
     tfboost::CreateDirectories( c.OutputDirectory + "data");
@@ -150,12 +151,18 @@ int main(int argv, char** argc)
     const double min_kernel  = -0.5*(max-min);
     const double max_kernel  =  0.5*(max-min);
 
+    hydra::host::vector<double> th_jitter_withTOA(120, 0.0);
+    
     size_t INDEX = 0;
     
     hydra::SeedRNG S{};
     hydra::default_random_engine engine( S() );
     TRandom3 root_rng( S() );
     
+    
+    /* ----------------------------------------------
+     * Initialization of histograms
+     * --------------------------------------------*/
     TH1D* hist_TOA             = new TH1D("hist_TOA","Time of arrival Leading Edge", hc.TOALE_Nbins, hc.TOALE_min, hc.TOALE_max);
     TH1D* hist_TOACFD          = new TH1D("hist_TOACFD","Time of arrival CFD at 0.35 of V max", hc.TOACFD_Nbins, hc.TOACFD_min, hc.TOACFD_max);
     TH1D* hist_TOARM           = new TH1D("hist_TOARM","Time of arrival Ref.Method", hc.TOARM_Nbins, hc.TOARM_min, hc.TOARM_max);
@@ -184,12 +191,10 @@ int main(int argv, char** argc)
     //TH2D *TOAmaps              = new TH2D("TOAmaps;Y;X","TOAmaps", 200, 0, 200, 56, 0, 56);
     //TH2D *Vmaxmaps             = new TH2D("Vmaxmaps;Y;X","Vmaxmaps", 200, 0, 200, 56, 0, 56);
 
-    hydra::host::vector<double> th_jitter_withTOA(120, 0.0);
-
-    
     
     /* ----------------------------------------------
-     * Preparing the list of input files
+     * Preparing the list of input files and
+     * related variables
      * --------------------------------------------*/
     TList* listoffiles = tfboost::GetFileList(c.InputDirectory); 
     listoffiles->Sort();
@@ -204,16 +209,16 @@ int main(int argv, char** argc)
      * Check if the preload of a Tr.Function
      * has to be done
      *-----------------------------------------------*/
-     
      hydra::host::vector<double> time_tf;
      hydra::host::vector<double> current_tf;
      
     if(c.ID==5){
-    
          int Nskip = (int) cfg_tf["NlinesToSkip"];
          TString tf_infile = (const char*) cfg_tf["TFFile"];
-
-         tfboost::ReadTF( tf_infile, Nskip, time_tf, current_tf, 1.0, true);
+         
+         tfboost::ReadTF( tf_infile, Nskip, 
+                          time_tf, current_tf, 
+                          /*scaling*/1.0, /*double range?*/true);
      }
 
 
@@ -224,10 +229,23 @@ int main(int argv, char** argc)
     {
 
         auto start_d = std::chrono::high_resolution_clock::now();
-
+        
+        currentfilename = currentfile->GetName();
+        if(c.UseSameCurve) currentfilename = c.SingleFile;
+        
+        if ( currentfile->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension) ) continue;
+        
+        std::cout << "========================================" << "\n";
+        std::cout << "|  FILE  : "<<currentfilename<<" " << "\n";
+        std::cout << "|  INDEX : "<<INDEX<<" "           << "\n";
+        std::cout << "========================================" << "\n\n";
+        ++INDEX;
+        
+        
         //Clean the configuration
         c.ResetInitialValues();
     
+        //Declare and prepare the containers
         hydra::host::vector<double> time;
         hydra::host::vector<double> idx;
         hydra::host::vector<double> current;
@@ -242,32 +260,20 @@ int main(int argv, char** argc)
             time.push_back(k * c.dT);
             current.push_back(0.0);
         }
-      
-        currentfilename = currentfile->GetName();
-
-        if(c.UseSameCurve) currentfilename = c.SingleFile;
         
         //std::pair<double,double> pos = tfboost::GetHitPosition(currentfilename);
         //int pos_x = pos.first;
         //int pos_y = pos.second;
 
-        
-        if ( currentfile->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension) ) continue;
-
-        std::cout << "========================================" << "\n";
-        std::cout << "|  FILE  : "<<currentfilename<<" " << "\n";
-        std::cout << "|  INDEX : "<<INDEX<<" "           << "\n";
-        std::cout << "========================================" << "\n\n";
-        ++INDEX;
-
-
         std::ifstream myFile( (c.InputDirectory+currentfilename).Data() );
+        
         for(size_t j=0; j < c.NlinesToSkip; ++j) line.ReadLine(myFile);
         
 
         // Actual loop on file lines
-        double landau = root_rng.Landau(1,0.15);
+        // Fill the containers
         
+        double landau = root_rng.Landau(1,0.15);
         if (myFile.is_open()) 
         {
             size_t s = c.offset;
@@ -324,7 +330,9 @@ int main(int argv, char** argc)
         }
 
 
-
+        /* ----------------------------------------------
+         * Final signal curve
+         * --------------------------------------------*/ 
         hydra::device::vector<double> time_d(time.size());
         hydra::device::vector<double> current_d(current.size());
         hydra::copy(time, time_d);
@@ -333,7 +341,6 @@ int main(int argv, char** argc)
         auto signal   = hydra::make_spiline<double>(time, current );
         auto signal_d = hydra::make_spiline<double>(time_d, current_d );
 
-        
         if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave)
             for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i)
                 hist_signal->SetBinContent(i, signal(hist_signal->GetBinCenter(i)) );
@@ -344,7 +351,6 @@ int main(int argv, char** argc)
         /* ----------------------------------------------
          * Performing the convolution
          * --------------------------------------------*/
-
         #if HYDRA_DEVICE_SYSTEM!=CUDA
         auto fft_backend = hydra::fft::fftw_f64;
         #endif
@@ -433,7 +439,6 @@ int main(int argv, char** argc)
             }//end switch
 
 
-
             // This step is done only if we are  not requesting noise
             if(c.MakeDigitization && !c.AddNoise)
             {
@@ -451,7 +456,6 @@ int main(int argv, char** argc)
           
 
 
-          
         /* ----------------------------------------------
          * Filling histogram for visualization
          * --------------------------------------------*/ 
@@ -486,7 +490,7 @@ int main(int argv, char** argc)
         
         size_t TOA_CFD    = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , Vpeak);
         
-        size_t TOA_RM     = tfboost::algo::TimeRefMethod( conv_data_h, time, Vpeak, c.bound_fit, /*noise?*/false );
+        size_t TOA_RM     = tfboost::algo::TimeRefMethod( conv_data_h, time, Vpeak, c.bound_fit, /*noise?*/false ).second ;
         
         double dvdt_CFD   = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
         
@@ -523,13 +527,13 @@ int main(int argv, char** argc)
         hist_dVdt_RM    -> Fill(1e-6 * dvdt_RM/c.dT);
 
         std::cout << "========================================" << "\n";
-        std::cout << "Time on thresholds (LE)  = " << time[TOA_LE]  << "  (s)"<< "\n";
-        std::cout << "Time on thresholds (CFD) = " << time[TOA_CFD] << "  (s)"<< "\n";
-        std::cout << "Time on thresholds (RM)  = " << time[TOA_RM]  << "  (s)"<< "\n";
-        std::cout << "V on thresholds (CFD)    = " << 1e3*VonThCFD << "  (mV)"<< "\n";
-        std::cout << "V on thresholds (LE)     = " << 1e3*VonThLE << "  (mV)"<< "\n";
-        std::cout << "V on thresholds (RM)     = " << 1e3*VonThRM << "  (mV)"<< "\n";
-        std::cout << "Vpeak                    = " << 1e3*Vpeak << "  (mV)"<< "\n";
+        std::cout << "Time on thresholds (LE)  = " << time[TOA_LE]  << "  (s)" << "\n";
+        std::cout << "Time on thresholds (CFD) = " << time[TOA_CFD] << "  (s)" << "\n";
+        std::cout << "Time on thresholds (RM)  = " << time[TOA_RM]  << "  (s)" << "\n";
+        std::cout << "V on thresholds (CFD)    = " << 1e3*VonThCFD  << "  (mV)"<< "\n";
+        std::cout << "V on thresholds (LE)     = " << 1e3*VonThLE   << "  (mV)"<< "\n";
+        std::cout << "V on thresholds (RM)     = " << 1e3*VonThRM   << "  (mV)"<< "\n";
+        std::cout << "Vpeak                    = " << 1e3*Vpeak     << "  (mV)"<< "\n";
         std::cout << "dv/dt CFD                = " << 1e-6*dvdt_CFD/c.dT << "  (uV/ps)"<< "\n";
         std::cout << "dv/dt LE                 = " << 1e-6*dvdt_LE/c.dT  << "  (uV/ps)"<< "\n";    
         std::cout << "dv/dt RM                 = " << 1e-6*dvdt_RM/c.dT  << "  (uV/ps)"<< "\n";    
@@ -543,12 +547,10 @@ int main(int argv, char** argc)
          *------------------------------------------------*/
         if(c.AddNoise)
         {
-        
             auto noise = tfboost::noise::Noise(c.sigma_noise, c.UseRedNoise, c.r_rednoise);
             
             noise.AddNoiseToSignal( conv_data_h, S() );
             
-
             // This step is done only if we are requesting noise
             if(c.MakeDigitization)
             {
@@ -559,14 +561,9 @@ int main(int argv, char** argc)
                 c.Nsamples = conv_data_h.size();
                 c.dT = c.sampling_dT;
                 hist_convol->SetBins(c.Nsamples, min, maxplot);
-
             }
             
             
-            size_t TOA_LE_noise  = tfboost::algo::LeadingEdge(conv_data_h , c.LEthr);
-            double VonThLE       = conv_data_h[TOA_LE_noise];
-
-
             // Condition to avoid to process empty signal
             // reject signal with amplitude < 1 mV
             if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_noise) == 0) 
@@ -574,8 +571,11 @@ int main(int argv, char** argc)
                 WARNING_LINE("Skipping empty event...")
                 continue;
             }
-
-
+            
+            
+            size_t TOA_LE_noise  = tfboost::algo::LeadingEdge(conv_data_h , c.LEthr);
+            double VonThLE       = conv_data_h[TOA_LE_noise];
+            
             hist_TOALEnoise      -> Fill( time[TOA_LE_noise] );
             hist_Vth_LE_noise    -> Fill( time[VonThLE] );
             
@@ -584,10 +584,12 @@ int main(int argv, char** argc)
                 size_t timeatth      = tfboost::algo::GetTimeAtPeak(conv_data_h);
                 double vmax          = tfboost::algo::GaussianFitNearVmax( conv_data_h, c.bound_fit );
                 size_t TOA_CFD_noise = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , vmax);
-                double TOA_RM_noise  = tfboost::algo::TimeRefMethod( conv_data_h, time, vmax, c.bound_fit, /*noise?*/true );
+                
+                std::pair<double,size_t> RM = tfboost::algo::TimeRefMethod( conv_data_h, time, vmax, c.bound_fit, /*noise?*/true );
+                double TOA_RM_noise = RM.first ;
                 
                 double VonThCFD = conv_data_h[TOA_CFD_noise];
-                double VonThRM  = conv_data_h[TOA_RM_noise];
+                double VonThRM  = conv_data_h[ RM.second ];
 
                 hist_TOARMnoise      -> Fill( TOA_RM_noise );
                 hist_TOACFDnoise     -> Fill( time[TOA_CFD_noise] );

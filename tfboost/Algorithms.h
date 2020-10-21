@@ -218,9 +218,14 @@ inline double GaussianFitNearVmax(Iterable const& data, size_t const& bound_fit,
  * If error returns 0
  */
 template<typename Iterable, typename Iterablet>
-inline double TimeRefMethod(Iterable const& vout, Iterablet const& time, double const& vmax, size_t const& bound_fit, bool const& noise=false)
+inline std::pair<double,size_t> TimeRefMethod(Iterable const& vout, 
+                                              Iterablet const& time, 
+                                              double const& vmax, 
+                                              size_t const& bound_fit, 
+                                              bool const& noise=false)
 {
-
+    typedef std::pair<double,size_t> return_type;
+    
     const size_t N = vout.size();
     
     const size_t TOA80 = LeadingEdge(vout , vmax*0.8);
@@ -247,9 +252,11 @@ inline double TimeRefMethod(Iterable const& vout, Iterablet const& time, double 
 
     int min_fit = LeadingEdge(subtr , newthr) - bound_fit;
     int max_fit = LeadingEdge(subtr , newthr) + bound_fit;
+    
+    size_t dummy_TOA_RM = LeadingEdge(subtr , newthr);
 
     ERROR_RETURN( newthr<0 || min_fit < 0 || max_fit > (int)N, 
-                 "Error in TimeRefMethod(), Exit with 0.", 0)
+                 "Error in TimeRefMethod(), Exit with 0.", return_type(-1.0, 0) )
     
     double min = exdT*min_fit;
     double max = exdT*max_fit;
@@ -257,9 +264,10 @@ inline double TimeRefMethod(Iterable const& vout, Iterablet const& time, double 
 
     
     for(size_t i=0; i<Np; ++i)
-        if( spl(min + indT*i)>newthr ) return min + indT*i; 
+        if( spl(min + indT*i)>newthr ) 
+            return return_type(min + indT*i, dummy_TOA_RM); 
         
-    return -1;
+    return return_type(-1.0, 0);
     
     /*
     return LeadingEdge(subtr , newthr);
