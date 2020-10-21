@@ -91,6 +91,22 @@ struct ExpModifiedGaussian {
     inline void SetParLimits(int n, double min, double max){
        fun->SetParLimits(n, min, max);
     }
+    
+    
+    inline void SetParFromHist(TH1D* hist){
+        
+        double mu    = hist->GetBinCenter( hist->GetMaximumBin() );
+        double norm  = hist->Integral("width");
+        double sigma = 0.2*hist->GetStdDev();
+        double tau   = sigma;
+        double cst   = hist->GetBinCenter( hist->GetNbinsX() - int(0.9*hist->GetNbinsX()) );
+        fun->SetParameters(norm, mu, sigma, tau, 0.5, 1.0, cst);
+        fun->SetParLimits(0, 0.3*norm, 3*norm);
+        fun->SetParLimits(1, 0.3*mu, 2*mu);
+        fun->SetParLimits(2, 0.3*sigma, 3*sigma);
+        fun->SetParLimits(3, 0.3*tau,   3*tau);
+        fun->SetParLimits(4, 0., 1.);
+    }
    
    
    ~ExpModifiedGaussian(){ 
