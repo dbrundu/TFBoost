@@ -43,15 +43,14 @@
 #include <hydra/GaussKronrodQuadrature.h>
 #include <hydra/Lambda.h>
 #include <hydra/Algorithm.h>
+#include <hydra/Convolution.h>
 #include <hydra/functions/Gaussian.h>
 #include <hydra/device/System.h>
+#include <hydra/functions/ConvolutionFunctor.h>
 #include <hydra/functions/SpilineFunctor.h>
 #include <hydra/functions/Polynomial.h>
-#include <hydra/LogLikelihoodFCN.h>
 #include <hydra/Filter.h>
 #include <hydra/Parameter.h>
-#include <hydra/UserParameters.h>
-#include <hydra/Pdf.h>
 #include <hydra/Random.h>
 #include <hydra/Plain.h>
 #include <hydra/Sobol.h>
@@ -59,7 +58,12 @@
 #include <hydra/Zip.h>
 #include <hydra/Range.h>
 #include <hydra/SeedRNG.h>
+#if HYDRA_DEVICE_SYSTEM == CUDA
+#include <hydra/CuFFT.h>
+#endif
+#if HYDRA_DEVICE_SYSTEM != CUDA
 #include <hydra/FFTW.h>
+#endif
 
 
 // ROOT
