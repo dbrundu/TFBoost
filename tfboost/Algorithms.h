@@ -28,12 +28,14 @@
 #ifndef ALGORITHMS_H_
 #define ALGORITHMS_H_
 
+#include <tfboost/Types.h>
 #include <tfboost/Utils.h>
 
 
 namespace tfboost { 
 
 namespace algo { 
+
 
 /* 
  * Leading edge algorithm return the position 
@@ -126,34 +128,39 @@ inline double SlopeOnThrs(Iterable const& vout, size_t const& Tth)
  * Computation of the slope of a noisy signal
  * at a specific position
  * A linear fit in the region near the specified position
- * is done to get the correct slope
+ * is done to get the correct slope.
  * If errors return -1
  */
-template<typename Iterable>
-inline double LinearFitNearThr(size_t const& TOA, 
-                               Iterable const& data, 
-                               size_t const& bound_fit, 
-                               bool const& plot=false ) {
-        
-    //const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
+template<typename Iterable, typename Iterablet>
+inline pairDD_type LinearFitNearThr(double const& Thr, 
+                                    Iterable const& data, 
+                                    Iterablet const& time,
+                                    size_t const& bound_fit, 
+                                    bool const& plot=false ) {
     
+    // temporary TOA position
+    const size_t TOA = LeadingEdge(data, Thr);
+   
     const size_t min_fit = (TOA - bound_fit); 
     const size_t max_fit = (TOA + bound_fit); 
     
     ERROR_RETURN( min_fit < 0 || max_fit > data.size(), 
-                  "In LinearFitNearThr(), out of range limit. Exit with -1", -1.0)
+                  "In LinearFitNearThr(), out of range limit. Exit with -1", pairDD_type(-1.0,-1.0))
             
     TGraph graph;
     
     #pragma unroll
     for(size_t i=min_fit; i<max_fit+1; ++i)
-        graph.SetPoint(graph.GetN(), i , data[i]);
+        graph.SetPoint(graph.GetN(), time[i] , data[i]);
 
             
     TFitResultPtr r = graph.Fit("pol1","S");
 
-    ERROR_RETURN( r==-1, "Error in LinearFitNearThr. Exit with -1.", -1.0)
-
+    ERROR_RETURN( r==-1, "Error in LinearFitNearThr. Exit with -1.", pairDD_type(-1.0,-1.0) )
+    
+    double q   = r->Parameter(0);
+    double m   = r->Parameter(1); 
+    double toa = (Thr-q)/m ;
     
     if(plot){
         TCanvas p("","",800,800);
@@ -161,7 +168,7 @@ inline double LinearFitNearThr(size_t const& TOA,
         p.SaveAs("LinearFitNearThr.pdf");
     }
             
-    return r->Parameter(1);
+    return pairDD_type(toa, m);
 }
 
 
@@ -172,29 +179,33 @@ inline double LinearFitNearThr(size_t const& TOA,
  * is done to get the correct max value
  * If errors return -1
  */
-template<typename Iterable>
-inline double GaussianFitNearVmax(Iterable const& data, size_t const& bound_fit, bool const& plot=false ) {
-        
-    //const double bound_fit = (kernel_id == 0 || kernel_id == 4)? 200 : 20;
+template<typename Iterable, typename Iterablet>
+inline pairDD_type GaussianFitNearVmax(Iterable const& data, 
+                                       Iterablet const& time, 
+                                       size_t const& bound_fit, 
+                                       bool const& plot=false ) {
     
-    const size_t time = GetTimeAtPeak(data);
+    const size_t t0 = GetTimeAtPeak(data);
             
-    const size_t min_fit = (time - bound_fit); 
-    const size_t max_fit = (time + bound_fit);
+    const size_t min_fit = (t0 - bound_fit); 
+    const size_t max_fit = (t0 + bound_fit);
 
     ERROR_RETURN( min_fit < 0 || max_fit > data.size(), 
-                 "In GaussianFitNearVmax(), out of range limit. Exit with -1", -1.0)
+                 "In GaussianFitNearVmax(), out of range limit. Exit with -1", pairDD_type(-1.0,-1.0) )
             
     TGraph graph;
     
     #pragma unroll
     for(size_t i=min_fit; i<max_fit+1; ++i)
-        graph.SetPoint(graph.GetN(), i , data[i]);
+        graph.SetPoint(graph.GetN(), time[i] , data[i]);
     
 
     TFitResultPtr r = graph.Fit("gaus","S");
 
-    ERROR_RETURN( r==-1, "Error in GaussianFitNearVmax. Exit with -1.", -1.0)
+    ERROR_RETURN( r==-1, "Error in GaussianFitNearVmax. Exit with -1.", pairDD_type(-1.0,-1.0))
+    
+    double amp = r->Parameter(0);
+    double mu  = r->Parameter(1);
 
     if(plot)
     {
@@ -203,7 +214,7 @@ inline double GaussianFitNearVmax(Iterable const& data, size_t const& bound_fit,
         p.SaveAs("GaussianFitNearVmax.pdf");
     }
             
-    return r->Parameter(0) ;
+    return pairDD_type(amp,mu) ;
 }
 
 
@@ -218,61 +229,58 @@ inline double GaussianFitNearVmax(Iterable const& data, size_t const& bound_fit,
  * If error returns (-1.0 , 0)
  */
 template<typename Iterable, typename Iterablet>
-inline std::pair<double,size_t> TimeRefMethod(Iterable const& vout, 
-                                              Iterablet const& time, 
-                                              double const& vmax, 
-                                              size_t const& bound_fit, 
-                                              bool const& noise=false)
+inline pairDS_type TimeRefMethod(Iterable const& vout, 
+                                 Iterablet const& time, 
+                                 double const& vmax, 
+                                 size_t const& bound_fit, 
+                                 bool const& noise=false)
 {
-    typedef std::pair<double,size_t> return_type;
     
     const size_t N = vout.size();
     
     const size_t TOA80 = LeadingEdge(vout , vmax*0.8);
     const size_t TOA20 = LeadingEdge(vout , vmax*0.2);
     
+    ERROR_RETURN( TOA80 == 0 || TOA20 == 0 || TOA80<TOA20, 
+                 "Error in TimeRefMethod(), Exit with (-1,0)", pairDS_type(-1.0, 0) )
+    
     const size_t delay = (TOA80-TOA20)/2;
     
-    hydra::host::vector<double> subtr( N );
+    signal_type_h subtr( N );
     
-    #pragma unroll
-    for(size_t i=0; i<delay; ++i) 
-        subtr[i] = vout[i] - 0.0;
-    
-    #pragma unroll
-    for(size_t i=delay; i<N; ++i) 
-        subtr[i] = vout[i] - vout[i-delay];
-        
-     
-    double newthr = (noise)? 0.5 * GaussianFitNearVmax( subtr, bound_fit ) : 0.5 * GetVAtPeak(subtr);
+    // subtract the delayed signal
+    for(size_t i=0; i<N; ++i) {
+      double x = i<delay? 0.0 : vout[i-delay];
+      subtr[i] = vout[i] - x;
+    }
 
-    auto spl = hydra::make_spiline<double>(time, subtr );
-    double exdT = time[2]-time[1];
-    double indT = 1e-12;
-
-    int min_fit = LeadingEdge(subtr , newthr) - bound_fit;
-    int max_fit = LeadingEdge(subtr , newthr) + bound_fit;
+    double newthr   =  (noise)? 0.5 * GaussianFitNearVmax( subtr, time, bound_fit ).first : 0.5 * GetVAtPeak(subtr);
+    int    min_fit  =  LeadingEdge(subtr , newthr) - bound_fit;
+    int    max_fit  =  LeadingEdge(subtr , newthr) + bound_fit;
     
     size_t dummy_TOA_RM = LeadingEdge(subtr , newthr);
 
-    ERROR_RETURN( newthr<0 || min_fit < 0 || max_fit > (int)N, 
-                 "Error in TimeRefMethod(), Exit with 0.", return_type(-1.0, 0) )
+    ERROR_RETURN( newthr<0 || min_fit < 0 || max_fit > (int) N, 
+                 "Error in TimeRefMethod(), Exit with (-1,0)", pairDS_type(-1.0, 0) )
+                 
     
-    double min = exdT*min_fit;
-    double max = exdT*max_fit;
-    size_t Np = (max-min)/indT;
-
+    // Linear fit near thr 
+    // of the subtracted signal
+    TGraph graph;
     
-    for(size_t i=0; i<Np; ++i)
-        if( spl(min + indT*i)>newthr ) 
-            return return_type(min + indT*i, dummy_TOA_RM); 
+    #pragma unroll
+    for(int i=min_fit; i<max_fit+1; ++i)
+        graph.SetPoint(graph.GetN(), time[i] , subtr[i]);
         
-    return return_type(-1.0, 0);
+    TFitResultPtr r = graph.Fit("pol1","S");
+
+    ERROR_RETURN( r==-1, "Error in TimeRefMethod(), Exit with (-1,0)", pairDS_type(-1.0, 0) )
     
-    /*
-    return LeadingEdge(subtr , newthr);
-    */
+    double q   = r->Parameter(0);
+    double m   = r->Parameter(1); 
+    double toa = (newthr-q)/m ;
     
+    return pairDS_type(toa, dummy_TOA_RM);
 
 
 }
@@ -285,8 +293,13 @@ inline std::pair<double,size_t> TimeRefMethod(Iterable const& vout,
  * Fill the data and time containers
  */
 template<typename Iterable, typename SPLINE, typename RNG>
-inline void DoDigitization(Iterable& data, Iterable& time, 
-                           SPLINE const& signal, double  const& dT, double  const& Tmax, RNG& rng, bool  const& rndmphase=true){
+inline void DoDigitization(Iterable& data, 
+                           Iterable& time, 
+                           SPLINE const& signal, 
+                           double const& dT, 
+                           double const& Tmax, 
+                           RNG& rng, 
+                           bool const& rndmphase=true){
     
     SAFE_EXIT( !data.empty() || !time.empty(), "In DigitizeSignal: the containers must be empty.")
 
@@ -313,11 +326,15 @@ inline void DoDigitization(Iterable& data, Iterable& time,
  * Resize the original containers properly
  */
 template<typename Iterable, typename RNG>
-inline void DigitizeSignal(Iterable& data, Iterable& time, 
-                            double const& dT, double const& Tmax, RNG& rng, bool const& rndmphase=false){
+inline void DigitizeSignal(Iterable& data, 
+                           Iterable& time, 
+                            double const& dT, 
+                            double const& Tmax, 
+                            RNG& rng, 
+                            bool const& rndmphase=false){
 
-    hydra::host::vector<double> conv_dig;  
-    hydra::host::vector<double> time_dig; 
+    signal_type_h conv_dig;  
+    signal_type_h time_dig; 
 
     //time and conv_data_h are the not digitized ones
     auto conv_spline = hydra::make_spiline<double>(time, data );
