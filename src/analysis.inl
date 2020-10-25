@@ -87,6 +87,7 @@
 #include <TFitResult.h>
 #include <TStyle.h>
 #include <TRandom3.h>
+#include <TLine.h>
 
 // OTHERs
 #include <tclap/CmdLine.h>
@@ -132,10 +133,6 @@ int main(int argv, char** argc)
   
   tfboost::ConfigParser    c(cfg_root);
   tfboost::HistConfigParser  hc(cfg_root);
-
-  auto& LOG = tfboost::Logger::getInstance( (c.OutputDirectory+TString("LOG.log")).Data() );
-  
-  LOG.PrintConfig(c);
   
   
   /* ----------------------------------------------
@@ -143,6 +140,9 @@ int main(int argv, char** argc)
    * --------------------------------------------*/
   tfboost::CreateDirectories( c.OutputDirectory + "plots");
   tfboost::CreateDirectories( c.OutputDirectory + "data");
+  
+  auto& LOG = tfboost::Logger::getInstance( (c.OutputDirectory+TString("LOG.log")).Data() );
+  LOG.PrintConfig(c);
 
   const double min     = 0.0;
   const double max     = (c.Nsamples-1) * c.dT;
@@ -481,7 +481,7 @@ int main(int argv, char** argc)
 
     // Condition to avoid to process empty signal
     // reject signal with amplitude < 1 mV
-    if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_nonoise) == 0) 
+    if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_nonoise) ==  conv_data_h.size() ) 
     { 
       WARNING_LINE("Skipping empty event...")
       //TOAmaps->SetBinContent( pos_y+1, pos_x+1, 0.0 ); 
@@ -590,7 +590,7 @@ int main(int argv, char** argc)
       
       // Condition to avoid to process empty signal
       // reject signal with amplitude < 1 mV
-      if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_noise) == 0) 
+      if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_noise) == conv_data_h.size() ) 
       { 
         WARNING_LINE("Skipping empty event...") continue;
       }
@@ -625,7 +625,7 @@ int main(int argv, char** argc)
 
         if(c.MakeLinearFitNearThreshold && TOA_LE>1)
         {
-          auto toa       = tfboost::algo::LinearFitNearThr( c.CFD_fr*vmax, conv_data_h, time, c.bound_fit, /*plot?*/ true );
+          auto toa       = tfboost::algo::LinearFitNearThr( c.CFD_fr*vmax, conv_data_h, time, c.bound_fit, /*plot?*/ false );
           TOA_CFD_noise  = toa.first ;
           dvdt_CFD_noise = toa.second ;
           

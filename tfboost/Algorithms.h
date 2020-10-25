@@ -50,7 +50,7 @@ inline size_t LeadingEdge(Iterable const& vout, double const& Vthr)
     
     auto it = hydra_thrust::find_if(vout.begin(), vout.end(), trigger );
     
-    ERROR_RETURN( it==vout.end(), "In LeadingEdge: no element found.", 0)
+    ERROR_RETURN( it==vout.end(), "In LeadingEdge: no element found.", vout.size() )
     
     return  it-vout.begin();
     
@@ -153,7 +153,6 @@ inline pairDD_type LinearFitNearThr(double const& Thr,
     for(size_t i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , data[i]);
 
-            
     TFitResultPtr r = graph.Fit("pol1","S");
 
     ERROR_RETURN( r==-1, "Error in LinearFitNearThr. Exit with -1.", pairDD_type(-1.0,-1.0) )
@@ -199,7 +198,6 @@ inline pairDD_type GaussianFitNearVmax(Iterable const& data,
     for(size_t i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , data[i]);
     
-
     TFitResultPtr r = graph.Fit("gaus","S");
 
     ERROR_RETURN( r==-1, "Error in GaussianFitNearVmax. Exit with -1.", pairDD_type(-1.0,-1.0))
@@ -241,7 +239,7 @@ inline pairDS_type TimeRefMethod(Iterable const& vout,
     const size_t TOA80 = LeadingEdge(vout , vmax*0.8);
     const size_t TOA20 = LeadingEdge(vout , vmax*0.2);
     
-    ERROR_RETURN( TOA80 == 0 || TOA20 == 0 || TOA80<TOA20, 
+    ERROR_RETURN( TOA80 == N || TOA20 == N || TOA80<TOA20, 
                  "Error in TimeRefMethod(), Exit with (-1,0)", pairDS_type(-1.0, 0) )
     
     const size_t delay = (TOA80-TOA20)/2;
@@ -254,9 +252,11 @@ inline pairDS_type TimeRefMethod(Iterable const& vout,
       subtr[i] = vout[i] - x;
     }
 
-    double newthr   =  (noise)? 0.5 * GaussianFitNearVmax( subtr, time, bound_fit ).first : 0.5 * GetVAtPeak(subtr);
-    int    min_fit  =  LeadingEdge(subtr , newthr) - bound_fit;
-    int    max_fit  =  LeadingEdge(subtr , newthr) + bound_fit;
+    double newthr     =  (noise)? 0.5 * GaussianFitNearVmax( subtr, time, bound_fit+1, true ).first : 0.5 * GetVAtPeak(subtr);
+    int    min_fit    =  LeadingEdge(subtr , newthr) - bound_fit;
+    int    max_fit    =  LeadingEdge(subtr , newthr) + bound_fit;
+    double min_fit_t  =  time[min_fit];
+    double max_fit_t  =  time[max_fit];
     
     size_t dummy_TOA_RM = LeadingEdge(subtr , newthr);
 
@@ -272,13 +272,35 @@ inline pairDS_type TimeRefMethod(Iterable const& vout,
     for(int i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , subtr[i]);
         
+    double pr=0.; int k=0;
     TFitResultPtr r = graph.Fit("pol1","S");
+    
+    /*
+    while(pr<0.4 && k<4){
+      r = graph.Fit("pol1","S","", min_fit_t, max_fit_t);
+      pr = graph.GetFunction("pol1")->GetProb();
+      min_fit_t *= 0.95;
+      max_fit_t *= 0.95;
+      ++k;
+    }
+    */
 
     ERROR_RETURN( r==-1, "Error in TimeRefMethod(), Exit with (-1,0)", pairDS_type(-1.0, 0) )
     
     double q   = r->Parameter(0);
     double m   = r->Parameter(1); 
     double toa = (newthr-q)/m ;
+    
+    if(true)
+    {
+        TCanvas p("","",800,800);
+        graph.Draw("APL");
+        p.Update();
+        TLine l(p.GetUxmin(), newthr , p.GetUxmax(), newthr);
+        l.Draw("same");
+        p.SaveAs("TimeRefMethod.pdf");
+    }
+    
     
     return pairDS_type(toa, dummy_TOA_RM);
 
