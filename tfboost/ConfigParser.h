@@ -86,6 +86,7 @@ struct ConfigParser
         sampling_dT  = (double) cfg_tf["sampling_dT"];
         minplot      = (double) cfg_tf["minplot"];
         maxplot      = (double) cfg_tf["maxplot"]; 
+        RM_delay     = (double) cfg_tf["RM_delay"]; 
         
         if(!InputDirectory.EndsWith("/")) InputDirectory   = InputDirectory+"/";
         if(!OutputDirectory.EndsWith("/")) OutputDirectory = OutputDirectory+"/";
@@ -114,7 +115,7 @@ struct ConfigParser
     
     size_t offset, NlinesToSkip, IdxConvtoSave, Nfiles, Nsamples, bound_fit;
     
-    double dT, LEthr, CFD_fr, sigma_noise, r_rednoise, sampling_dT, LE_reject_nonoise, LE_reject_noise;
+    double dT, LEthr, CFD_fr, sigma_noise, r_rednoise, sampling_dT, LE_reject_nonoise, LE_reject_noise, RM_delay;
     double minplot, maxplot;
     
     
@@ -232,8 +233,10 @@ struct HistConfigParser
     dVdt_LE_noise_min = (double) cfg_tf["dVdt_LE_noise_min"];
     dVdt_LE_noise_max = (double) cfg_tf["dVdt_LE_noise_max"];
     dVdt_LE_noise_Nbins = (int)    cfg_tf["dVdt_LE_noise_Nbins"];
-    
-
+ 
+    VthRMoverVmax_min = (double) cfg_tf["VthRMoverVmax_min"];
+    VthRMoverVmax_max = (double) cfg_tf["VthRMoverVmax_max"];   
+    VthRMoverVmax_Nbins = (int) cfg_tf["VthRMoverVmax_Nbins"];
 
         
 
@@ -282,7 +285,9 @@ struct HistConfigParser
         dVdt_CFD_noise_min,
         dVdt_CFD_noise_max,
         dVdt_LE_noise_min,
-        dVdt_LE_noise_max;
+        dVdt_LE_noise_max,
+        VthRMoverVmax_min,
+        VthRMoverVmax_max;
 
     int  TOALE_Nbins, TOACFD_Nbins, TOARM_Nbins, TOACFDnoise_Nbins, 
         TOALEnoise_Nbins,
@@ -300,7 +305,8 @@ struct HistConfigParser
         dVdt_CFD_Nbins,
         dVdt_RM_Nbins,
         dVdt_CFD_noise_Nbins,
-        dVdt_LE_noise_Nbins;
+        dVdt_LE_noise_Nbins,
+        VthRMoverVmax_Nbins;
 
 
 };

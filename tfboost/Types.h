@@ -30,6 +30,7 @@
 
 typedef std::pair<double,size_t> pairDS_type;
 typedef std::pair<double,double> pairDD_type;
+typedef std::tuple<double,double,size_t> tripletDDS_type;
 
 typedef hydra::host::vector<double> signal_type_h;
 typedef hydra::device::vector<double> signal_type_d;

@@ -227,22 +227,22 @@ inline pairDD_type GaussianFitNearVmax(Iterable const& data,
  * If error returns (-1.0 , 0)
  */
 template<typename Iterable, typename Iterablet>
-inline pairDS_type TimeRefMethod(Iterable const& vout, 
+inline tripletDDS_type TimeRefMethod(Iterable const& vout, 
                                  Iterablet const& time, 
                                  double const& vmax, 
+                                 double const& delay_t,
                                  size_t const& bound_fit, 
-                                 bool const& noise=false)
+                                 bool const& noise=false,
+                                 bool const& plot=false)
 {
     
-    const size_t N = vout.size();
+    const size_t N     = vout.size();
+    const double dT    = time[1]-time[0];
+    const size_t delay = delay_t/dT;
     
-    const size_t TOA80 = LeadingEdge(vout , vmax*0.8);
-    const size_t TOA20 = LeadingEdge(vout , vmax*0.2);
-    
-    ERROR_RETURN( TOA80 == N || TOA20 == N || TOA80<TOA20, 
-                 "Error in TimeRefMethod(), Exit with (-1,0)", pairDS_type(-1.0, 0) )
-    
-    const size_t delay = (TOA80-TOA20)/2;
+    ERROR_RETURN( delay == 0, 
+                 "Error in TimeRefMethod(), Exit with (-1,0)", tripletDDS_type(-1.0, -1.0, 0) )
+
     
     signal_type_h subtr( N );
     
@@ -252,7 +252,7 @@ inline pairDS_type TimeRefMethod(Iterable const& vout,
       subtr[i] = vout[i] - x;
     }
 
-    double newthr     =  (noise)? 0.5 * GaussianFitNearVmax( subtr, time, bound_fit+1, true ).first : 0.5 * GetVAtPeak(subtr);
+    double newthr     =  (noise)? 0.5 * GaussianFitNearVmax( subtr, time, bound_fit+1 ).first : 0.5 * GetVAtPeak(subtr);
     int    min_fit    =  LeadingEdge(subtr , newthr) - bound_fit;
     int    max_fit    =  LeadingEdge(subtr , newthr) + bound_fit;
     double min_fit_t  =  time[min_fit];
@@ -261,7 +261,7 @@ inline pairDS_type TimeRefMethod(Iterable const& vout,
     size_t dummy_TOA_RM = LeadingEdge(subtr , newthr);
 
     ERROR_RETURN( newthr<0 || min_fit < 0 || max_fit > (int) N, 
-                 "Error in TimeRefMethod(), Exit with (-1,0)", pairDS_type(-1.0, 0) )
+                 "Error in TimeRefMethod(), Exit with (-1,0)", tripletDDS_type(-1.0, -1.0, 0) )
                  
     
     // Linear fit near thr 
@@ -285,13 +285,13 @@ inline pairDS_type TimeRefMethod(Iterable const& vout,
     }
     */
 
-    ERROR_RETURN( r==-1, "Error in TimeRefMethod(), Exit with (-1,0)", pairDS_type(-1.0, 0) )
+    ERROR_RETURN( r==-1, "Error in TimeRefMethod(), Exit with (-1,0)", tripletDDS_type(-1.0, -1.0, 0) )
     
     double q   = r->Parameter(0);
     double m   = r->Parameter(1); 
     double toa = (newthr-q)/m ;
     
-    if(true)
+    if(plot)
     {
         TCanvas p("","",800,800);
         graph.Draw("APL");
@@ -302,10 +302,12 @@ inline pairDS_type TimeRefMethod(Iterable const& vout,
     }
     
     
-    return pairDS_type(toa, dummy_TOA_RM);
+    return tripletDDS_type(toa, newthr, dummy_TOA_RM);
 
 
 }
+
+
 
 
 
@@ -376,6 +378,35 @@ inline void DigitizeSignal(Iterable& data,
 
 
 
+
+/* 
+ * Time over threshold algorithm return the difference of positions
+ * for which the signal 
+ * is greater than 2 thresholds, Vthr1 and Vthr2
+ * If not found returns 0
+ */
+template<typename Iterable>
+inline size_t TimeOverThr(Iterable const& vout, double const& Vthr1, double const& Vthr2)
+{
+
+    size_t t1 = LeadingEdge(vout , Vthr1);
+    
+    Iterable vout_rev(vout.size() );
+    hydra::copy(vout, vout_rev);
+    
+    hydra_thrust::reverse(vout_rev.begin() , vout_rev.end() ); 
+    
+    size_t t2 = vout.size() - LeadingEdge(vout_rev , Vthr2);
+    
+    ERROR_RETURN( t1==vout.end() || t2==vout_rev.end(), 
+                  "In TimeOverThr: no element found.", vout.size() )
+    
+    return  t2 - t1;
+    
+}
+
+
+
 /*
  * Algorithm that calculates the best (smaller)
  * time interval of a time distributions
@@ -383,7 +414,7 @@ inline void DigitizeSignal(Iterable& data,
  */
 struct BestTimeInterval {
 
-    BestTimeInterval(TH1D* h1) { 
+    BestTimeInterval(TH1D* h1) {
         m_h1 = h1 ; 
         m_bin_max = h1->GetMaximumBin();
         m_bin_l = m_bin_max;

@@ -93,6 +93,20 @@ void SaveCanvas(TString const& directory, TString const& title, TString const& x
 }
 
 
+void SaveCanvas(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, TH2D& hist)
+{
+    TCanvas canv(title, title, 800,800);
+    hist.SetLineWidth(2);
+    hist.GetXaxis()->SetTitle(xtitle);
+    hist.GetYaxis()->SetTitle(ytitle);
+    hist.GetYaxis()->SetLabelSize(0.03);
+    hist.GetYaxis()->SetTitleOffset(1.5);
+    hist.Draw("colz");
+    canv.SaveAs( directory+title+TString(".pdf") );
+    canv.SaveAs( directory+title+TString(".C") );
+}
+
+
 void SaveCanvasAndFit(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, TH1D& hist, TF1* tf1)
 {
     TCanvas canv(title, title, 800,800);

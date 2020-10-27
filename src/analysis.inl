@@ -163,30 +163,31 @@ int main(int argv, char** argc)
   /* ----------------------------------------------
    * Initialization of histograms
    * --------------------------------------------*/
-  TH1D* hist_TOA             = new TH1D("hist_TOA","Time of arrival Leading Edge", hc.TOALE_Nbins, hc.TOALE_min, hc.TOALE_max);
-  TH1D* hist_TOACFD          = new TH1D("hist_TOACFD","Time of arrival CFD at 0.35 of V max", hc.TOACFD_Nbins, hc.TOACFD_min, hc.TOACFD_max);
-  TH1D* hist_TOARM           = new TH1D("hist_TOARM","Time of arrival Ref.Method", hc.TOARM_Nbins, hc.TOARM_min, hc.TOARM_max);
-  TH1D* hist_TOACFDnoise     = new TH1D("hist_TOACFDnoise","Time of arrival CFD with noise", hc.TOACFDnoise_Nbins, hc.TOACFDnoise_min, hc.TOACFDnoise_max);
-  TH1D* hist_TOALEnoise      = new TH1D("hist_TOALEnoise","Time of arrival LE with noise", hc.TOALEnoise_Nbins, hc.TOALEnoise_min, hc.TOALEnoise_max);
-  TH1D* hist_TOARMnoise      = new TH1D("hist_TOARMnoise","Time of arrival RM with noise", hc.TOARMnoise_Nbins, hc.TOARMnoise_min, hc.TOARMnoise_max);
-  TH1D* hist_Vmax            = new TH1D("hist_Vmax","V on peak", hc.Vmax_Nbins, hc.Vmax_min, hc.Vmax_max);
-  TH1D* hist_TimeatVmax      = new TH1D("hist_TimeatVmax","Time at V max", hc.TimeatVmax_Nbins, hc.TimeatVmax_min, hc.TimeatVmax_max);
-  TH1D* hist_Vmax_noise      = new TH1D("hist_Vmax_noise","V on peak with noise",hc.Vmax_noise_Nbins, hc.Vmax_noise_min, hc.Vmax_noise_max);
-  TH1D* hist_Vth_CFD         = new TH1D("hist_Vth_CFD","V on CFD threshold",hc.Vth_CFD_Nbins, hc.Vth_CFD_min, hc.Vth_CFD_max);
-  TH1D* hist_Vth_LE          = new TH1D("hist_Vth_LE","V on LE threshold",hc.Vth_LE_Nbins, hc.Vth_LE_min, hc.Vth_LE_max);
-  TH1D* hist_Vth_RM          = new TH1D("hist_Vth_RM","V on RM threshold",hc.Vth_RM_Nbins, hc.Vth_RM_min, hc.Vth_RM_max);
-  TH1D* hist_Vth_CFD_noise   = new TH1D("hist_Vth_CFD_noise","V on CFD threshold with noise",hc.Vth_CFD_noise_Nbins, hc.Vth_CFD_noise_min, hc.Vth_CFD_noise_max);
-  TH1D* hist_Vth_RM_noise    = new TH1D("hist_Vth_RM_noise","V on RM threshold with noise",hc.Vth_RM_noise_Nbins, hc.Vth_RM_noise_min, hc.Vth_RM_noise_max);
-  TH1D* hist_Vth_LE_noise    = new TH1D("hist_Vth_LE_noise","V on LE threshold with noise",hc.Vth_LE_noise_Nbins, hc.Vth_LE_noise_min, hc.Vth_LE_noise_max);
-  TH1D* hist_dVdt_LE         = new TH1D("hist_dVdt_LE","Slope (dV/dT) on LE threshold",hc.dVdt_LE_Nbins, hc.dVdt_LE_min, hc.dVdt_LE_max);
-  TH1D* hist_dVdt_CFD        = new TH1D("hist_dVdt_CFD","Slope (dV/dT) on CFD threshold",hc.dVdt_CFD_Nbins, hc.dVdt_CFD_min, hc.dVdt_CFD_max);
-  TH1D* hist_dVdt_RM         = new TH1D("hist_dVdt_RM","Slope (dV/dT) on RM threshold",hc.dVdt_RM_Nbins, hc.dVdt_RM_min, hc.dVdt_RM_max);
-  TH1D* hist_dVdt_CFD_noise  = new TH1D("hist_dVdt_CFD_noise","Slope (dV/dT) on CFD threshold with noise",hc.dVdt_CFD_noise_Nbins, hc.dVdt_CFD_noise_min, hc.dVdt_CFD_noise_max);
-  TH1D* hist_dVdt_LE_noise   = new TH1D("hist_dVdt_LE_noise","Slope (dV/dT) on LE threshold with noise",hc.dVdt_LE_noise_Nbins, hc.dVdt_LE_noise_min, hc.dVdt_LE_noise_max);
+  TH1D            hist_TOA("hist_TOA","Time of arrival Leading Edge", hc.TOALE_Nbins, hc.TOALE_min, hc.TOALE_max);
+  TH1D         hist_TOACFD("hist_TOACFD","Time of arrival CFD at 0.35 of V max", hc.TOACFD_Nbins, hc.TOACFD_min, hc.TOACFD_max);
+  TH1D          hist_TOARM("hist_TOARM","Time of arrival Ref.Method", hc.TOARM_Nbins, hc.TOARM_min, hc.TOARM_max);
+  TH1D    hist_TOACFDnoise("hist_TOACFDnoise","Time of arrival CFD with noise", hc.TOACFDnoise_Nbins, hc.TOACFDnoise_min, hc.TOACFDnoise_max);
+  TH1D     hist_TOALEnoise("hist_TOALEnoise","Time of arrival LE with noise", hc.TOALEnoise_Nbins, hc.TOALEnoise_min, hc.TOALEnoise_max);
+  TH1D     hist_TOARMnoise("hist_TOARMnoise","Time of arrival RM with noise", hc.TOARMnoise_Nbins, hc.TOARMnoise_min, hc.TOARMnoise_max);
+  TH1D           hist_Vmax("hist_Vmax","V on peak", hc.Vmax_Nbins, hc.Vmax_min, hc.Vmax_max);
+  TH1D     hist_TimeatVmax("hist_TimeatVmax","Time at V max", hc.TimeatVmax_Nbins, hc.TimeatVmax_min, hc.TimeatVmax_max);
+  TH1D     hist_Vmax_noise("hist_Vmax_noise","V on peak with noise",hc.Vmax_noise_Nbins, hc.Vmax_noise_min, hc.Vmax_noise_max);
+  TH1D        hist_Vth_CFD("hist_Vth_CFD","V on CFD threshold",hc.Vth_CFD_Nbins, hc.Vth_CFD_min, hc.Vth_CFD_max);
+  TH1D         hist_Vth_LE("hist_Vth_LE","V on LE threshold",hc.Vth_LE_Nbins, hc.Vth_LE_min, hc.Vth_LE_max);
+  TH1D         hist_Vth_RM("hist_Vth_RM","V on RM threshold",hc.Vth_RM_Nbins, hc.Vth_RM_min, hc.Vth_RM_max);
+  TH1D  hist_Vth_CFD_noise("hist_Vth_CFD_noise","V on CFD threshold with noise",hc.Vth_CFD_noise_Nbins, hc.Vth_CFD_noise_min, hc.Vth_CFD_noise_max);
+  TH1D   hist_Vth_RM_noise("hist_Vth_RM_noise","V on RM threshold with noise",hc.Vth_RM_noise_Nbins, hc.Vth_RM_noise_min, hc.Vth_RM_noise_max);
+  TH1D   hist_Vth_LE_noise("hist_Vth_LE_noise","V on LE threshold with noise",hc.Vth_LE_noise_Nbins, hc.Vth_LE_noise_min, hc.Vth_LE_noise_max);
+  TH1D        hist_dVdt_LE("hist_dVdt_LE","Slope (dV/dT) on LE threshold",hc.dVdt_LE_Nbins, hc.dVdt_LE_min, hc.dVdt_LE_max);
+  TH1D       hist_dVdt_CFD("hist_dVdt_CFD","Slope (dV/dT) on CFD threshold",hc.dVdt_CFD_Nbins, hc.dVdt_CFD_min, hc.dVdt_CFD_max);
+  TH1D        hist_dVdt_RM("hist_dVdt_RM","Slope (dV/dT) on RM threshold",hc.dVdt_RM_Nbins, hc.dVdt_RM_min, hc.dVdt_RM_max);
+  TH1D hist_dVdt_CFD_noise("hist_dVdt_CFD_noise","Slope (dV/dT) on CFD threshold with noise",hc.dVdt_CFD_noise_Nbins, hc.dVdt_CFD_noise_min, hc.dVdt_CFD_noise_max);
+  TH1D  hist_dVdt_LE_noise("hist_dVdt_LE_noise","Slope (dV/dT) on LE threshold with noise",hc.dVdt_LE_noise_Nbins, hc.dVdt_LE_noise_min, hc.dVdt_LE_noise_max);
+  TH1D  hist_VthRMoverVmax("hist_VthRMoverVmax","Vth RM over Vmax with noise",hc.VthRMoverVmax_Nbins, hc.VthRMoverVmax_min, hc.VthRMoverVmax_max);
 
-  TH1D *hist_convol          = new TH1D("hist_convol;Time[s];Vout [V]","hist_convol", c.Nsamples, minplot, maxplot );
-  TH1D *hist_signal          = new TH1D("hist_signal;Time[s];Vout [V]","hist_signal", c.Nsamples, minplot, maxplot );
-  TH1D *hist_kernel          = new TH1D("hist_kernel;Time[s];Vout [V]","hist_kernel", c.Nsamples/30, minplot, maxplot );
+  TH1D hist_convol("hist_convol;Time[s];Vout [V]","hist_convol", c.Nsamples, minplot, maxplot );
+  TH1D hist_signal("hist_signal;Time[s];Vout [V]","hist_signal", c.Nsamples, minplot, maxplot );
+  TH1D hist_kernel("hist_kernel;Time[s];Vout [V]","hist_kernel", c.Nsamples/30, minplot, maxplot );
 
   //TH2D *TOAmaps        = new TH2D("TOAmaps;Y;X","TOAmaps", 200, 0, 200, 56, 0, 56);
   //TH2D *Vmaxmaps       = new TH2D("Vmaxmaps;Y;X","Vmaxmaps", 200, 0, 200, 56, 0, 56);
@@ -342,7 +343,7 @@ int main(int argv, char** argc)
 
     if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave)
       for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i)
-        hist_signal->SetBinContent(i, signal(hist_signal->GetBinCenter(i)) );
+        hist_signal.SetBinContent(i, signal(hist_signal.GetBinCenter(i)) );
     
     
     
@@ -376,7 +377,7 @@ int main(int argv, char** argc)
           
           if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
             for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );
+              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );
           
           }break;
 
@@ -387,7 +388,7 @@ int main(int argv, char** argc)
           
           if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
             for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );  
           
           }break;
 
@@ -398,7 +399,7 @@ int main(int argv, char** argc)
           
           if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
             for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );  
           
           }break;
 
@@ -409,7 +410,7 @@ int main(int argv, char** argc)
          
           if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
             for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );  
           
           }break;
 
@@ -420,7 +421,7 @@ int main(int argv, char** argc)
           
           if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
             for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );  
           
           }break;
 
@@ -432,7 +433,7 @@ int main(int argv, char** argc)
 
           if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
             for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) );  
+              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );  
           
 
         } break;
@@ -456,7 +457,7 @@ int main(int argv, char** argc)
         // Override all the conv information
         c.Nsamples = conv_data_h.size();
         c.dT = c.sampling_dT;
-        hist_convol->SetBins(c.Nsamples, min, maxplot);
+        hist_convol.SetBins(c.Nsamples, min, maxplot);
       }
       
 
@@ -471,7 +472,7 @@ int main(int argv, char** argc)
 
     if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave)
       for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i)
-         hist_convol->SetBinContent(i, conv_spline(hist_convol->GetBinCenter(i)) );  
+         hist_convol.SetBinContent(i, conv_spline(hist_convol.GetBinCenter(i)) );  
          
     
     
@@ -498,7 +499,7 @@ int main(int argv, char** argc)
     
     size_t TOA_CFD    = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , Vpeak);
     
-    size_t TOA_RM     = tfboost::algo::TimeRefMethod( conv_data_h, time, Vpeak, c.bound_fit, /*noise?*/false ).second ;
+    size_t TOA_RM     = std::get<2>( tfboost::algo::TimeRefMethod( conv_data_h, time, Vpeak, c.RM_delay, c.bound_fit, /*noise?*/false ) ) ;
     
     double dvdt_CFD   = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
     
@@ -525,17 +526,17 @@ int main(int argv, char** argc)
     }
     
 
-    hist_TOA        -> Fill( time[TOA_LE] ); 
-    hist_TOACFD     -> Fill( time[TOA_CFD] ); 
-    hist_TOARM      -> Fill( time[TOA_CFD] ); 
-    hist_Vmax       -> Fill( 1e3 * Vpeak);
-    hist_TimeatVmax -> Fill( time[timeatth_0] );
-    hist_Vth_CFD    -> Fill( 1e3*VonThCFD);
-    hist_Vth_LE     -> Fill( 1e3*VonThLE);
-    hist_Vth_RM     -> Fill( 1e3*VonThRM);
-    hist_dVdt_CFD   -> Fill( 1e-6 * dvdt_CFD/c.dT);
-    hist_dVdt_LE    -> Fill( 1e-6 * dvdt_LE/c.dT);
-    hist_dVdt_RM    -> Fill( 1e-6 * dvdt_RM/c.dT);
+    hist_TOA        .Fill( time[TOA_LE] ); 
+    hist_TOACFD     .Fill( time[TOA_CFD] ); 
+    hist_TOARM      .Fill( time[TOA_CFD] ); 
+    hist_Vmax       .Fill( 1e3 * Vpeak);
+    hist_TimeatVmax .Fill( time[timeatth_0] );
+    hist_Vth_CFD    .Fill( 1e3*VonThCFD);
+    hist_Vth_LE     .Fill( 1e3*VonThLE);
+    hist_Vth_RM     .Fill( 1e3*VonThRM);
+    hist_dVdt_CFD   .Fill( 1e-6 * dvdt_CFD/c.dT);
+    hist_dVdt_LE    .Fill( 1e-6 * dvdt_LE/c.dT);
+    hist_dVdt_RM    .Fill( 1e-6 * dvdt_RM/c.dT);
 
     std::cout << "========================================" << "\n";
     std::cout << "Measurements without noise:             " << "\n";
@@ -566,7 +567,7 @@ int main(int argv, char** argc)
       // initialize measurments
       size_t timeatmax=0, TOA_LE_noise_idx=0, TOA_CFD_noise_idx=0, TOA_RM_noise_idx=0;
       double vmax=0.0, TOA_LE_noise=0.0, TOA_CFD_noise=0.0, TOA_RM_noise=0.0;
-      double VonThCFD_noise=0.0, VonThRM_noise=0.0, VonThLE_noise=0.0;
+      double VonThCFD_noise=0.0, VonThRM_noise=0.0, VonThLE_noise=0.0, VthRMoverVmax=0.0;;
       double dvdt_CFD_noise=0.0, dvdt_LE_noise=0.0;
       
       
@@ -583,7 +584,7 @@ int main(int argv, char** argc)
         // Override all the conv information
         c.Nsamples = conv_data_h.size();
         c.dT = c.sampling_dT;
-        hist_convol->SetBins(c.Nsamples, min, maxplot);
+        hist_convol.SetBins(c.Nsamples, min, maxplot);
       }
       
       
@@ -629,24 +630,26 @@ int main(int argv, char** argc)
           TOA_CFD_noise  = toa.first ;
           dvdt_CFD_noise = toa.second ;
           
-          auto rm           = tfboost::algo::TimeRefMethod( conv_data_h, time, vmax, c.bound_fit, /*noise?*/true );
-          TOA_RM_noise_idx  = rm.second;
-          TOA_RM_noise      = rm.first ;
+          auto rm           = tfboost::algo::TimeRefMethod( conv_data_h, time, vmax, c.RM_delay, c.bound_fit, /*noise?*/true );
+          TOA_RM_noise_idx  = std::get<2>(rm); 
+          TOA_RM_noise      = std::get<0>(rm);
+          VthRMoverVmax     = std::get<1>(rm);
           VonThRM_noise     = conv_data_h[ TOA_RM_noise_idx ];
         }
 
       }
 
 
-      hist_TOALEnoise    -> Fill( TOA_LE_noise );
-      hist_Vth_LE_noise  -> Fill( VonThLE_noise );
-      hist_TOARMnoise    -> Fill( TOA_RM_noise );
-      hist_TOACFDnoise   -> Fill( TOA_CFD_noise );
-      hist_Vmax_noise    -> Fill( vmax );
-      hist_Vth_CFD_noise -> Fill( VonThCFD_noise );
-      hist_Vth_RM_noise  -> Fill( VonThRM_noise );
-      hist_dVdt_CFD_noise ->Fill( 1e-6*dvdt_CFD_noise );
-      hist_dVdt_LE_noise  ->Fill( 1e-6*dvdt_LE_noise );
+      hist_TOALEnoise    .Fill( TOA_LE_noise );
+      hist_Vth_LE_noise  .Fill( VonThLE_noise );
+      hist_TOARMnoise    .Fill( TOA_RM_noise );
+      hist_TOACFDnoise   .Fill( TOA_CFD_noise );
+      hist_Vmax_noise    .Fill( vmax );
+      hist_Vth_CFD_noise .Fill( VonThCFD_noise );
+      hist_Vth_RM_noise  .Fill( VonThRM_noise );
+      hist_VthRMoverVmax .Fill( VthRMoverVmax );
+      hist_dVdt_CFD_noise .Fill( 1e-6*dvdt_CFD_noise );
+      hist_dVdt_LE_noise  .Fill( 1e-6*dvdt_LE_noise );
       
       std::cout << "========================================" << "\n";
       std::cout << "Measurements with noise:                " << "\n";
@@ -664,14 +667,14 @@ int main(int argv, char** argc)
       auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
       if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave)
         for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i)
-          hist_convol->SetBinContent(i, conv_spline(hist_convol->GetBinCenter(i)) ); 
+          hist_convol.SetBinContent(i, conv_spline(hist_convol.GetBinCenter(i)) ); 
 
     }
    
 
     if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave)
        tfboost::SaveConvolutionCanvas(c.OutputDirectory + "plots/", "hist_convol_functor", 
-              *hist_convol, *hist_signal, *hist_kernel);
+              hist_convol, hist_signal, hist_kernel);
 
 
     if(c.SaveConvDataToFile) 
@@ -688,19 +691,19 @@ int main(int argv, char** argc)
   /*-------------------------------------------------
    *  Save all the plots
    *------------------------------------------------*/  
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_LE",  "Time [s]",    "counts", *hist_TOA);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_CFD",   "Time [s]",    "counts", *hist_TOACFD);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_RM",  "Time [s]",    "counts", *hist_TOARM);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_LE",  "Time [s]",    "counts", hist_TOA);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_CFD",   "Time [s]",    "counts", hist_TOACFD);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_RM",  "Time [s]",    "counts", hist_TOARM);
   
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_LE",   "Slope [uV/ps]", "counts", *hist_dVdt_LE);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_CFD",  "Slope [uV/ps]", "counts", *hist_dVdt_CFD);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_RM",  "Slope [uV/ps]", "counts", *hist_dVdt_RM);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_LE",   "Slope [uV/ps]", "counts", hist_dVdt_LE);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_CFD",  "Slope [uV/ps]", "counts", hist_dVdt_CFD);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_RM",  "Slope [uV/ps]", "counts", hist_dVdt_RM);
 
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vmax",    "Voltage [mV]",  "counts", *hist_Vmax);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TimeatVmax","Time [ps]",   "counts", *hist_TimeatVmax);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vth_CFD",   "Voltage [mV]",  "counts", *hist_Vth_CFD);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vth_LE",  "Voltage [mV]",  "counts", *hist_Vth_LE);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vth_RM",  "Voltage [mV]",  "counts", *hist_Vth_RM);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vmax",    "Voltage [mV]",  "counts", hist_Vmax);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TimeatVmax","Time [ps]",   "counts", hist_TimeatVmax);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vth_CFD",   "Voltage [mV]",  "counts", hist_Vth_CFD);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vth_LE",  "Voltage [mV]",  "counts", hist_Vth_LE);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vth_RM",  "Voltage [mV]",  "counts", hist_Vth_RM);
 
 
 
@@ -723,18 +726,19 @@ int main(int argv, char** argc)
    tfboost::SaveCanvasAndFit(c.OutputDirectory + "plots/", "TOA_RMnoise", "Time [s]",  "counts", *hist_TOARMnoise, f2.fun );
     */
 
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_LEnoise", "Voltage [mV]", "counts",  *hist_Vth_LE_noise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_LEnoise",   "Time [s]",   "counts",  *hist_TOALEnoise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_CFDnoise", "Time [s]",  "counts", *hist_TOACFDnoise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_RMnoise",  "Time [s]",   "counts", *hist_TOARMnoise);
+    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_LEnoise", "Voltage [mV]", "counts",  hist_Vth_LE_noise);
+    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_LEnoise",   "Time [s]",   "counts",  hist_TOALEnoise);
+    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_CFDnoise", "Time [s]",  "counts", hist_TOACFDnoise);
+    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_RMnoise",  "Time [s]",   "counts", hist_TOARMnoise);
   
 
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vmax_noise",   "Voltage [mV]", "counts", *hist_Vmax_noise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_CFDnoise", "Voltage [mV]", "counts", *hist_Vth_CFD_noise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_RMnoise", "Voltage [mV]", "counts",  *hist_Vth_RM_noise);
+    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vmax_noise",   "Voltage [mV]", "counts", hist_Vmax_noise);
+    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_CFDnoise", "Voltage [mV]", "counts", hist_Vth_CFD_noise);
+    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_RMnoise", "Voltage [mV]", "counts",  hist_Vth_RM_noise);
+    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "hist_VthRMoverVmax", "Frac. of Vmax", "counts",  hist_VthRMoverVmax);
    
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_CFDnoise", "Slope [uV/ps]", "counts", *hist_dVdt_CFD_noise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_LEnoise",  "Slope [uV/ps]", "counts", *hist_dVdt_LE_noise); 
+    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_CFDnoise", "Slope [uV/ps]", "counts", hist_dVdt_CFD_noise);
+    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_LEnoise",  "Slope [uV/ps]", "counts", hist_dVdt_LE_noise); 
     
   }
 
