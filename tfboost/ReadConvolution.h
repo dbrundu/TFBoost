@@ -27,12 +27,62 @@
  
 #ifndef READ_CONVOLUTION_H_
 #define READ_CONVOLUTION_H_
- 
-    
-#include <tfboost/Utils.h>
 
     
+#include <tfboost/Utils.h>
+#include <tfboost/detail/Traits.h>
+    
+    
 namespace tfboost {
+
+
+namespace detail {
+
+    inline void PushBack_helper(std::vector<double>& cols) {}
+
+    template<typename Iterable, typename ...Iterables>
+    inline void PushBack_helper(std::vector<double>& a, Iterable& first, Iterables&... args){
+    
+        first.push_back( a.back() );
+        if(!a.empty() ) a.pop_back();
+        
+        PushBack_helper(a, args...);
+    }
+
+
+    template<typename ...Iterables, size_t N> 
+    inline typename std::enable_if< N==sizeof...(Iterables) && 
+                             tfboost::detail::all_true<std::is_floating_point<typename Iterables::value_type>::value...>::value, void>::type
+    PushBackTokens(TString const& line,
+                   TString const& token, 
+                   std::array<int,N> const& columns, 
+                   Iterables&... args){
+    
+        TObjArray *tokens = line.Tokenize( token.Data() );
+        
+        size_t Ncolumns = tokens->GetEntriesFast();
+        
+        SAFE_EXIT(Ncolumns < N, "No sufficient columns in file. Exit.")
+        
+        std::vector<double> data(Ncolumns);
+        
+        for(size_t i=0; i<Ncolumns; ++i){
+            TString data_str  = ((TObjString*) tokens->At( i ) )->GetString();
+            data[i] = atof(data_str);
+        }
+        
+        std::reverse(data.begin(), data.end() );
+
+        PushBack_helper(data, args...);
+        
+    }
+    
+} //end detail
+
+
+
+
+
 
 template<typename Iterable>
 void ReadConvolution(TString const& file, Iterable& iterable)
@@ -79,7 +129,12 @@ void ReadConvolution(TString const& file, Iterable& iterable)
 
 
 template<typename Iterable>
-void ReadTF(TString const& file, int Nlinestoskip, Iterable& iterable_t, Iterable& iterable_V, double const& scale = 1.0, bool doublerange=false)
+void ReadTF(TString const& file, 
+            int Nlinestoskip, 
+            Iterable& iterable_t, 
+            Iterable& iterable_V, 
+            double const& scale = 1.0, 
+            bool doublerange=false)
 {
 
         TString line;

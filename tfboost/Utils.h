@@ -72,7 +72,12 @@ if(flag){\
         return val;\
     }
     
-    
+#define CHECK_ERROR(x, message)\
+    if(x) {\
+        std::cout<< "\033[1;33mWarning: \033[0m" << message << "\n";\
+        BaseFitAlgorithm::is_error = true;\
+        return ;\
+    }
     
     
     
@@ -245,26 +250,49 @@ void TFBoostHeader()
 
 
 
-// This is a custom function to extract the hit position
+
+// These are custom functions to extract the hit position
 // information using the TCoDe software for signal inputs
-inline std::pair< int , int > GetHitPosition(TString const& filename)
-{
+namespace tcode {
 
-    size_t i = filename.First("_");
-    size_t k = filename.First(".");
+    inline std::pair< int , int > GetHitPosition(TString const& filename)
+    {
 
-    TString str = (TString) filename(i+1, k-i-1);
-    DEBUG(str)
+        size_t i = filename.First("_");
+        size_t k = filename.First(".");
 
-    int pos  = atoi(str);
+        TString str = (TString) filename(i+1, k-i-1);
+        DEBUG(str)
 
-    int y    = std::floor(pos/56);
-    int x    = pos % 56;
+        int pos  = atoi(str);
 
-    return std::pair<int,int>(x,y); 
+        int y    = std::floor(pos/56);
+        int x    = pos % 56;
 
-}
+        return std::pair<int,int>(x,y); 
 
+    }
+
+    inline std::pair< double , double > GetHitPosition2(TString const& filename)
+    {
+
+        TObjArray *tokens = filename.Tokenize( "_" );
+        
+        TString x_str  = ((TObjString*) tokens->At( 1 ) )->GetString();
+        TString y_str  = ((TObjString*) tokens->At( 2 ) )->GetString();
+        
+        y_str = y_str(0, y_str.Length()-4 );
+        
+        DEBUG(x_str)
+        DEBUG(y_str)
+
+
+        return std::pair<double,double>( atof(x_str) , atof(y_str) ); 
+
+    }
+
+} //namespace tcode
+    
 } //namespace tfboost
     
     

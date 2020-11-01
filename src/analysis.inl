@@ -37,7 +37,10 @@
 #include <time.h>
 #include <chrono>
 #include <vector>
+#include <unistd.h>
+#include <csignal>
 
+ 
 // HYDRA
 #include <hydra/Function.h>
 #include <hydra/GaussKronrodQuadrature.h>
@@ -88,6 +91,7 @@
 #include <TStyle.h>
 #include <TRandom3.h>
 #include <TLine.h>
+#include <TMultiGraph.h>
 
 // OTHERs
 #include <tclap/CmdLine.h>
@@ -115,11 +119,13 @@ namespace libconf = libconfig;
 
 
 
+
 int main(int argv, char** argc)
 {
   tfboost::TFBoostHeader();
 
   std::cout.precision(10);
+
   
   /* ----------------------------------------------
    * Get Configuration
@@ -133,6 +139,9 @@ int main(int argv, char** argc)
   
   tfboost::ConfigParser    c(cfg_root);
   tfboost::HistConfigParser  hc(cfg_root);
+  
+  size_t us_delay = 1e3 * c.DelayMonitoring;
+  bool dodelay = (us_delay!=0);
   
   
   /* ----------------------------------------------
@@ -189,8 +198,8 @@ int main(int argv, char** argc)
   TH1D hist_signal("hist_signal;Time[s];Vout [V]","hist_signal", c.Nsamples, minplot, maxplot );
   TH1D hist_kernel("hist_kernel;Time[s];Vout [V]","hist_kernel", c.Nsamples/30, minplot, maxplot );
 
-  //TH2D *TOAmaps        = new TH2D("TOAmaps;Y;X","TOAmaps", 200, 0, 200, 56, 0, 56);
-  //TH2D *Vmaxmaps       = new TH2D("Vmaxmaps;Y;X","Vmaxmaps", 200, 0, 200, 56, 0, 56);
+  //TH2D *TOAmaps   = new TH2D("TOAmaps","TOAmaps", 56, 0, 56, 56, 0, 56);
+  //TH2D *Vmaxmaps  = new TH2D("Vmaxmaps","Vmaxmaps", 56, 0, 56, 56, 0, 56);
 
   
   /* ----------------------------------------------
@@ -233,6 +242,7 @@ int main(int argv, char** argc)
     
     currentfilename = currentfile->GetName();
     if(c.UseSameCurve) currentfilename = c.SingleFile;
+
     
     if ( currentfile->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension) ) continue;
     
@@ -262,9 +272,11 @@ int main(int argv, char** argc)
       current.push_back(0.0);
     }
     
-    //std::pair<double,double> pos = tfboost::GetHitPosition(currentfilename);
-    //int pos_x = pos.first;
-    //int pos_y = pos.second;
+//    std::pair<double,double> pos = tfboost::GetHitPosition2(currentfilename);
+//    double pos_x = pos.first;
+//    double pos_y = pos.second;
+
+    //if(pos_y<56) continue;
 
     std::ifstream myFile( (c.InputDirectory+currentfilename).Data() );
     
@@ -285,6 +297,7 @@ int main(int argv, char** argc)
         if (!myFile.good()) break;
       
         TObjArray *tokens = line.Tokenize( c.token.Data() );
+        //DEBUG("ARRAY1: " << tokens->GetEntriesFast() )
       
         TString data_str  = ((TObjString*) tokens->At( c.column ) )->GetString();
         if(data_str == "0" && s==c.offset) continue; //to avoid misaligned TCoDe input files 
@@ -485,8 +498,6 @@ int main(int argv, char** argc)
     if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_nonoise) ==  conv_data_h.size() ) 
     { 
       WARNING_LINE("Skipping empty event...")
-      //TOAmaps->SetBinContent( pos_y+1, pos_x+1, 0.0 ); 
-      //Vmaxmaps->SetBinContent( pos_y+1, pos_x+1, 0.0 );
       continue;
     }
 
@@ -499,7 +510,9 @@ int main(int argv, char** argc)
     
     size_t TOA_CFD    = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , Vpeak);
     
-    size_t TOA_RM     = std::get<2>( tfboost::algo::TimeRefMethod( conv_data_h, time, Vpeak, c.RM_delay, c.bound_fit, /*noise?*/false ) ) ;
+    size_t TOA_RM     = std::get<2>( tfboost::algo::TimeRefMethod( conv_data_h, 
+                                                                  time, Vpeak, c.RM_delay, c.bound_fit,
+                                                                   /*noise?*/false, /*plot?*/false ) ) ;
     
     double dvdt_CFD   = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
     
@@ -513,7 +526,7 @@ int main(int argv, char** argc)
     
     double VonThRM    = conv_data_h[TOA_RM];
 
-    //TOAmaps->SetBinContent( pos_y+1, pos_x+1, (double)dT*TOA_CFD );
+    //TOAmaps->SetBinContent( pos_y+1, pos_x+1, ::abs(time[TOA_CFD]-0.2432374637e-9)/7.47e-11 );
     //Vmaxmaps->SetBinContent( pos_y+1, pos_x+1, 1e3 * Vpeak );
  
     
@@ -528,7 +541,7 @@ int main(int argv, char** argc)
 
     hist_TOA        .Fill( time[TOA_LE] ); 
     hist_TOACFD     .Fill( time[TOA_CFD] ); 
-    hist_TOARM      .Fill( time[TOA_CFD] ); 
+    hist_TOARM      .Fill( time[TOA_RM] ); 
     hist_Vmax       .Fill( 1e3 * Vpeak);
     hist_TimeatVmax .Fill( time[timeatth_0] );
     hist_Vth_CFD    .Fill( 1e3*VonThCFD);
@@ -606,7 +619,7 @@ int main(int argv, char** argc)
       
       if(c.MakeLinearFitNearThreshold && TOA_LE>1)
       {
-        auto toa      = tfboost::algo::LinearFitNearThr( c.LEthr, conv_data_h, time, c.bound_fit );
+        auto toa      = tfboost::algo::LinearFitNearThr( c.LEthr, conv_data_h, time, c.bound_fit, c.PlotLinFit, "LEfit");
         TOA_LE_noise  = toa.first ;
         dvdt_LE_noise = toa.second ;
       }
@@ -616,7 +629,7 @@ int main(int argv, char** argc)
       if(c.MakeGaussianFitNearVmax && TOA_CFD>1)
       {
 
-        auto gfit = tfboost::algo::GaussianFitNearVmax( conv_data_h, time, c.bound_fit );
+        auto gfit = tfboost::algo::GaussianFitNearVmax( conv_data_h, time, c.bound_fit, c.PlotGausFit );
         vmax      = gfit.first ;
         timeatmax = gfit.second ;
 
@@ -626,11 +639,15 @@ int main(int argv, char** argc)
 
         if(c.MakeLinearFitNearThreshold && TOA_LE>1)
         {
-          auto toa       = tfboost::algo::LinearFitNearThr( c.CFD_fr*vmax, conv_data_h, time, c.bound_fit, /*plot?*/ false );
+          auto toa       = tfboost::algo::LinearFitNearThr( c.CFD_fr*vmax, 
+                                                            conv_data_h, time, c.bound_fit, 
+                                                            /*plot?*/c.PlotLinFit, "CFDfit");
           TOA_CFD_noise  = toa.first ;
           dvdt_CFD_noise = toa.second ;
           
-          auto rm           = tfboost::algo::TimeRefMethod( conv_data_h, time, vmax, c.RM_delay, c.bound_fit, /*noise?*/true );
+          auto rm           = tfboost::algo::TimeRefMethod( conv_data_h, time, 
+                                                            vmax, c.RM_delay, c.bound_fit, 
+                                                            /*noise?*/true, /*plot?*/c.PlotRMfit);
           TOA_RM_noise_idx  = std::get<2>(rm); 
           TOA_RM_noise      = std::get<0>(rm);
           VthRMoverVmax     = std::get<1>(rm);
@@ -639,6 +656,7 @@ int main(int argv, char** argc)
 
       }
 
+      //if(TOA_RM_noise<0 || TOA_CFD_noise<0) continue;
 
       hist_TOALEnoise    .Fill( TOA_LE_noise );
       hist_Vth_LE_noise  .Fill( VonThLE_noise );
@@ -650,6 +668,9 @@ int main(int argv, char** argc)
       hist_VthRMoverVmax .Fill( VthRMoverVmax );
       hist_dVdt_CFD_noise .Fill( 1e-6*dvdt_CFD_noise );
       hist_dVdt_LE_noise  .Fill( 1e-6*dvdt_LE_noise );
+      
+      //TOAmaps->SetBinContent( TOAmaps->FindBin( pos_x, pos_y), TOA_CFD_noise ); 
+      //Vmaxmaps->SetBinContent( Vmaxmaps->FindBin( pos_x, pos_y), vmax ); 
       
       std::cout << "========================================" << "\n";
       std::cout << "Measurements with noise:                " << "\n";
@@ -682,7 +703,9 @@ int main(int argv, char** argc)
                               c.OutputDirectory + "data/" +currentfilename );
 
     
-
+    if(dodelay) usleep(us_delay);
+  
+  
   }//end loop on files
   
 
@@ -694,6 +717,12 @@ int main(int argv, char** argc)
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_LE",  "Time [s]",    "counts", hist_TOA);
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_CFD",   "Time [s]",    "counts", hist_TOACFD);
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_RM",  "Time [s]",    "counts", hist_TOARM);
+  
+  tfboost::algo::BestTimeInterval rm0(&hist_TOARM);
+  DEBUG( rm0(0.68) )
+  
+  tfboost::algo::BestTimeInterval cfd0(&hist_TOACFD);
+  DEBUG( cfd0(0.68) )
   
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_LE",   "Slope [uV/ps]", "counts", hist_dVdt_LE);
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_CFD",  "Slope [uV/ps]", "counts", hist_dVdt_CFD);
@@ -763,14 +792,21 @@ int main(int argv, char** argc)
 
   /*
   gStyle->SetOptStat(0);
+  gStyle->SetPalette(kRainBow);
 
-  TCanvas canv_TOAmaps("canv_TOAmaps", "canv_TOAmaps", 4*200, 4*56);
+  TCanvas canv_TOAmaps("canv_TOAmaps", "canv_TOAmaps", 4*200, 4*200);
+  TOAmaps->SetMinimum(0.15e-9);
+  TOAmaps->SetMaximum(0.5e-9);
+  //TOAmaps->SetMinimum(0.0);
   TOAmaps->Draw("colz");
-  canv_TOAmaps.SaveAs("canv_TOAmaps.pdf");
+  canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.pdf");
+    canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.C");
 
-  TCanvas canv_Vmaxmaps("canv_Vmaxmaps", "canv_Vmaxmaps", 4*200, 4*56);
+  TCanvas canv_Vmaxmaps("canv_Vmaxmaps", "canv_Vmaxmaps", 4*200, 4*200);
+  //Vmaxmaps->SetMinimum(TOAmaps->GetMinimum(0.));
+    Vmaxmaps->SetMinimum(0.0);
   Vmaxmaps->Draw("colz");
-  canv_Vmaxmaps.SaveAs("canv_Vmaxmaps.pdf");
+  canv_Vmaxmaps.SaveAs( c.OutputDirectory + "plots/" +"canv_Vmaxmaps.pdf");
   */
 
   return 0;

@@ -66,6 +66,11 @@ struct ConfigParser
         MakeDigitization             = (bool) cfg_root["MakeDigitization"];
         randomphase                  = (bool) cfg_root["randomphase"];
         TimeReferenceResolution      = (bool) cfg_root["TimeReferenceResolution"];
+        
+        PlotRMfit                    = (bool) cfg_root["PlotRMfit"];
+        PlotLinFit                   = (bool) cfg_root["PlotLinFit"];
+        PlotGausFit                  = (bool) cfg_root["PlotGausFit"];
+        DelayMonitoring              = (int)  cfg_root["DelayMonitoring"];
 
         LE_reject_nonoise  = (double) cfg_root["LE_reject_nonoise"];
         LE_reject_noise    = (double) cfg_root["LE_reject_noise"]; 
@@ -110,10 +115,11 @@ struct ConfigParser
     bool LandauFluctuation, MakeConvolution, SaveSinglePlotConvolution;
     bool SaveConvDataToFile, MakeLinearFitNearThreshold, MakeGaussianFitNearVmax, TimeReferenceResolution;
     bool AddNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeDigitization, randomphase;
+    bool PlotRMfit, PlotLinFit, PlotGausFit;
     
     int column, ID, Nbins;
     
-    size_t offset, NlinesToSkip, IdxConvtoSave, Nfiles, Nsamples, bound_fit;
+    size_t offset, NlinesToSkip, IdxConvtoSave, Nfiles, Nsamples, bound_fit, DelayMonitoring;
     
     double dT, LEthr, CFD_fr, sigma_noise, r_rednoise, sampling_dT, LE_reject_nonoise, LE_reject_noise, RM_delay;
     double minplot, maxplot;
