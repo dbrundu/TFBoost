@@ -78,9 +78,11 @@
 #include <TSystem.h>
 #include <TFile.h>
 #include <TGraph.h>
+#include <TMultiGraph.h>
 #include <TIterator.h>
 #include <TString.h>
 #include <TDirectory.h>
+#include <TLine.h>
 #include <TObjArray.h>
 #include <TObjString.h>
 #include <TFitResultPtr.h>
@@ -262,11 +264,11 @@ int main(int argv, char** argc)
 
   auto kernel = hydra::make_spiline<double>(time2, voltage2);
         
-  conv_data_h = tfboost::Do_DeConvolution(fft_backend, kernel, signal, min, max, Nsamples);
+  tfboost::Do_DeConvolution(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
   
   if(filter){
     auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
-    conv_data_h    = tfboost::Do_Convolution(fft_backend, flt, conv_temp, min, max, Nsamples);
+    tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, Nsamples);
   }
 
   auto conv = hydra::make_spiline<double>(time, conv_data_h);

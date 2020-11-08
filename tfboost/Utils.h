@@ -83,8 +83,8 @@ if(flag){\
     
 namespace tfboost {
 
-
-void SaveCanvas(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, TH1D& hist)
+template<typename HIST>
+void SaveCanvas(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, HIST& hist, const char* opt="")
 {
     TCanvas canv(title, title, 800,800);
     hist.SetLineWidth(2);
@@ -92,26 +92,13 @@ void SaveCanvas(TString const& directory, TString const& title, TString const& x
     hist.GetYaxis()->SetTitle(ytitle);
     hist.GetYaxis()->SetLabelSize(0.03);
     hist.GetYaxis()->SetTitleOffset(1.5);
-    hist.Draw();
+    hist.Draw(opt);
     canv.SaveAs( directory+title+TString(".pdf") );
     canv.SaveAs( directory+title+TString(".C") );
 }
 
 
-void SaveCanvas(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, TH2D& hist)
-{
-    TCanvas canv(title, title, 800,800);
-    hist.SetLineWidth(2);
-    hist.GetXaxis()->SetTitle(xtitle);
-    hist.GetYaxis()->SetTitle(ytitle);
-    hist.GetYaxis()->SetLabelSize(0.03);
-    hist.GetYaxis()->SetTitleOffset(1.5);
-    hist.Draw("colz");
-    canv.SaveAs( directory+title+TString(".pdf") );
-    canv.SaveAs( directory+title+TString(".C") );
-}
-
-
+template<typename HIST>
 void SaveCanvasAndFit(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, TH1D& hist, TF1* tf1)
 {
     TCanvas canv(title, title, 800,800);
@@ -167,10 +154,10 @@ void SaveConvolutionCanvas(TString const& directory, TString const& title,
     hist_convol.SetLineColor(1);
     hist_convol.Draw("same");
 
-    //canvas.SaveAs(c.OutputDirectory + "plots/hist_convol_functor.pdf");
     canvas.SaveAs( directory+title+TString(".pdf") );
 
 }
+
 
 
 size_t upper_power_of_two(size_t v)
@@ -199,8 +186,8 @@ TList* GetFileList(TString dirname_string)
     }
 
     return dir.GetListOfFiles();
-
 }
+
 
 
 template<typename Iterable, typename Iterable_t>
@@ -217,11 +204,12 @@ void SaveConvToFile(Iterable const& data, Iterable_t const& time, double dT, TSt
     size_t k = it - data.begin();
     double vmax = data[k];
 
-    for (size_t i=0; i<data.size(); ++i) outdata << time[i] << " " << data[i] << " " << vmax <<  std::endl;
+    for (size_t i=0; i<data.size(); ++i) 
+        outdata << time[i] << " " << data[i] << " " << vmax <<  std::endl;
+    
     outdata.close();
- 
-    return;
 }
+
 
 
 void CreateDirectories(TString path)
@@ -249,50 +237,6 @@ void TFBoostHeader()
 }
 
 
-
-
-// These are custom functions to extract the hit position
-// information using the TCoDe software for signal inputs
-namespace tcode {
-
-    inline std::pair< int , int > GetHitPosition(TString const& filename)
-    {
-
-        size_t i = filename.First("_");
-        size_t k = filename.First(".");
-
-        TString str = (TString) filename(i+1, k-i-1);
-        DEBUG(str)
-
-        int pos  = atoi(str);
-
-        int y    = std::floor(pos/56);
-        int x    = pos % 56;
-
-        return std::pair<int,int>(x,y); 
-
-    }
-
-    inline std::pair< double , double > GetHitPosition2(TString const& filename)
-    {
-
-        TObjArray *tokens = filename.Tokenize( "_" );
-        
-        TString x_str  = ((TObjString*) tokens->At( 1 ) )->GetString();
-        TString y_str  = ((TObjString*) tokens->At( 2 ) )->GetString();
-        
-        y_str = y_str(0, y_str.Length()-4 );
-        
-        DEBUG(x_str)
-        DEBUG(y_str)
-
-
-        return std::pair<double,double>( atof(x_str) , atof(y_str) ); 
-
-    }
-
-} //namespace tcode
-    
 } //namespace tfboost
     
     

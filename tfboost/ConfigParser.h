@@ -66,14 +66,17 @@ struct ConfigParser
         MakeDigitization             = (bool) cfg_root["MakeDigitization"];
         randomphase                  = (bool) cfg_root["randomphase"];
         TimeReferenceResolution      = (bool) cfg_root["TimeReferenceResolution"];
+        TOTcorrection                = (bool) cfg_root["TOTcorrection"];
         
         PlotRMfit                    = (bool) cfg_root["PlotRMfit"];
         PlotLinFit                   = (bool) cfg_root["PlotLinFit"];
         PlotGausFit                  = (bool) cfg_root["PlotGausFit"];
         DelayMonitoring              = (int)  cfg_root["DelayMonitoring"];
 
-        LE_reject_nonoise  = (double) cfg_root["LE_reject_nonoise"];
-        LE_reject_noise    = (double) cfg_root["LE_reject_noise"]; 
+        TOT_a                      = (double) cfg_root["TOT_a"];
+        TOT_b                      = (double) cfg_root["TOT_b"];
+        LE_reject_nonoise          = (double) cfg_root["LE_reject_nonoise"];
+        LE_reject_noise            = (double) cfg_root["LE_reject_noise"]; 
 
         const libconfig::Setting& cfg_tf  = cfg_root[TransferFunction];
 
@@ -114,7 +117,7 @@ struct ConfigParser
 
     bool LandauFluctuation, MakeConvolution, SaveSinglePlotConvolution;
     bool SaveConvDataToFile, MakeLinearFitNearThreshold, MakeGaussianFitNearVmax, TimeReferenceResolution;
-    bool AddNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeDigitization, randomphase;
+    bool AddNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeDigitization, randomphase, TOTcorrection;
     bool PlotRMfit, PlotLinFit, PlotGausFit;
     
     int column, ID, Nbins;
@@ -122,7 +125,7 @@ struct ConfigParser
     size_t offset, NlinesToSkip, IdxConvtoSave, Nfiles, Nsamples, bound_fit, DelayMonitoring;
     
     double dT, LEthr, CFD_fr, sigma_noise, r_rednoise, sampling_dT, LE_reject_nonoise, LE_reject_noise, RM_delay;
-    double minplot, maxplot;
+    double minplot, maxplot, TOT_a, TOT_b;
     
     
     
@@ -243,12 +246,12 @@ struct HistConfigParser
     VthRMoverVmax_min = (double) cfg_tf["VthRMoverVmax_min"];
     VthRMoverVmax_max = (double) cfg_tf["VthRMoverVmax_max"];   
     VthRMoverVmax_Nbins = (int) cfg_tf["VthRMoverVmax_Nbins"];
-
-        
-
-
-    }
     
+    TOT_min = (double) cfg_tf["TOT_min"];
+    TOT_max = (double) cfg_tf["TOT_max"];
+    TOT_Nbins = (int) cfg_tf["TOT_Nbins"];
+    
+    }
 
 
 
@@ -293,7 +296,9 @@ struct HistConfigParser
         dVdt_LE_noise_min,
         dVdt_LE_noise_max,
         VthRMoverVmax_min,
-        VthRMoverVmax_max;
+        VthRMoverVmax_max,
+        TOT_min,
+        TOT_max;
 
     int  TOALE_Nbins, TOACFD_Nbins, TOARM_Nbins, TOACFDnoise_Nbins, 
         TOALEnoise_Nbins,
@@ -312,7 +317,8 @@ struct HistConfigParser
         dVdt_RM_Nbins,
         dVdt_CFD_noise_Nbins,
         dVdt_LE_noise_Nbins,
-        VthRMoverVmax_Nbins;
+        VthRMoverVmax_Nbins,
+        TOT_Nbins;
 
 
 };

@@ -38,15 +38,15 @@ namespace tfboost {
 
 namespace detail {
 
-    inline void PushBack_helper(std::vector<double>& cols) {}
+    inline void PushBack_helper(std::vector<double>& data) {}
 
     template<typename Iterable, typename ...Iterables>
-    inline void PushBack_helper(std::vector<double>& a, Iterable& first, Iterables&... args){
-    
-        first.push_back( a.back() );
-        if(!a.empty() ) a.pop_back();
+    inline void PushBack_helper(std::vector<double>& data, Iterable& first, Iterables&... args)
+    {
+        first.push_back( data.back() );
+        if(!data.empty()) data.pop_back();
         
-        PushBack_helper(a, args...);
+        PushBack_helper(data, args...);
     }
 
 
@@ -56,25 +56,55 @@ namespace detail {
     PushBackTokens(TString const& line,
                    TString const& token, 
                    std::array<int,N> const& columns, 
-                   Iterables&... args){
-    
+                   Iterables&... args)
+    {
         TObjArray *tokens = line.Tokenize( token.Data() );
         
         size_t Ncolumns = tokens->GetEntriesFast();
         
         SAFE_EXIT(Ncolumns < N, "No sufficient columns in file. Exit.")
         
-        std::vector<double> data(Ncolumns);
+        for(auto k : columns) { 
+            SAFE_EXIT(Ncolumns < (size_t)k, "Requested to read a column not present in file. Exit.") }
         
-        for(size_t i=0; i<Ncolumns; ++i){
-            TString data_str  = ((TObjString*) tokens->At( i ) )->GetString();
-            data[i] = atof(data_str);
-        }
+        std::vector<double> data(N);
+        
+        for(size_t i=0; i<N; ++i){
+            int col = columns[i];
+            TString data_str  = ((TObjString*) tokens->At( col ) )->GetString();
+            data[i] = atof(data_str); }
         
         std::reverse(data.begin(), data.end() );
 
         PushBack_helper(data, args...);
         
+        tokens->Delete();
+        delete tokens;
+    }
+    
+    
+    
+    template<typename Iterable> 
+    inline typename std::enable_if< std::is_floating_point<typename Iterable::value_type>::value, void>::type
+    PushBackTokens(TString const& line,
+                   TString const& token, 
+                   int const& column, 
+                   Iterable& arg)
+    {
+        TObjArray *tokens = line.Tokenize( token.Data() );
+        
+        size_t Ncolumns = tokens->GetEntriesFast();
+        
+        SAFE_EXIT(Ncolumns < 1, "No sufficient columns in file. Exit.")
+        SAFE_EXIT(Ncolumns < (size_t)column, "Requested to read a column not present in file. Exit.") 
+        
+        TString data_str  = ((TObjString*) tokens->At( column ) )->GetString();
+        double data = atof(data_str); 
+        
+        arg.push_back(data);
+        
+        tokens->Delete();
+        delete tokens;
     }
     
 } //end detail
@@ -85,43 +115,29 @@ namespace detail {
 
 
 template<typename Iterable>
-void ReadConvolution(TString const& file, Iterable& iterable)
+void ReadConvolution(TString const& file, Iterable& iterable, size_t const& Nsamples)
 {
-        size_t Nsamples = iterable.size();
+        //size_t Nsamples = iterable.size();
+        iterable.reserve(Nsamples);
+        
         TString line;
         std::ifstream myFile( file.Data() );
+        
+        SAFE_EXIT(!myFile.is_open(), "Input file cannot be open.")
+                
         line.ReadLine(myFile);
-        size_t k = 0;
-
-        if (myFile.is_open()) 
-        {
-            for(size_t j = 0; j < Nsamples ; ++j)
-            {
-                k = j;
-
-                line.ReadLine(myFile);
-                if (!myFile.good()) break;
-            
-                TObjArray *tokens = line.Tokenize( " " );
-            
-                TString data_str  = ((TObjString*) tokens->At( 1 ) )->GetString();
-                
-                const double data = atof(data_str);
-
-                iterable[j] = data;
-                
-                tokens->Delete();
-                delete tokens;
-            }
-        }  else { SAFE_EXIT(true, "Input file cannot be open.") }
+        
+        while(myFile.good()) {
+            detail::PushBackTokens(line, " ", 1, iterable);
+            line.ReadLine(myFile); }
+        
         myFile.close();
-
-        const size_t diff = Nsamples - k - 1;
-        if(diff>0)
-        {
-            for(size_t j = k; j < Nsamples; ++j) 
-                iterable[j] = 0.0;
-        }
+        
+        size_t diff = Nsamples - iterable.size();
+        
+        if(diff>0) 
+          for(size_t j = iterable.size(); j < Nsamples; ++j)
+            iterable.push_back(0.0);
 }
 
 
@@ -136,59 +152,37 @@ void ReadTF(TString const& file,
             double const& scale = 1.0, 
             bool doublerange=false)
 {
+        Iterable iterable_t_temp, iterable_V_temp;
+        std::array<int,2> columns = {0,1};
 
         TString line;
         std::ifstream myFile( file.Data() );
-        line.ReadLine(myFile);
-        size_t k = 0;
-        double dT = 0.0;
-        double time0 = 0.0;
+        
+        SAFE_EXIT(!myFile.is_open(), "In ReadTF(): Input file cannot be open.")
+        
+        for(size_t i=0; i<(size_t)Nlinestoskip+1; ++i) line.ReadLine(myFile);
+        
+        while(myFile.good()) {
+            detail::PushBackTokens(line, " ", columns, iterable_t_temp, iterable_V_temp);
+            line.ReadLine(myFile); }
+            
+        myFile.close();
+        
+        if(scale!=1.0) 
+            for(auto& x : iterable_V_temp) x *= scale;
 
-        
-        Iterable iterable_t_temp, iterable_V_temp;
+        double dT = iterable_t_temp[1] - iterable_t_temp[0];
 
-        if (myFile.is_open()) 
-        {
-        
-            for(size_t i=0; i<(size_t)Nlinestoskip; ++i) line.ReadLine(myFile);
-            
-            while(1)
-            {
-                line.ReadLine(myFile);
-                if (!myFile.good()) break;
-            
-                TObjArray *tokens = line.Tokenize( " " );
-            
-                TString time_str  = ((TObjString*) tokens->At( 0 ) )->GetString();
-                TString data_str  = ((TObjString*) tokens->At( 1 ) )->GetString();
-                
-                const double time = atof(time_str);
-                const double data = scale*atof(data_str);
-                
-                //if(k==0) time0 = time;
-                if(k==1) dT = time - iterable_t_temp[0];
-                
-                iterable_t_temp.push_back(time - time0);
-                iterable_V_temp.push_back(data);
-                
-                tokens->Delete();
-                delete tokens;
-                ++k;
-                
-            }
-            
-        } else { SAFE_EXIT(true, "In ReadTF(): Input file cannot be open.") }
-        
-        
         
         if(doublerange){
         
             double last_t = iterable_t_temp.back();
             
+            // a small buffer befor doubling the range
+            // in order to help the future spline
             for(size_t i=0; i<100; ++i ){
                 iterable_t_temp.push_back( last_t + i*dT );
-                iterable_V_temp.push_back(0.0);
-            } 
+                iterable_V_temp.push_back(0.0); } 
         
             Iterable time_rev(iterable_t_temp.size());
             Iterable V_rev(iterable_V_temp.size(), 0.0);
@@ -212,7 +206,7 @@ void ReadTF(TString const& file,
         
         }
 
-        myFile.close();
+
 
 }
 

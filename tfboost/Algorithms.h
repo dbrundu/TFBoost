@@ -58,6 +58,7 @@ inline size_t LeadingEdge(Iterable const& vout, double const& Vthr)
 }
 
 
+
 /*
  * Constant fraction discrimination
  * applies the LE algorithm at the threshold
@@ -79,7 +80,7 @@ inline size_t ConstantFraction(Iterable const& vout, double const& fraction, dou
  * If not found returns 0
  */
 template<typename Iterable>
-inline size_t TimeOverThr(Iterable vout, double const& Vthr1, double const& Vthr2)
+inline double TimeOverThr(Iterable vout, Iterable const& time, double const& Vthr1, double const& Vthr2)
 {
 
     size_t t1 = LeadingEdge(vout , Vthr1);
@@ -90,9 +91,10 @@ inline size_t TimeOverThr(Iterable vout, double const& Vthr1, double const& Vthr
     
     ERROR_RETURN( t1==vout.size() || t2==vout.size(), 
                   "In TimeOverThr: no element found.", vout.size() )
-    return  t2 - t1;
-    
+                  
+    return  time[t2] - time[t1];
 }
+
 
 
 /*
@@ -110,6 +112,7 @@ inline size_t GetTimeAtPeak(Iterable const& vout)
     
     return i ;
 }
+
 
 
 
@@ -149,6 +152,27 @@ inline double SlopeOnThrs(Iterable const& vout, size_t const& Tth)
 
 
 /*
+ * Correct the TOA based on the TOT measurements
+ */
+struct CorrectTOA {
+
+    // 1.13822e+06 , -0.166281
+    CorrectTOA() : m_a(0.0), m_b(0.0) { }
+    
+    CorrectTOA(double a, double b) : m_a(a), m_b(b) { }
+    
+    inline double operator()(double const& tot){
+        double x = -m_b/(2.*m_a);
+        return ( m_a * ( tot + x)  + m_b ) * (tot - x);
+    }
+    
+    double m_a, m_b;
+};
+
+
+
+
+/*
  * Functor to compute the slope of a noisy signal
  * at a specific position
  * A linear fit in the region near the specified position
@@ -173,7 +197,6 @@ inline pairDD_type LinearFitNearThr(double const& Thr,
             
     TGraph graph;
     
-    #pragma unroll
     for(size_t i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , data[i]);
 
@@ -218,7 +241,6 @@ inline pairDD_type GaussianFitNearVmax(Iterable const& data,
             
     TGraph graph;
     
-    #pragma unroll
     for(size_t i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , data[i]);
     
@@ -268,7 +290,6 @@ inline tripletDDS_type TimeRefMethod(Iterable const& vout,
     ERROR_RETURN( delay == 0, 
                  "Error in TimeRefMethod() [delay == 0], Exit with (-1,0)", tripletDDS_type(-1.0, -1.0, 0) )
 
-    
     signal_type_h subtr( N );
 
     // subtract the delayed signal
@@ -293,7 +314,6 @@ inline tripletDDS_type TimeRefMethod(Iterable const& vout,
     // of the subtracted signal
     TGraph graph;
     
-    #pragma unroll
     for(int i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , subtr[i]);
         
@@ -308,14 +328,15 @@ inline tripletDDS_type TimeRefMethod(Iterable const& vout,
     
     if(plot)
     {
+        TMultiGraph mg;
         TGraph graph2, graph3;
+        
         for(size_t i=0; i<subtr.size(); ++i){
             graph2.SetPoint(graph2.GetN(), time[i] , subtr[i]);
-            graph3.SetPoint(graph3.GetN(), time[i] , vout[i]);
-        }
+            graph3.SetPoint(graph3.GetN(), time[i] , vout[i]);}
+        
         TCanvas p2("","",800,800);
         graph3.SetLineColor(kRed);
-        TMultiGraph mg;
         mg.Add(&graph2,"lp");
         mg.Add(&graph3,"cp");
         mg.Draw("a");
@@ -361,14 +382,17 @@ inline void DoDigitization(Iterable& data,
     double offset = rndmphase? uniDist(rng) * dT : 0 ;
     
     size_t Nsamples = Tmax/dT;
+    
+    data.reserve(Nsamples);
+    time.reserve(Nsamples);
 
     data.push_back( 0.0 ); 
     time.push_back( 0.0 );
     
     for(size_t i=1; i<Nsamples; ++i){
-        data.push_back( signal(offset + i*dT) ); 
-        time.push_back( offset + i*dT );
-    }
+        double t = offset + i*dT;
+        data.push_back( signal(t) ); 
+        time.push_back( t ); }
 }
 
 
@@ -389,24 +413,21 @@ inline void DigitizeSignal(Iterable& data,
     signal_type_h conv_dig;  
     signal_type_h time_dig; 
 
-    //time and conv_data_h are the not digitized ones
+    //time and data are the not digitized ones
     auto conv_spline = hydra::make_spiline<double>(time, data );
 
     tfboost::algo::DoDigitization(conv_dig, time_dig, 
                                 conv_spline, dT, Tmax, rng, rndmphase);
                                 
-    SAFE_EXIT( conv_dig.size() > data.size(), "In DigitizeSignal: requested an oversamplig. Not yet implemented")
+    //SAFE_EXIT( conv_dig.size() > data.size(), "In DigitizeSignal: requested an oversamplig. Not yet implemented")
 
     // override time and conv_data containers
-    data.erase(data.begin() + conv_dig.size(), data.end());
-    time.erase(time.begin() + time_dig.size(), time.end());
+    data.resize(conv_dig.size());
+    time.resize(time_dig.size());
     hydra::copy(conv_dig , data);
     hydra::copy(time_dig , time);
 
 }
-
-
-
 
 
 

@@ -60,51 +60,47 @@
 namespace tfboost {
 
 
-template<typename KERNEL, typename FFT_BACKEND, typename SIGNAL>
-hydra::host::vector<double> Do_Convolution(FFT_BACKEND fft_backend, 
-                                           KERNEL const& kernel, 
-                                           SIGNAL const& signal, 
-                                           double const& min,
-                                           double const& max,
-                                           size_t const& N)
+template<typename FFT_BACKEND, typename KERNEL, typename SIGNAL, typename DATA>
+inline void Do_Convolution(FFT_BACKEND fft_backend, 
+                           KERNEL const& kernel, 
+                           SIGNAL const& signal,
+                           DATA& data, 
+                           double const& min,
+                           double const& max,
+                           size_t const& N)
 {
-        hydra::host::vector<double >  conv_data_h(N);
+        SAFE_EXIT( data.size() != N, "In Do_Convolution(): wrong size of data container.")
        
         auto convolution = hydra::make_convolution<double>(  hydra::device::sys,  fft_backend, signal, kernel, min, max,  N, true, true );
 
         auto conv_data    = hydra::make_range(convolution.GetDeviceData(), convolution.GetDeviceData()+N);
         
-        hydra::copy(conv_data, conv_data_h);
+        hydra::copy(conv_data, data);
         
         convolution.Dispose();
-
-        return conv_data_h;
 
 }
 
 
 
-template<typename CONVOL, typename FFT_BACKEND, typename SIGNAL>
-hydra::host::vector<double> Do_DeConvolution(FFT_BACKEND fft_backend, 
-                                           CONVOL const& conv, 
-                                           SIGNAL const& signal, 
-                                           double const& min,
-                                           double const& max,
-                                           size_t const& N)
+template<typename FFT_BACKEND, typename CONVOL, typename SIGNAL, typename DATA>
+inline void Do_DeConvolution(FFT_BACKEND fft_backend, 
+                           CONVOL const& conv, 
+                           SIGNAL const& signal, 
+                           DATA& data, 
+                           double const& min,
+                           double const& max,
+                           size_t const& N)
 {
-
-        hydra::host::vector<double >  conv_data_h(N);
+        SAFE_EXIT( data.size() != N, "In Do_Convolution(): wrong size of data container.")
        
         auto deconvolution = hydra::make_deconvolution<double>(  hydra::device::sys,  fft_backend, signal, conv, min, max,  N, true, true );
 
         auto conv_data    = hydra::make_range(deconvolution.GetDeviceData(), deconvolution.GetDeviceData()+N);
         
-        hydra::copy(conv_data, conv_data_h);
+        hydra::copy(conv_data, data);
         
         deconvolution.Dispose();
-
-        return conv_data_h;
-
 }
 
 
