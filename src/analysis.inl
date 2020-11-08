@@ -135,6 +135,8 @@ int main(int argv, char** argc)
   
   /* ----------------------------------------------
    * Get Configuration
+   * Instatiante Config parser and 
+   * Hist Config parser structs
    * --------------------------------------------*/
   libconf::Config Cfg;
   Cfg.readFile("../etc/configuration.cfg");
@@ -150,8 +152,10 @@ int main(int argv, char** argc)
   bool dodelay = (us_delay!=0);
   
   
+  
   /* ----------------------------------------------
-   * Initialization of variables and RNGs
+   * Initialization of variables, RNGs
+   * and algorithm objects
    * --------------------------------------------*/
   tfboost::CreateDirectories( c.OutputDirectory + "plots");
   tfboost::CreateDirectories( c.OutputDirectory + "data");
@@ -159,10 +163,10 @@ int main(int argv, char** argc)
   auto& LOG = tfboost::Logger::getInstance( (c.OutputDirectory+TString("LOG.log")).Data() );
   LOG.PrintConfig(c);
 
-  const double min     = 0.0;
-  const double max     = (c.Nsamples-1) * c.dT;
-  const double minplot   = c.minplot;
-  const double maxplot   = c.maxplot;
+  const double min         = 0.0;
+  const double max         = (c.Nsamples-1) * c.dT;
+  const double minplot     = c.minplot;
+  const double maxplot     = c.maxplot;
   const double min_kernel  = -0.5*(max-min);
   const double max_kernel  =  0.5*(max-min);
 
@@ -215,25 +219,24 @@ int main(int argv, char** argc)
   TH2D *Vmaxmaps  = new TH2D("Vmaxmaps","Vmaxmaps", 100, 0, 56, 100, 0, 56);
 #endif
   
+  
   /* ----------------------------------------------
    * Preparing the list of input files and
-   * related variables
+   * related variables for the main loop
    * --------------------------------------------*/
   TList* listoffiles = tfboost::GetFileList(c.InputDirectory); 
   listoffiles->Sort();
   TIter nextfile( listoffiles );
   TSystemFile *currentfile;
-  TString currentfilename;
-  TString line;
-
+  TString currentfilename, line;
 
 
   /*-----------------------------------------------
-   * Check if the preload of a Tr.Function
-   * has to be done
+   * Check if the a custom Tr.Function
+   * by the user has to be preloaded
    *-----------------------------------------------*/
-   signal_type_h time_tf;
-   signal_type_h current_tf;
+  signal_type_h time_tf;
+  signal_type_h current_tf;
    
   if(c.ID==5){
      int Nskip = (int) cfg_tf["NlinesToSkip"];
@@ -243,6 +246,7 @@ int main(int argv, char** argc)
                       time_tf, current_tf, 
                       /*scaling*/1.0, /*double range?*/true);
    }
+
 
 
   /* ----------------------------------------------
@@ -260,31 +264,27 @@ int main(int argv, char** argc)
     if ( currentfile->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension) ) continue;
     
     std::cout << "========================================" << "\n";
-    std::cout << "|  FILE  : "<<currentfilename<<" " << "\n";
-    std::cout << "|  INDEX : "<<INDEX<<" "       << "\n";
+    std::cout << "|  FILE  : "<<currentfilename<<" "        << "\n";
+    std::cout << "|  INDEX : "<<INDEX<<" "                  << "\n";
     std::cout << "========================================" << "\n\n";
     ++INDEX;
     
+    const bool PlotConv = c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave;
     
-    
+
     //Clean the configuration
     c.ResetInitialValues();
   
     //Declare and prepare the containers
-    signal_type_h time;
-    signal_type_h idx;
-    signal_type_h current;
+    signal_type_h time;     time.reserve(c.Nsamples);
+    signal_type_h idx;      idx.reserve(c.Nsamples);
+    signal_type_h current;  current.reserve(c.Nsamples);
      
-    time.reserve(c.Nsamples);
-    idx.reserve(c.Nsamples);
-    current.reserve(c.Nsamples);
-  
-    for(size_t k=0; k < c.offset; ++k)
-    {
+    
+    for(size_t k=0; k < c.offset; ++k) {
       idx.push_back(k);
       time.push_back(k * c.dT);
-      current.push_back(0.0);
-    }
+      current.push_back(0.0); }
     
     
 #ifdef TCODE_ENABLE
@@ -296,56 +296,45 @@ int main(int argv, char** argc)
 
 
     std::ifstream myFile( (c.InputDirectory+currentfilename).Data() );
-    
-    for(size_t j=0; j < c.NlinesToSkip; ++j) line.ReadLine(myFile);
-    
-
-    // Actual loop on file lines
-    // Fill the containers
-    
-    double landau = root_rng.Landau(1,0.15);
-    if (myFile.is_open()) 
-    {
-      size_t s = c.offset;
-
-      for(size_t j = c.offset; j < c.Nsamples ; ++j)
-      {
-        line.ReadLine(myFile);
-        if (!myFile.good()) break;
-      
-        TObjArray *tokens = line.Tokenize( c.token.Data() );
-        //DEBUG("ARRAY1: " << tokens->GetEntriesFast() )
-      
-        TString data_str  = ((TObjString*) tokens->At( c.column ) )->GetString();
-        if(data_str == "0" && s==c.offset) continue; //to avoid misaligned TCoDe input files 
-        
-        const double data = c.LandauFluctuation? landau*atof(data_str) : atof(data_str);
-         
-        idx.push_back(s);
-        time.push_back( s * c.dT);
-        current.push_back(data);
-        
-        tokens->Delete();
-        delete tokens;
-
-        ++s;
-      }
-    } 
-    
     SAFE_EXIT( !myFile.is_open() , "In analysis.inl: input file cannot be open. ")
-        
-    myFile.close();
+    
+    for(size_t j=0; j < c.NlinesToSkip; ++j) 
+      line.ReadLine(myFile);
+    
+    // preload a Landau Fluctuation factor
+    double landau = root_rng.Landau(1,0.15);
 
-    if(c.Nsamples - current.size() > 0)
+    // Actual loop on file lines, fill all the containers
+    size_t s = c.offset;
+    for(size_t j = c.offset; j < c.Nsamples ; ++j)
     {
-      for(size_t k=current.size(); k<c.Nsamples; ++k)
-      {
-        idx.push_back(k);
-        time.push_back( k * c.dT);
-        current.push_back(0.0);
-      }
+      line.ReadLine(myFile);
+      if (!myFile.good()) break;
+      
+      TObjArray *tokens = line.Tokenize( c.token.Data() );
+      
+      TString data_str  = ((TObjString*) tokens->At( c.column ) )->GetString();
+      if(data_str == "0" && s==c.offset) continue; //to avoid misaligned TCoDe input files 
+        
+      double data = c.LandauFluctuation? landau*atof(data_str) : atof(data_str);
+         
+      idx.push_back(s);
+      time.push_back( s * c.dT);
+      current.push_back(data);
+      
+      tokens->Delete();
+      delete tokens;
+
+      ++s;
     }
     
+    myFile.close();
+
+    for(size_t k=current.size(); k<c.Nsamples; ++k) {
+      idx.push_back(k);
+      time.push_back( k * c.dT);
+      current.push_back(0.0); }
+
     SAFE_EXIT( current.size() != c.Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
 
 
@@ -369,30 +358,27 @@ int main(int argv, char** argc)
 
     auto signal   = hydra::make_spiline<double>(time, current );
     auto signal_d = hydra::make_spiline<double>(time_d, current_d );
-
-    if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave)
-      for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i)
-        hist_signal.SetBinContent(i, signal(hist_signal.GetBinCenter(i)) );
     
+    if(PlotConv) tfboost::FillHistWithFunction( hist_signal, signal);
     
     
     
     /* ----------------------------------------------
      * Performing the convolution
      * --------------------------------------------*/
-    #if HYDRA_DEVICE_SYSTEM!=CUDA
+#if HYDRA_DEVICE_SYSTEM!=CUDA
     auto fft_backend = hydra::fft::fftw_f64;
-    #endif
+#endif
     
-    #if HYDRA_DEVICE_SYSTEM==CUDA
+#if HYDRA_DEVICE_SYSTEM==CUDA
     auto fft_backend = hydra::fft::cufft_f64;
-    #endif
+#endif
     
     signal_type_h conv_data_h(c.Nsamples);
 
     
     if(!c.MakeConvolution){
-    
+      // Read the convoluted signal from file
       conv_data_h.clear();
       tfboost::ReadConvolution( c.conv_inputfile, conv_data_h, c.Nsamples);
       
@@ -402,76 +388,45 @@ int main(int argv, char** argc)
       {
         case 0:{
           auto kernel = tfboost::TIA_MOS<double>( cfg_tf );
-          SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
           tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-          
-          if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
-            for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );
-          
+          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
           }break;
 
         case 1:{
           auto kernel = tfboost::TIA_BJT_2stages<double>( cfg_tf );
-          SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
           tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-          
-          if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
-            for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );  
-          
+          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
           }break;
 
         case 2:{
           auto kernel = tfboost::TIA_BJT_2stages_GM<double>( cfg_tf );
-          SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
           tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-          
-          if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
-            for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );  
-          
+          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
           }break;
 
         case 3:{
           auto kernel = tfboost::TIA_BJT_1stage<double>( cfg_tf );
-          SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
           tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-         
-          if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
-            for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );  
-          
+          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
           }break;
 
         case 4:{
           auto kernel = tfboost::TIA_IdealInt<double>( cfg_tf );
-          SAFE_EXIT(kernel.IDX != c.ID , "Wrong Tr.Function configuration ID.")
           tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-          
-          if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
-            for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );  
-          
+          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
           }break;
 
         case 5:{
-
           auto kernel = hydra::make_spiline<double>(time_tf, current_tf );
-          
           tfboost::Do_Convolution(fft_backend, kernel, signal, conv_data_h, min, max, c.Nsamples);
-
-          if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave) 
-            for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i) 
-              hist_kernel.SetBinContent(i, kernel(hist_kernel.GetBinCenter(i)) );  
-          
-
+          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
         } break;
 
         default:
           SAFE_EXIT( true , "In analysis.inl: bad transfer function ID.")
           
       }//end switch
+
 
 
      /*-------------------------------------------------
@@ -495,15 +450,14 @@ int main(int argv, char** argc)
       
 
 
+
     /* ----------------------------------------------
      * Filling histogram for visualization
      * --------------------------------------------*/ 
     auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
-
-    if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave)
-      for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i)
-         hist_convol.SetBinContent(i, conv_spline(hist_convol.GetBinCenter(i)) );  
-         
+    
+    if(PlotConv) tfboost::FillHistWithFunction( hist_convol, conv_spline);
+    
     
     
     /* ----------------------------------------------
@@ -512,11 +466,9 @@ int main(int argv, char** argc)
 
     // Condition to avoid to process empty signal
     // reject signal with amplitude < 1 mV
-    if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_nonoise) ==  conv_data_h.size() ) 
-    { 
-      WARNING_LINE("Skipping empty event...")
-      continue;
-    }
+    if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_nonoise) ==  conv_data_h.size() ) { 
+        WARNING_LINE("Skipping empty event...")
+        continue; }
 
 
     size_t TOA_LE     = tfboost::algo::LeadingEdge(conv_data_h, c.LEthr);
@@ -689,10 +641,10 @@ int main(int argv, char** argc)
       hist_dVdt_CFD_noise .Fill( 1e-6*dvdt_CFD_noise );
       hist_dVdt_LE_noise  .Fill( 1e-6*dvdt_LE_noise );
       
-      #ifdef TCODE_ENABLE
+#ifdef TCODE_ENABLE
       TOAmaps->SetBinContent( TOAmaps->FindBin( pos_x, pos_y), TOA_CFD_noise ); 
       Vmaxmaps->SetBinContent( Vmaxmaps->FindBin( pos_x, pos_y), vmax ); 
-      #endif
+#endif
 
 
       std::cout << "========================================" << "\n";
@@ -709,14 +661,13 @@ int main(int argv, char** argc)
       std::cout << "========================================" << "\n";
 
       auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
-      if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave)
-        for(size_t i=1;  i < (size_t) c.Nsamples+1; ++i)
-          hist_convol.SetBinContent(i, conv_spline(hist_convol.GetBinCenter(i)) ); 
+      
+      if(PlotConv) tfboost::FillHistWithFunction( hist_convol, conv_spline);
 
     }
    
 
-    if(c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave)
+    if(PlotConv)
        tfboost::SaveConvolutionCanvas(c.OutputDirectory + "plots/", "hist_convol_functor", 
               hist_convol, hist_signal, hist_kernel);
 

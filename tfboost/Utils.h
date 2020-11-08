@@ -83,8 +83,14 @@ if(flag){\
     
 namespace tfboost {
 
+template<typename HIST, typename FUNCTION>
+inline void FillHistWithFunction(HIST& hist, FUNCTION const& fun){
+        for(size_t i=1;  i < (size_t) hist.GetNbinsX(); ++i) 
+            hist.SetBinContent(i, fun(hist.GetBinCenter(i)) );  
+}
+
 template<typename HIST>
-void SaveCanvas(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, HIST& hist, const char* opt="")
+inline void SaveCanvas(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, HIST& hist, const char* opt="")
 {
     TCanvas canv(title, title, 800,800);
     hist.SetLineWidth(2);
@@ -99,7 +105,7 @@ void SaveCanvas(TString const& directory, TString const& title, TString const& x
 
 
 template<typename HIST>
-void SaveCanvasAndFit(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, TH1D& hist, TF1* tf1)
+inline void SaveCanvasAndFit(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, TH1D& hist, TF1* tf1)
 {
     TCanvas canv(title, title, 800,800);
     hist.SetLineWidth(2);
@@ -118,7 +124,7 @@ void SaveCanvasAndFit(TString const& directory, TString const& title, TString co
 
 
 
-void SaveConvolutionCanvas(TString const& directory, TString const& title, 
+inline void SaveConvolutionCanvas(TString const& directory, TString const& title, 
                           TH1D& hist_convol, TH1D& hist_signal, TH1D& hist_kernel)
 {
     TCanvas canvas(title, title, 4000,1000);
@@ -160,7 +166,7 @@ void SaveConvolutionCanvas(TString const& directory, TString const& title,
 
 
 
-size_t upper_power_of_two(size_t v)
+inline size_t upper_power_of_two(size_t v)
 {
     v--;
     v |= v >> 1;

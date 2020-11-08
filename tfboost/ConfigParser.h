@@ -97,6 +97,15 @@ struct ConfigParser
         dT_0 = dT;
         Nsamples_0    = Nsamples;
         sampling_dT_0 = sampling_dT;
+        
+        TF_IDs[0] = "TIA_MOS";
+        TF_IDs[1] = "TIA_BJT_2stages";
+        TF_IDs[2] = "TIA_BJT_2stages_GM";
+        TF_IDs[3] = "TIA_BJT_1stage";
+        TF_IDs[4] = "TIA_IdealInt";
+        TF_IDs[5] = "FromFile";
+        
+        CheckTrFunctionID();
     }
     
     
@@ -104,6 +113,13 @@ struct ConfigParser
         Nsamples = Nsamples_0;
         dT = dT_0;
         sampling_dT = sampling_dT_0;
+    }
+    
+    
+    inline void CheckTrFunctionID(){
+        auto search = TF_IDs.find(ID);
+        SAFE_EXIT( search == TF_IDs.end() , "Wrong Tr.Function configuration ID.")
+        SAFE_EXIT( TransferFunction != search->second , "Wrong Tr.Function configuration ID.")
     }
 
 
@@ -132,6 +148,7 @@ private: // for initial configurations
     
     size_t Nsamples_0;
     double dT_0, sampling_dT_0;
+    std::map<int, TString> TF_IDs;
 
 
 };
