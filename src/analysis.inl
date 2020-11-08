@@ -143,8 +143,8 @@ int main(int argv, char** argc)
   TString TransferFunction  = (const char*) cfg_root["TransferFunction"];
   const libconf::Setting& cfg_tf  = cfg_root[TransferFunction];
   
-  tfboost::ConfigParser    c(cfg_root);
-  tfboost::HistConfigParser  hc(cfg_root);
+  const tfboost::ConfigParser      c(cfg_root);
+  const tfboost::HistConfigParser  hc(cfg_root);
   
   size_t us_delay = 1e3 * c.DelayMonitoring;
   bool dodelay = (us_delay!=0);
@@ -251,6 +251,8 @@ int main(int argv, char** argc)
   while( (currentfile = (TSystemFile*) nextfile() ) && INDEX < c.Nfiles )
   {
     
+    auto start = std::chrono::high_resolution_clock::now();
+
     currentfilename = currentfile->GetName();
     if(c.UseSameCurve) currentfilename = c.SingleFile;
 
@@ -726,7 +728,12 @@ int main(int argv, char** argc)
     
     if(dodelay) usleep(us_delay);
   
-  
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "========================================"  << "\n";
+    std::cout << "Single iteration time: " <<elapsed.count() << " ms\n";
+    std::cout << "========================================"  << "\n";
+    
   }//end loop on files
   
 

@@ -46,11 +46,9 @@ struct ConfigParser
         conv_inputfile        = (const char*) cfg_root["ConvolutionFile"]; 
         SingleFile            = (const char*) cfg_root["FileName"];
         token                 = (const char*) cfg_root["token"];
-        
         column                       = (int)  cfg_root["column"];
         offset                       = (int)  cfg_root["offset"]; 
         NlinesToSkip                 = (int)  cfg_root["NlinesToSkip"];
-
         LandauFluctuation            = (bool) cfg_root["LandauFluctuation"];
         MakeConvolution              = (bool) cfg_root["MakeConvolution"];
         SaveSinglePlotConvolution    = (bool) cfg_root["SaveSinglePlotConvolution"];
@@ -67,12 +65,10 @@ struct ConfigParser
         randomphase                  = (bool) cfg_root["randomphase"];
         TimeReferenceResolution      = (bool) cfg_root["TimeReferenceResolution"];
         TOTcorrection                = (bool) cfg_root["TOTcorrection"];
-        
         PlotRMfit                    = (bool) cfg_root["PlotRMfit"];
         PlotLinFit                   = (bool) cfg_root["PlotLinFit"];
         PlotGausFit                  = (bool) cfg_root["PlotGausFit"];
         DelayMonitoring              = (int)  cfg_root["DelayMonitoring"];
-
         TOT_a                      = (double) cfg_root["TOT_a"];
         TOT_b                      = (double) cfg_root["TOT_b"];
         LE_reject_nonoise          = (double) cfg_root["LE_reject_nonoise"];
@@ -80,32 +76,31 @@ struct ConfigParser
 
         const libconfig::Setting& cfg_tf  = cfg_root[TransferFunction];
 
-        Nsamples     = (int)    cfg_tf["Nsamples"];
-        Nsamples     = (int)    tfboost::upper_power_of_two((size_t) Nsamples);
-      
-        bound_fit    = (int)    cfg_tf["bound_fit"];
-        ID           = (int)    cfg_tf["ID"];
-        Nbins        = (int)    cfg_tf["Nbins"];
-        dT           = (double) cfg_tf["dT"];
-        LEthr        = (double) cfg_tf["LEthr"];
-        CFD_fr       = (double) cfg_tf["CFD_fr"];
-        sigma_noise  = (double) cfg_tf["sigma_noise"];
-        r_rednoise   = (double) cfg_tf["r_rednoise"];
-        sampling_dT  = (double) cfg_tf["sampling_dT"];
-        minplot      = (double) cfg_tf["minplot"];
-        maxplot      = (double) cfg_tf["maxplot"]; 
-        RM_delay     = (double) cfg_tf["RM_delay"]; 
+        Nsamples                   = (int)    cfg_tf["Nsamples"];
+        Nsamples                   = (int)    tfboost::upper_power_of_two((size_t) Nsamples);
+        bound_fit                  = (int)    cfg_tf["bound_fit"];
+        ID                         = (int)    cfg_tf["ID"];
+        Nbins                      = (int)    cfg_tf["Nbins"];
+        dT                         = (double) cfg_tf["dT"];
+        LEthr                      = (double) cfg_tf["LEthr"];
+        CFD_fr                     = (double) cfg_tf["CFD_fr"];
+        sigma_noise                = (double) cfg_tf["sigma_noise"];
+        r_rednoise                 = (double) cfg_tf["r_rednoise"];
+        sampling_dT                = (double) cfg_tf["sampling_dT"];
+        minplot                    = (double) cfg_tf["minplot"];
+        maxplot                    = (double) cfg_tf["maxplot"]; 
+        RM_delay                   = (double) cfg_tf["RM_delay"]; 
         
         if(!InputDirectory.EndsWith("/")) InputDirectory   = InputDirectory+"/";
         if(!OutputDirectory.EndsWith("/")) OutputDirectory = OutputDirectory+"/";
         
-        Nsamples_0 = Nsamples;
         dT_0 = dT;
+        Nsamples_0    = Nsamples;
         sampling_dT_0 = sampling_dT;
     }
     
     
-    inline void ResetInitialValues(){
+    inline void ResetInitialValues() const {
         Nsamples = Nsamples_0;
         dT = dT_0;
         sampling_dT = sampling_dT_0;
@@ -122,14 +117,18 @@ struct ConfigParser
     
     int column, ID, Nbins;
     
-    size_t offset, NlinesToSkip, IdxConvtoSave, Nfiles, Nsamples, bound_fit, DelayMonitoring;
+    size_t offset, NlinesToSkip, IdxConvtoSave, Nfiles, bound_fit, DelayMonitoring;
     
-    double dT, LEthr, CFD_fr, sigma_noise, r_rednoise, sampling_dT, LE_reject_nonoise, LE_reject_noise, RM_delay;
+    double LEthr, CFD_fr, sigma_noise, r_rednoise, LE_reject_nonoise, LE_reject_noise, RM_delay;
     double minplot, maxplot, TOT_a, TOT_b;
     
+    mutable size_t Nsamples;
+    mutable double dT;
+    mutable double sampling_dT;
     
     
-    private: // for initial configurations
+    
+private: // for initial configurations
     
     size_t Nsamples_0;
     double dT_0, sampling_dT_0;
