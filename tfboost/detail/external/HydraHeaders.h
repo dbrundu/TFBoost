@@ -21,18 +21,39 @@
 /*
  * 
  *
- *  Created on: 07/05/2020
- *      Author: Davide Brundu
+ *  Created on: 22/11/2020
+ *    Author: Davide Brundu
  */
  
-#ifndef TFBOOST_H_
-#define TFBOOST_H_
- 
 
-#define PROJECT_NAME "TFBoost"
-#define PROJECT_VERSION "0.2-alpha"
-    
+#ifndef TFBOOST_HYDRAHEADERS_H_
+#define TFBOOST_HYDRAHEADERS_H_
 
-    
-    
+#include <hydra/Function.h>
+#include <hydra/GaussKronrodQuadrature.h>
+#include <hydra/Lambda.h>
+#include <hydra/Algorithm.h>
+#include <hydra/Convolution.h>
+#include <hydra/functions/Gaussian.h>
+#include <hydra/device/System.h>
+#include <hydra/functions/ConvolutionFunctor.h>
+#include <hydra/functions/SpilineFunctor.h>
+#include <hydra/functions/Polynomial.h>
+#include <hydra/Filter.h>
+#include <hydra/Parameter.h>
+#include <hydra/Random.h>
+#include <hydra/Plain.h>
+#include <hydra/Sobol.h>
+#include <hydra/RandomFill.h>
+#include <hydra/Zip.h>
+#include <hydra/Range.h>
+#include <hydra/SeedRNG.h>
+
+#if HYDRA_DEVICE_SYSTEM == CUDA
+#include <hydra/CuFFT.h>
+#endif
+#if HYDRA_DEVICE_SYSTEM != CUDA
+#include <hydra/FFTW.h>
+#endif
+
 #endif

@@ -25,20 +25,36 @@
  *      Author: Davide Brundu
  */
 
-#ifndef TYPES_TFBOOST_H_
-#define TYPES_TFBOOST_H_
-
-typedef std::pair<double,size_t> pairDS_type;
-typedef std::pair<double,double> pairDD_type;
-typedef std::tuple<double,double,size_t> tripletDDS_type;
-
-typedef hydra::host::vector<double> signal_type_h;
-typedef hydra::device::vector<double> signal_type_d;
+#ifndef TFBOOST_TYPES_H_
+#define TFBOOST_TYPES_H_
 
 
-namespace tfboost
-{
+using HostSignal_t          = hydra::host::vector<double>;
+using DevSignal_t           = hydra::device::vector<double>;
+
+using pairDD_type           = std::pair<double,double>;
+using tripletDDD_type       = std::tuple<double,double,double>;
+
+using MeasuresEnum_t = enum MeasuresEnum { _toa_le,
+                                           _toa_cfd,
+                                           _toa_rm,
+                                           _tpeak,
+                                           _vpeak,
+                                           _dvdt_le,
+                                           _dvdt_cfd,
+                                           _dvdt_rm,
+                                           _vonth_le,
+                                           _vonth_cfd,
+                                           _vonth_rm,
+                                           _tot,
+                                           _num_of_measures};
+    
+    
+using MeasuresKeys_t  = std::array< MeasuresEnum_t , _num_of_measures>;
+using MeasuresNames_t = std::array< TString , _num_of_measures>;
+using Measures_t      = std::array< double, _num_of_measures>;
+using Histograms_t    = std::array< TH1D*, _num_of_measures>;
 
 
-}
-#endif /* TYPES_TFBOOST_H_ */
+
+#endif /* TFBOOST_TYPES_H_ */

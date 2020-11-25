@@ -21,18 +21,36 @@
 /*
  * 
  *
- *  Created on: 07/05/2020
- *      Author: Davide Brundu
+ *  Created on: 22/11/2020
+ *    Author: Davide Brundu
  */
  
-#ifndef TFBOOST_H_
-#define TFBOOST_H_
- 
 
-#define PROJECT_NAME "TFBoost"
-#define PROJECT_VERSION "0.2-alpha"
-    
+#ifndef TFBOOST_ROOTHEADERS_H_
+#define TFBOOST_ROOTHEADERS_H_
 
-    
-    
+#include <TROOT.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TF1.h>
+#include <TApplication.h>
+#include <TCanvas.h>
+#include <TSystemDirectory.h>
+#include <TSystemFile.h>
+#include <TSystem.h>
+#include <TFile.h>
+#include <TGraph.h>
+#include <TMultiGraph.h>
+#include <TIterator.h>
+#include <TString.h>
+#include <TDirectory.h>
+#include <TObjArray.h>
+#include <TObjString.h>
+#include <TFitResultPtr.h>
+#include <TFitResult.h>
+#include <TStyle.h>
+#include <TRandom3.h>
+#include <TLine.h>
+#include <TProfile.h>
+
 #endif

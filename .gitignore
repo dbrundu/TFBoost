@@ -6,6 +6,7 @@
 build/*
 docs/*
 others/*
+dev/*
 
 # Precompiled Headers
 *.gch

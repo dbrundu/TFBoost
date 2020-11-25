@@ -25,8 +25,8 @@
  *      Author: Davide Brundu
  */
  
-#ifndef READ_CONVOLUTION_H_
-#define READ_CONVOLUTION_H_
+#ifndef TFBOOST_READ_CONVOLUTION_INL_
+#define TFBOOST_READ_CONVOLUTION_INL_
 
     
 #include <tfboost/Utils.h>
@@ -38,6 +38,8 @@ namespace tfboost {
 
 namespace detail {
 
+
+
     inline void PushBack_helper(std::vector<double>& data) {}
 
     template<typename Iterable, typename ...Iterables>
@@ -48,6 +50,8 @@ namespace detail {
         
         PushBack_helper(data, args...);
     }
+
+
 
 
     template<typename ...Iterables, size_t N> 
@@ -84,6 +88,7 @@ namespace detail {
     
     
     
+    
     template<typename Iterable> 
     inline typename std::enable_if< std::is_floating_point<typename Iterable::value_type>::value, void>::type
     PushBackTokens(TString const& line,
@@ -108,109 +113,6 @@ namespace detail {
     }
     
 } //end detail
-
-
-
-
-
-
-template<typename Iterable>
-void ReadConvolution(TString const& file, Iterable& iterable, size_t const& Nsamples)
-{
-        //size_t Nsamples = iterable.size();
-        iterable.reserve(Nsamples);
-        
-        TString line;
-        std::ifstream myFile( file.Data() );
-        
-        SAFE_EXIT(!myFile.is_open(), "Input file cannot be open.")
-                
-        line.ReadLine(myFile);
-        
-        while(myFile.good()) {
-            detail::PushBackTokens(line, " ", 1, iterable);
-            line.ReadLine(myFile); }
-        
-        myFile.close();
-        
-        size_t diff = Nsamples - iterable.size();
-        
-        if(diff>0) 
-          for(size_t j = iterable.size(); j < Nsamples; ++j)
-            iterable.push_back(0.0);
-}
-
-
-
-
-
-template<typename Iterable>
-void ReadTF(TString const& file, 
-            int Nlinestoskip, 
-            Iterable& iterable_t, 
-            Iterable& iterable_V, 
-            double const& scale = 1.0, 
-            bool doublerange=false)
-{
-        Iterable iterable_t_temp, iterable_V_temp;
-        std::array<int,2> columns = {0,1};
-
-        TString line;
-        std::ifstream myFile( file.Data() );
-        
-        SAFE_EXIT(!myFile.is_open(), "In ReadTF(): Input file cannot be open.")
-        
-        for(size_t i=0; i<(size_t)Nlinestoskip+1; ++i) line.ReadLine(myFile);
-        
-        while(myFile.good()) {
-            detail::PushBackTokens(line, " ", columns, iterable_t_temp, iterable_V_temp);
-            line.ReadLine(myFile); }
-            
-        myFile.close();
-        
-        if(scale!=1.0) 
-            for(auto& x : iterable_V_temp) x *= scale;
-
-        double dT = iterable_t_temp[1] - iterable_t_temp[0];
-
-        
-        if(doublerange){
-        
-            double last_t = iterable_t_temp.back();
-            
-            // a small buffer befor doubling the range
-            // in order to help the future spline
-            for(size_t i=0; i<100; ++i ){
-                iterable_t_temp.push_back( last_t + i*dT );
-                iterable_V_temp.push_back(0.0); } 
-        
-            Iterable time_rev(iterable_t_temp.size());
-            Iterable V_rev(iterable_V_temp.size(), 0.0);
-            
-            hydra::copy(iterable_t_temp, time_rev);
-            
-            for(double& x : time_rev) x *= -1.0 ;
-            
-            hydra_thrust::reverse(time_rev.begin() , time_rev.end() ); 
-
-            iterable_t.insert( iterable_t.begin(), time_rev.begin(), time_rev.end() );
-            iterable_t.insert( iterable_t.end(), iterable_t_temp.begin(), iterable_t_temp.end() );
-            
-            iterable_V.insert( iterable_V.begin(), V_rev.begin(), V_rev.end() );
-            iterable_V.insert( iterable_V.end(), iterable_V_temp.begin(), iterable_V_temp.end() );
-            
-        } else {
-
-            iterable_t.insert( iterable_t.begin(), iterable_t_temp.begin(), iterable_t_temp.end() );
-            iterable_V.insert( iterable_V.begin(), iterable_V_temp.begin(), iterable_V_temp.end() );
-        
-        }
-
-
-
-}
-
-
 
 
 } //namespace tfboost

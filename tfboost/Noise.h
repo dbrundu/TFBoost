@@ -25,17 +25,12 @@
  *      Author: Davide Brundu
  */
  
-#ifndef NOISE_H_
-#define NOISE_H_
+#ifndef TFBOOST_NOISE_H_
+#define TFBOOST_NOISE_H_
 
-
+#include <tfboost/Types.h>
 
 namespace tfboost { 
-
-namespace noise { 
-
-
-
 
 /*
  *  @class Noise
@@ -85,16 +80,15 @@ public:
     
     
     
-    inline void AddNoiseToSignal(hydra::host::vector<double>& data_h, size_t rng_seed) 
+    inline void AddNoiseToSignal(HostSignal_t& data_h, size_t rng_seed) 
     {
         const size_t N = data_h.size();
         
-        auto gauss   = hydra::Gaussian<double>(0.0, fsigmanoise);
+        hydra::Gaussian<double> gauss(0.0, fsigmanoise);
         
-        auto noise_d = hydra::device::vector<double>(N);
-        auto noise_h = hydra::host::vector<double>(N);
-        
-        auto data_d  = hydra::device::vector<double>(N);
+        DevSignal_t data_d(N);
+        DevSignal_t noise_d(N);
+        HostSignal_t noise_h(N);
         
         hydra::copy(data_h , data_d);
         
@@ -104,8 +98,8 @@ public:
         
             hydra::copy(noise_d , noise_h);
             
-            auto noise_h_final = hydra::host::vector<double>(N);
-            noise_h_final[0]   = noise_h[0];
+            HostSignal_t noise_h_final(N);
+            noise_h_final[0] = noise_h[0];
             
             #pragma unroll
             for(size_t i=1; i<N ; ++i)
@@ -143,22 +137,22 @@ private:
  *  with a specific sigma (sigmanoise)
  */
 template<typename Iterable>
-hydra::host::vector<double> GetTheorProbability(Iterable const& vout, double const& VTh, double const& sigmanoise)
+HostSignal_t GetTheorProbability(Iterable const& vout, double const& VTh, double const& sigmanoise)
 {
     double min      = 0.0;
     double constant = 1./::sqrt(2*PI*sigmanoise*sigmanoise);
     
-    hydra::host::vector<double> integrals( vout.size() );
+    HostSignal_t integrals( vout.size() );
     
-    auto gaussianIntegrator = hydra::AnalyticalIntegral< hydra::Gaussian<double> >(VTh, 1e20);
+    hydra::AnalyticalIntegral< hydra::Gaussian<double> > gaussianIntegrator(VTh, 1e20);
     
     for(size_t i=1; i<vout.size(); ++i) 
     {
-        auto xgauss     = hydra::Gaussian<double>( vout[i], sigmanoise);
-        integrals[i]    = constant * gaussianIntegrator(xgauss).first;
+        hydra::Gaussian<double> xgauss( vout[i], sigmanoise);
+        integrals[i]  = constant * gaussianIntegrator(xgauss).first;
     }
     
-    hydra::host::vector<double> prob( vout.size() );
+    HostSignal_t prob( vout.size() );
     prob[0] = integrals[0];
     
     for(size_t i=1; i<vout.size(); ++i)
@@ -180,15 +174,15 @@ hydra::host::vector<double> GetTheorProbability(Iterable const& vout, double con
  *  additionally filter the signal in the region near the threshold
  */
 template<typename Iterablex, typename Iterabley>
-hydra::host::vector<double> ComputeTOAcurve(size_t const& TOA_CFD, 
-                                            size_t const& min_fit2,
-                                            size_t const& max_fit2,
-                                            double const CFD_fr, 
-                                            double const& Vpeak, 
-                                            double const& sigmanoise,
-                                            Iterablex idx, 
-                                            Iterabley conv_data_d,
-                                            TString const& filename="thjitter.pdf") 
+HostSignal_t ComputeTOAcurve(size_t const& TOA_CFD, 
+                             size_t const& min_fit2,
+                             size_t const& max_fit2,
+                             double const CFD_fr, 
+                             double const& Vpeak, 
+                             double const& sigmanoise,
+                             Iterablex idx, 
+                             Iterabley conv_data_d,
+                             TString const& filename="thjitter.pdf") 
 {
 
     size_t min_fit = 160; //(TOA_CFD-500);
@@ -205,7 +199,7 @@ hydra::host::vector<double> ComputeTOAcurve(size_t const& TOA_CFD,
     auto xrange = hydra::filter(idx , filterx);
     auto yrange = xrange | filtery;
             
-    hydra::host::vector<double> xdata(max_fit-min_fit);
+    HostSignal_t xdata(max_fit-min_fit);
     hydra::copy(yrange , xdata);
             
     auto th_jitter = GetTheorProbability(xdata, CFD_fr*Vpeak, sigmanoise);
@@ -227,9 +221,6 @@ hydra::host::vector<double> ComputeTOAcurve(size_t const& TOA_CFD,
 }
 
 
-
-
-} //namespace noise
 } //namespace tfboost
 
 #endif

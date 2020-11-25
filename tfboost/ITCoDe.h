@@ -25,12 +25,16 @@
  *      Author: Davide Brundu
  */
  
-#ifdef TCODE_ENABLE
  
 #ifndef INTERFACE_TCODE_H_
 #define INTERFACE_TCODE_H_
 
 
+#define TCODE_ENABLE false
+
+#define TCODE_PIXEL_XMAX 56
+#define TCODE_PIXEL_YMAX 56
+ 
 
     
 namespace tfboost { 
@@ -83,4 +87,4 @@ namespace tcode {
     
 #endif //INTERFACE_TCODE_H_
 
-#endif //TCODE
+

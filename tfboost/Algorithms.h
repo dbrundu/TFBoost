@@ -25,8 +25,8 @@
  *      Author: Davide Brundu
  */
  
-#ifndef ALGORITHMS_H_
-#define ALGORITHMS_H_
+#ifndef TFBOOST_ALGORITHMS_H_
+#define TFBOOST_ALGORITHMS_H_
 
 #include <tfboost/Types.h>
 #include <tfboost/Utils.h>
@@ -154,20 +154,15 @@ inline double SlopeOnThrs(Iterable const& vout, size_t const& Tth)
 /*
  * Correct the TOA based on the TOT measurements
  */
-struct CorrectTOA {
+inline double CorrectTOA(double const& toa, double const& tot, double const& a, double const& b)
+{
+    ERROR_RETURN( !std::isnormal(a), "In CorrectTOA: undefined 'a' value.", -1.0)
+    
+    double x = -b/(2.*a);
+    
+    return ( a * ( tot + x)  + b ) * (tot - x);
 
-    // 1.13822e+06 , -0.166281
-    CorrectTOA() : m_a(0.0), m_b(0.0) { }
-    
-    CorrectTOA(double a, double b) : m_a(a), m_b(b) { }
-    
-    inline double operator()(double const& tot){
-        double x = -m_b/(2.*m_a);
-        return ( m_a * ( tot + x)  + m_b ) * (tot - x);
-    }
-    
-    double m_a, m_b;
-};
+}
 
 
 
@@ -193,14 +188,14 @@ inline pairDD_type LinearFitNearThr(double const& Thr,
     const size_t max_fit = (TOA + bound_fit); 
     
     ERROR_RETURN( min_fit < 0 || max_fit > data.size(), 
-                  "In LinearFitNearThr(), out of range limit. Exit with -1", pairDD_type(-1.0,-1.0))
+                  "In LinearFitNearThr(), out of range limit. Exit with -1", pairDD_type(-1.0,-1.0)) 
             
     TGraph graph;
     
     for(size_t i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , data[i]);
 
-    TFitResultPtr r = graph.Fit("pol1","S");
+    TFitResultPtr r = graph.Fit("pol1","SQ");
 
     ERROR_RETURN( r==-1, "Error in LinearFitNearThr. Exit with -1.", pairDD_type(-1.0,-1.0) )
     
@@ -244,19 +239,15 @@ inline pairDD_type GaussianFitNearVmax(Iterable const& data,
     for(size_t i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , data[i]);
     
-    TFitResultPtr r = graph.Fit("gaus","S");
+    TFitResultPtr r = graph.Fit("gaus","SQ");
 
     ERROR_RETURN( r==-1, "Error in GaussianFitNearVmax. Exit with -1.", pairDD_type(-1.0,-1.0))
     
     double amp = r->Parameter(0);
     double mu  = r->Parameter(1);
 
-    if(plot)
-    {
-        TCanvas p("","",800,800);
-        graph.Draw("APL");
-        p.SaveAs(TString("GaussianFit.pdf")+title+".pdf");
-    }
+    if(plot) 
+      SaveMonitorGraph( TString("GaussianFit_")+title, "time", "Voltage", graph );
             
     return pairDD_type(amp,mu) ;
 }
@@ -273,11 +264,11 @@ inline pairDD_type GaussianFitNearVmax(Iterable const& data,
  * If error returns (-1.0 , 0)
  */
 template<typename Iterable, typename Iterablet>
-inline tripletDDS_type TimeRefMethod(Iterable const& vout, 
-                                 Iterablet const& time, 
-                                 double const& vmax, 
+inline tripletDDD_type TimeRefMethod(Iterable const& vout, 
+                                 Iterablet const& time,
+                                 double const& vmax,
                                  double const& delay_t,
-                                 size_t const& bound_fit, 
+                                 size_t const& bound_fit,
                                  bool const& noise = false,
                                  bool const& plot  = false,
                                  TString const& title = "tref")
@@ -288,9 +279,9 @@ inline tripletDDS_type TimeRefMethod(Iterable const& vout,
     const size_t delay = delay_t/dT;
     
     ERROR_RETURN( delay == 0, 
-                 "Error in TimeRefMethod() [delay == 0], Exit with (-1,0)", tripletDDS_type(-1.0, -1.0, 0) )
+                 "Error in TimeRefMethod() [delay == 0], Exit with (-1,0)", tripletDDD_type(-1.0, -1.0, -1.0) )
 
-    signal_type_h subtr( N );
+    HostSignal_t subtr( N );
 
     // subtract the delayed signal
     for(size_t i=0; i<N; ++i) {
@@ -307,7 +298,7 @@ inline tripletDDS_type TimeRefMethod(Iterable const& vout,
     size_t dummy_TOA_RM = LeadingEdge(subtr , newthr);
 
     ERROR_RETURN( newthr<0 || min_fit < 0 || max_fit > (int) N, 
-                 "Error in TimeRefMethod() [out of range], Exit with (-1,0)", tripletDDS_type(-1.0, -1.0, 0) )
+                 "Error in TimeRefMethod() [out of range], Exit with (-1,0)", tripletDDD_type(-1.0, -1.0, -1.0) )
                  
     
     // Linear fit near thr 
@@ -317,9 +308,9 @@ inline tripletDDS_type TimeRefMethod(Iterable const& vout,
     for(int i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , subtr[i]);
         
-    TFitResultPtr r = graph.Fit("pol1","S");
+    TFitResultPtr r = graph.Fit("pol1","SQ");
     
-    ERROR_RETURN( r==-1, "Error in TimeRefMethod() [fit error], Exit with (-1,0)", tripletDDS_type(-1.0, -1.0, 0) )
+    ERROR_RETURN( r==-1, "Error in TimeRefMethod() [fit error], Exit with (-1,0)", tripletDDD_type(-1.0, -1.0, -1.0) )
     
     double q   = r->Parameter(0);
     double m   = r->Parameter(1); 
@@ -354,81 +345,8 @@ inline tripletDDS_type TimeRefMethod(Iterable const& vout,
         p.SaveAs(TString("LinearFit")+title+".pdf");
     }
     
-    return tripletDDS_type(toa, newthr, dummy_TOA_RM);
+    return tripletDDD_type(toa, newthr, m);
 }
-
-
-
-
-
-/*
- * Re-sample a signal (spline) with a specified dT
- * and a random phase clock.
- * Fill the data and time containers
- */
-template<typename Iterable, typename SPLINE, typename RNG>
-inline void DoDigitization(Iterable& data, 
-                           Iterable& time, 
-                           SPLINE const& signal, 
-                           double const& dT, 
-                           double const& Tmax, 
-                           RNG& rng, 
-                           bool const& rndmphase=true){
-    
-    SAFE_EXIT( !data.empty() || !time.empty(), "In DigitizeSignal: the containers must be empty.")
-
-    hydra_thrust::uniform_real_distribution<double> uniDist(0.0, 1.0);
-
-    double offset = rndmphase? uniDist(rng) * dT : 0 ;
-    
-    size_t Nsamples = Tmax/dT;
-    
-    data.reserve(Nsamples);
-    time.reserve(Nsamples);
-
-    data.push_back( 0.0 ); 
-    time.push_back( 0.0 );
-    
-    for(size_t i=1; i<Nsamples; ++i){
-        double t = offset + i*dT;
-        data.push_back( signal(t) ); 
-        time.push_back( t ); }
-}
-
-
-
-/*
- * Re-sample a signal (vector) with a specified dT
- * and a random phase clock.
- * Resize the original containers properly
- */
-template<typename Iterable, typename RNG>
-inline void DigitizeSignal(Iterable& data, 
-                           Iterable& time, 
-                            double const& dT, 
-                            double const& Tmax, 
-                            RNG& rng, 
-                            bool const& rndmphase=false){
-
-    signal_type_h conv_dig;  
-    signal_type_h time_dig; 
-
-    //time and data are the not digitized ones
-    auto conv_spline = hydra::make_spiline<double>(time, data );
-
-    tfboost::algo::DoDigitization(conv_dig, time_dig, 
-                                conv_spline, dT, Tmax, rng, rndmphase);
-                                
-    //SAFE_EXIT( conv_dig.size() > data.size(), "In DigitizeSignal: requested an oversamplig. Not yet implemented")
-
-    // override time and conv_data containers
-    data.resize(conv_dig.size());
-    time.resize(time_dig.size());
-    hydra::copy(conv_dig , data);
-    hydra::copy(time_dig , time);
-
-}
-
 
 
 

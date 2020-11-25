@@ -26,8 +26,8 @@
  */
 
 
-#ifndef DO_CONVOLUTION_H_
-#define DO_CONVOLUTION_H_
+#ifndef TFBOOST_DO_CONVOLUTION_H_
+#define TFBOOST_DO_CONVOLUTION_H_
 
 
 #include <cmath>
