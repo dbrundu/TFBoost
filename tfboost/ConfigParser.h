@@ -35,6 +35,10 @@
     
 namespace tfboost { 
 
+/*
+ * Struct containing variables and methods to 
+ * parse the libconfig configuration.
+ */
 struct ConfigParser
 {
     ConfigParser( libconfig::Setting const& cfg_root )
@@ -42,10 +46,10 @@ struct ConfigParser
 
         InputDirectory        = (const char*) cfg_root["InputDirectory"];
         OutputDirectory       = (const char*) cfg_root["OutputDirectory"];
+        NoiseDirectory        = (const char*) cfg_root["NoiseDirectory"];
         tf_inputfile          = (const char*) cfg_root["TFFile"];
         TransferFunction      = (const char*) cfg_root["TransferFunction"];
         InputFileExtension    = (const char*) cfg_root["InputFileExtension"];
-        conv_inputfile        = (const char*) cfg_root["ConvolutionFile"]; 
         SingleFile            = (const char*) cfg_root["FileName"];
         token                 = (const char*) cfg_root["token"];
         column                       = (int)  cfg_root["column"];
@@ -57,7 +61,11 @@ struct ConfigParser
         SaveConvDataToFile           = (bool) cfg_root["SaveConvDataToFile"];
         MakeLinearFitNearThreshold   = (bool) cfg_root["MakeLinearFitNearThreshold"];
         MakeGaussianFitNearVmax      = (bool) cfg_root["MakeGaussianFitNearVmax"];
-        AddNoise                     = (bool) cfg_root["AddNoise"];
+        
+        AddSimulatedNoise            = (bool) cfg_root["AddSimulatedNoise"];
+        DoMeasurementsWithNoise      = (bool) cfg_root["DoMeasurementsWithNoise"];
+        AddNoiseFromFiles            = (bool) cfg_root["AddNoiseFromFiles"];
+        
         UseRedNoise                  = (bool) cfg_root["UseRedNoise"];
         MakeTheoreticalTOA           = (bool) cfg_root["MakeTheoreticalTOA"];
         UseSameCurve                 = (bool) cfg_root["UseSameCurve"];
@@ -96,9 +104,11 @@ struct ConfigParser
         minplot                    = (double) cfg_tf["minplot"];
         maxplot                    = (double) cfg_tf["maxplot"]; 
         RM_delay                   = (double) cfg_tf["RM_delay"]; 
+       
         
         if(!InputDirectory.EndsWith("/")) InputDirectory   = InputDirectory+"/";
         if(!OutputDirectory.EndsWith("/")) OutputDirectory = OutputDirectory+"/";
+        
         
         dT_0 = dT;
         Nsamples_0    = Nsamples;
@@ -112,8 +122,9 @@ struct ConfigParser
         TF_IDs[5] = "FromFile";
         
         CheckTrFunctionID();
-        
+        CheckBooleansConsistency();
     }
+    
     
     
     inline void ResetInitialValues() const {
@@ -128,14 +139,20 @@ struct ConfigParser
         SAFE_EXIT( search == TF_IDs.end() , "Wrong Tr.Function configuration ID.")
         SAFE_EXIT( TransferFunction != search->second , "Wrong Tr.Function configuration ID.")
     }
+    
+    
+    inline void CheckBooleansConsistency(){
+        SAFE_EXIT( AddSimulatedNoise && AddNoiseFromFiles, "You can't request to simulate noise AND add the noise from file, choose one option.")
+    }
 
 
-    TString InputDirectory, OutputDirectory;
+    TString InputDirectory, OutputDirectory, NoiseDirectory;
     TString tf_inputfile, TransferFunction, InputFileExtension, conv_inputfile, SingleFile, token;
 
     bool LandauFluctuation, MakeConvolution, SaveSinglePlotConvolution;
     bool SaveConvDataToFile, MakeLinearFitNearThreshold, MakeGaussianFitNearVmax, TimeReferenceResolution;
-    bool AddNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeDigitization, randomphase, TOTcorrection;
+    bool AddSimulatedNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeDigitization, randomphase, TOTcorrection;
+    bool DoMeasurementsWithNoise, AddNoiseFromFiles;
     bool PlotRMfit, PlotLinFit, PlotGausFit;
     
     int column, ID, Nbins;
@@ -178,6 +195,11 @@ struct HistConfig {
 };
 
 
+/*
+ * Struct containing the histograms
+ * array and to configure them,
+ * parsing the libconfig configuration.
+ */
 struct HistConfigParser
 {
     using HistConfigs_t = std::array< HistConfig, _num_of_measures>;

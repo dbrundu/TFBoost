@@ -29,11 +29,11 @@
 #define TFBOOST_TYPES_H_
 
 
-using HostSignal_t          = hydra::host::vector<double>;
-using DevSignal_t           = hydra::device::vector<double>;
+using HostSignal_t   = hydra::host::vector<double>;
+using DevSignal_t    = hydra::device::vector<double>;
 
-using pairDD_type           = std::pair<double,double>;
-using tripletDDD_type       = std::tuple<double,double,double>;
+using doublePair_t   = std::tuple<double,double>;
+using doubleTriple_t = std::tuple<double,double,double>;
 
 using MeasuresEnum_t = enum MeasuresEnum { _toa_le,
                                            _toa_cfd,

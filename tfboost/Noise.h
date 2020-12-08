@@ -128,6 +128,32 @@ private:
 };
 
 
+/*
+ *  Function to add noise samples, stoed in the noise container
+ *  to the signal samples
+ */
+template<typename SIGNAL, typename NOISE>
+void inline AddNoiseToSignal(SIGNAL& signal, NOISE const& noise){
+
+    const size_t signal_N = signal.size();
+    const size_t noise_N  = noise.size();
+
+    SAFE_EXIT(noise_N < signal_N, "Impossible to add noise, too few samples.")
+
+    DevSignal_t signal_d(signal_N);
+    DevSignal_t noise_d(noise_N);
+    hydra::copy(signal, signal_d);
+    hydra::copy(noise, noise_d);
+
+    auto zipped_range = hydra::zip(signal_d, noise_d);
+
+    hydra::for_each(zipped_range , [] __hydra_dual__ (hydra::tuple<double&, double&> X) {
+        hydra::get<0>(X) += hydra::get<1>(X);
+    });
+    
+    hydra::copy(signal_d, signal);
+
+}
 
 
 

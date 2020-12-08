@@ -82,7 +82,7 @@ inline void Logger::PrintConfig( tfboost::ConfigParser const& c) {
     m_file << "InputDirectory:   "              << c.InputDirectory << "\n";
     m_file << "OutputDirectory:  "              << c.OutputDirectory << "\n";
     m_file << "TransferFunction: "              << c.TransferFunction << "\n";
-    m_file << "ConvolutionFile:  "              << c.conv_inputfile << "\n\n";
+    m_file << "ConvolutionDirectory:  "         << c.InputDirectory << "\n\n";
     
     m_file << "=== Flags ==="                   << "\n";
     m_file << "LandauFluctuation:          "    << bool_cast(c.LandauFluctuation) << "\n";
@@ -90,7 +90,9 @@ inline void Logger::PrintConfig( tfboost::ConfigParser const& c) {
     m_file << "SaveConvDataToFile:         "    << bool_cast(c.SaveConvDataToFile) << "\n";
     m_file << "MakeLinearFitNearThreshold: "    << bool_cast(c.MakeLinearFitNearThreshold) << "\n";
     m_file << "MakeGaussianFitNearVmax:    "    << bool_cast(c.MakeGaussianFitNearVmax) << "\n";
-    m_file << "AddNoise:                   "    << bool_cast(c.AddNoise) << "\n";
+    m_file << "AddSimulatedNoise:          "    << bool_cast(c.AddSimulatedNoise) << "\n";
+    m_file << "DoMeasurementsWithNoise:    "    << bool_cast(c.DoMeasurementsWithNoise) << "\n";
+    m_file << "AddNoiseFromFiles:          "    << bool_cast(c.AddNoiseFromFiles) << "\n";
     m_file << "UseRedNoise:                "    << bool_cast(c.UseRedNoise) << "\n";
     m_file << "UseSameCurve:               "    << bool_cast(c.UseSameCurve) << "\n";
     

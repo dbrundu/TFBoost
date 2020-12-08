@@ -76,19 +76,17 @@ if(flag){\
         std::cout<< "\033[1;33mWarning: \033[0m" << message << "\n";\
         return val;\
     }
-    
-#define CHECK_ERROR(x, message)\
-    if(x) {\
-        std::cout<< "\033[1;33mWarning: \033[0m" << message << "\n";\
-        BaseFitAlgorithm::is_error = true;\
-        return ;\
-    }
+
     
     
     
 namespace tfboost {
 
 
+/*
+ * Function to fill the signal, kernel or convolution
+ * histograms
+ */
 template<typename HIST, typename FUNCTION>
 inline void FillHistWithFunction(HIST& hist, FUNCTION const& fun)
 {
@@ -98,6 +96,10 @@ inline void FillHistWithFunction(HIST& hist, FUNCTION const& fun)
 
 
 
+/*
+ * Function to save the canvas for monitoring graphs
+ * passing the name of axes and title
+ */
 template<typename GRAPH>
 inline void SaveMonitorGraph(TString const& title, 
                        TString const& xtitle, 
@@ -116,7 +118,11 @@ inline void SaveMonitorGraph(TString const& title,
 
 
 
-
+/*
+ * Function to save a canvas 
+ * passing the name of axes, title and 
+ * drawing options
+ */
 template<typename HIST>
 inline void SaveCanvas(TString const& directory, 
                        TString const& title, 
@@ -141,7 +147,10 @@ inline void SaveCanvas(TString const& directory,
 
 
 
-
+/*
+ * Function to save a canvas given
+ * a fully configured histogram
+ */
 template<typename HIST>
 inline void SaveCanvas(TString const& directory, 
                        HIST& hist)
@@ -155,7 +164,11 @@ inline void SaveCanvas(TString const& directory,
 
 
 
-
+/*
+ * Function to save the canvas
+ * containing the signal, kernel 
+ * and convolution curves
+ */
 inline void SaveConvolutionCanvas(TString const& directory, TString const& title, 
                           TH1D& hist_convol, TH1D& hist_signal, TH1D& hist_kernel)
 {
@@ -198,7 +211,10 @@ inline void SaveConvolutionCanvas(TString const& directory, TString const& title
 }
 
 
-
+/*
+ * Function to get a size_t
+ * to the nearest upper power of 2
+ */
 inline size_t upper_power_of_two(size_t v)
 {
     v--;
@@ -212,7 +228,12 @@ inline size_t upper_power_of_two(size_t v)
 }
 
 
-
+/*
+ * Function to get a pointer
+ * to a list of all the files given a path
+ * NB: The list contains also other directories
+ * and special directories as "./" and "../"
+ */
 TList* GetFileList(TString dirname_string)
 {
     const char* dirname = dirname_string.Data();
@@ -223,11 +244,23 @@ TList* GetFileList(TString dirname_string)
         std::exit(1);
     }
 
-    return dir.GetListOfFiles();
+    TList* list   = dir.GetListOfFiles();
+    TIterator* it = list->MakeIterator();
+    TSystemFile* currentfile; 
+
+    while ( currentfile = (TSystemFile*) it->Next() ){
+        if (currentfile->IsDirectory()) list->Remove(currentfile);
+    }
+
+    return list;
 }
 
 
-
+/*
+ * Function to create recursively
+ * all the directories given a path,
+ * if they do not exist
+ */
 void CreateDirectories(TString path)
 {
     TObjArray *tokens = path.Tokenize("/");
@@ -246,10 +279,11 @@ void TFBoostHeader()
 {
     std::cout << "=====================================================" << "\n";
     std::cout << " TFBOOST, fast signals convolution and analyzer      " << "\n";
-    std::cout << "-----------------------------------------------------" << "\n";
     std::cout << "  Developed by D.Brundu and G.M. Cossu               " << "\n";
-    std::cout << "    Powered by HYDRA, developed by A.A.A Junior,     " << "\n";
-    std::cout << "    https://github.com/MultithreadCorner             " << "\n";
+    std::cout << "  https://github.com/dbrundu/TFBoost                 " << "\n";
+    std::cout << "-----------------------------------------------------" << "\n";
+    std::cout << "  Powered by HYDRA, developed by A.A.A Junior,       " << "\n";
+    std::cout << "  https://github.com/MultithreadCorner               " << "\n";
     std::cout << "=====================================================" << "\n\n";
 }
 

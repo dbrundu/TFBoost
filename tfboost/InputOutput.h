@@ -36,9 +36,14 @@
     
 namespace tfboost {
 
-
+/*
+ * Read data from a file with one
+ * or multiple columns separated by spaces
+ * and fill a container with data
+ * corresponding to a specific column
+ */
 template<typename Iterable>
-void ReadConvolution(TString const& file, Iterable& iterable, size_t const& Nsamples)
+void ReadSimple(TString const& file, int column, Iterable& iterable, size_t const& Nsamples, double const& scale=1.0)
 {
         //size_t Nsamples = iterable.size();
         iterable.reserve(Nsamples);
@@ -51,21 +56,25 @@ void ReadConvolution(TString const& file, Iterable& iterable, size_t const& Nsam
         line.ReadLine(myFile);
         
         while(myFile.good()) {
-            detail::PushBackTokens(line, " ", 1, iterable);
+            detail::PushBackTokens(line, " ", column, iterable);
             line.ReadLine(myFile); }
         
         myFile.close();
         
-        size_t diff = Nsamples - iterable.size();
-        
-        if(diff>0) 
-          for(size_t j = iterable.size(); j < Nsamples; ++j)
-            iterable.push_back(0.0);
+        for(size_t j = iterable.size(); j < Nsamples; ++j)
+          iterable.push_back(0.0);
+          
+        for(auto& x : iterable) x *= scale;
 }
 
 
 
-
+/*
+ * Read a transfer function from a file.
+ * The format must be two columns separated by spaces
+ * containing time and the transfer function response.
+ * Fill the two correponfing containers.
+ */
 template<typename Iterable>
 void ReadTF(TString const& file, 
             int Nlinestoskip, 

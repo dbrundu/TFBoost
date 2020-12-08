@@ -52,5 +52,6 @@
 #include <TRandom3.h>
 #include <TLine.h>
 #include <TProfile.h>
+#include <TGraph2D.h>
 
 #endif

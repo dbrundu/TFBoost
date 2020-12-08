@@ -74,16 +74,18 @@ class HistogramsManager {
         inline void FillMeasures( Measures_t const& measures){
         
             for(auto const& key : MeasuresInitializer::get_keys() ) { 
-                histograms[key] -> Fill ( measures[key] );
+                if(measures[key]>-1.0)
+                    histograms[key] -> Fill ( measures[key] );
             }
         }
         
         
         
-        inline void FillMeasures_noise( Measures_t const& measures){
+        inline void FillMeasures_noise( Measures_t const& measures_n){
         
             for(auto const& key : MeasuresInitializer::get_keys() ) { 
-                histograms_noise[key] -> Fill ( measures[key] );
+                if(measures_n[key]>-1.0)
+                    histograms_noise[key] -> Fill ( measures_n[key] );
             }
         }
         

@@ -168,80 +168,76 @@ inline double CorrectTOA(double const& toa, double const& tot, double const& a, 
 
 
 /*
- * Functor to compute the slope of a noisy signal
+ * Function to compute the slope of a noisy signal
  * at a specific position
  * A linear fit in the region near the specified position
- * is done to get the correct slope.
+ * is done to get the correct slope. It uses 2*half_fit_range
+ * to perform the fit.
  */
 template<typename Iterable, typename Iterablet>
-inline pairDD_type LinearFitNearThr(double const& Thr, 
-                                    Iterable const& data, 
+inline doublePair_t LinearFitNearThr(double   const& Thr, 
+                                    Iterable  const& data, 
                                     Iterablet const& time,
-                                    size_t const& bound_fit, 
-                                    bool const& plot=false,
-                                    TString const& title = "" ) {
+                                    size_t    const& half_fit_range, 
+                                    bool      const& plot=false,
+                                    TString   const& title = "" ) {
     
     // temporary TOA position
     const size_t TOA = LeadingEdge(data, Thr);
    
-    const size_t min_fit = (TOA - bound_fit); 
-    const size_t max_fit = (TOA + bound_fit); 
+    const size_t min_fit = (TOA - half_fit_range); 
+    const size_t max_fit = (TOA + half_fit_range); 
     
     ERROR_RETURN( min_fit < 0 || max_fit > data.size(), 
-                  "In LinearFitNearThr(), out of range limit. Exit with -1", pairDD_type(-1.0,-1.0)) 
+                  "In LinearFitNearThr(), out of range limit. Exit with -1", doublePair_t(-1.0,-1.0)) 
             
     TGraph graph;
-    
     for(size_t i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , data[i]);
 
     TFitResultPtr r = graph.Fit("pol1","SQ");
 
-    ERROR_RETURN( r==-1, "Error in LinearFitNearThr. Exit with -1.", pairDD_type(-1.0,-1.0) )
+    ERROR_RETURN( r==-1, "Error in LinearFitNearThr. Exit with -1.", doublePair_t(-1.0,-1.0) )
     
     double q   = r->Parameter(0);
     double m   = r->Parameter(1); 
     double toa = (Thr-q)/m ;
     
-    if(plot){
-        TCanvas p("","",800,800);
-        graph.Draw("APL");
-        p.SaveAs(TString("LinearFitNearThr")+title+".pdf");
-    }
+    if(plot)
+      SaveMonitorGraph( TString("LinearFitNearThr_")+title, "time", "Voltage", graph );
             
-    return pairDD_type(toa, m);
+    return doublePair_t(toa, m);
 }
 
 
 
 /*
- * Functor to compute the maximum value of a noisy signal
+ * Function to compute the maximum value of a noisy signal
  * A gaussian fit is done 
  * to get the correct max value
  */
 template<typename Iterable, typename Iterablet>
-inline pairDD_type GaussianFitNearVmax(Iterable const& data, 
+inline doublePair_t GaussianFitNearVmax(Iterable const& data, 
                                        Iterablet const& time, 
-                                       size_t const& bound_fit, 
-                                       bool const& plot=false,
-                                       TString const& title = "Vmax" ) {
+                                       size_t    const& half_fit_range, 
+                                       bool      const& plot=false,
+                                       TString   const& title = "Vmax" ) {
     
     const size_t t0 = GetTimeAtPeak(data);
             
-    const size_t min_fit = (t0 - bound_fit); 
-    const size_t max_fit = (t0 + bound_fit);
+    const size_t min_fit = (t0 - half_fit_range); 
+    const size_t max_fit = (t0 + half_fit_range);
 
     ERROR_RETURN( min_fit < 0 || max_fit > data.size(), 
-                 "In GaussianFitNearVmax(), out of range limit. Exit with -1", pairDD_type(-1.0,-1.0) )
+                 "In GaussianFitNearVmax(), out of range limit. Exit with -1", doublePair_t(-1.0,-1.0) )
             
     TGraph graph;
-    
     for(size_t i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , data[i]);
     
     TFitResultPtr r = graph.Fit("gaus","SQ");
 
-    ERROR_RETURN( r==-1, "Error in GaussianFitNearVmax. Exit with -1.", pairDD_type(-1.0,-1.0))
+    ERROR_RETURN( r==-1, "Error in GaussianFitNearVmax. Exit with -1.", doublePair_t(-1.0,-1.0))
     
     double amp = r->Parameter(0);
     double mu  = r->Parameter(1);
@@ -249,7 +245,7 @@ inline pairDD_type GaussianFitNearVmax(Iterable const& data,
     if(plot) 
       SaveMonitorGraph( TString("GaussianFit_")+title, "time", "Voltage", graph );
             
-    return pairDD_type(amp,mu) ;
+    return doublePair_t(amp,mu) ;
 }
 
 
@@ -264,11 +260,11 @@ inline pairDD_type GaussianFitNearVmax(Iterable const& data,
  * If error returns (-1.0 , 0)
  */
 template<typename Iterable, typename Iterablet>
-inline tripletDDD_type TimeRefMethod(Iterable const& vout, 
+inline doubleTriple_t TimeRefMethod(Iterable const& vout, 
                                  Iterablet const& time,
                                  double const& vmax,
                                  double const& delay_t,
-                                 size_t const& bound_fit,
+                                 size_t const& half_fit_range,
                                  bool const& noise = false,
                                  bool const& plot  = false,
                                  TString const& title = "tref")
@@ -279,7 +275,7 @@ inline tripletDDD_type TimeRefMethod(Iterable const& vout,
     const size_t delay = delay_t/dT;
     
     ERROR_RETURN( delay == 0, 
-                 "Error in TimeRefMethod() [delay == 0], Exit with (-1,0)", tripletDDD_type(-1.0, -1.0, -1.0) )
+                 "Error in TimeRefMethod() [delay == 0], Exit with (-1,0)", doubleTriple_t(-1.0, -1.0, -1.0) )
 
     HostSignal_t subtr( N );
 
@@ -289,33 +285,34 @@ inline tripletDDD_type TimeRefMethod(Iterable const& vout,
       subtr[i] = vout[i] - x;
     }
 
-    double newthr     =  (noise)? 0.5 * GaussianFitNearVmax( subtr, time, bound_fit+3, plot, title ).first : 0.5 * GetVAtPeak(subtr);
-    int    min_fit    =  LeadingEdge(subtr , newthr) - bound_fit;
-    int    max_fit    =  LeadingEdge(subtr , newthr) + bound_fit;
+    // compute the RM threshold
+    double newthr     =  0.5*( (noise)? 
+                         std::get<0>( GaussianFitNearVmax( subtr, time, half_fit_range+3, plot, title ) ) 
+                         : GetVAtPeak(subtr) );
+
+    size_t idx_0      =  LeadingEdge(subtr , newthr);
+    int    min_fit    =  idx_0 - half_fit_range;
+    int    max_fit    =  idx_0 + half_fit_range;
     double min_fit_t  =  time[min_fit];
     double max_fit_t  =  time[max_fit];
     
-    size_t dummy_TOA_RM = LeadingEdge(subtr , newthr);
-
     ERROR_RETURN( newthr<0 || min_fit < 0 || max_fit > (int) N, 
-                 "Error in TimeRefMethod() [out of range], Exit with (-1,0)", tripletDDD_type(-1.0, -1.0, -1.0) )
+                 "Error in TimeRefMethod() [out of range], Exit with (-1,0)", doubleTriple_t(-1.0, -1.0, -1.0) )
                  
     
     // Linear fit near thr 
     // of the subtracted signal
     TGraph graph;
-    
     for(int i=min_fit; i<max_fit+1; ++i)
         graph.SetPoint(graph.GetN(), time[i] , subtr[i]);
         
     TFitResultPtr r = graph.Fit("pol1","SQ");
     
-    ERROR_RETURN( r==-1, "Error in TimeRefMethod() [fit error], Exit with (-1,0)", tripletDDD_type(-1.0, -1.0, -1.0) )
+    ERROR_RETURN( r==-1, "Error in TimeRefMethod() [fit error], Exit with (-1,0)", doubleTriple_t(-1.0, -1.0, -1.0) )
     
     double q   = r->Parameter(0);
     double m   = r->Parameter(1); 
     double toa = (newthr-q)/m ;
-    
     
     if(plot)
     {
@@ -345,7 +342,7 @@ inline tripletDDD_type TimeRefMethod(Iterable const& vout,
         p.SaveAs(TString("LinearFit")+title+".pdf");
     }
     
-    return tripletDDD_type(toa, newthr, m);
+    return doubleTriple_t(toa, newthr, m);
 }
 
 
