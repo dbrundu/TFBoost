@@ -81,6 +81,8 @@ namespace libconf = libconfig;
 int main(int argv, char** argc)
 {
 
+  auto main_start = std::chrono::high_resolution_clock::now();
+
   tfboost::TFBoostHeader();
 
   std::cout.precision(10);
@@ -103,6 +105,7 @@ int main(int argv, char** argc)
   
   size_t us_delay = 1e3 * c.DelayMonitoring;
   bool   dodelay  = (us_delay!=0);
+  
   
   
   
@@ -142,18 +145,16 @@ int main(int argv, char** argc)
   Measures_t measures( init );
   Measures_t measures_noise( init );
   
-  
-
-  
-  
+ 
+ 
   /* ----------------------------------------------
    * Initialization of histograms
    * --------------------------------------------*/
   auto& histograms = tfboost::HistogramsManager::getInstance();
   histograms.SetConfig(hc);
   
-  TH2D       hist_TOTvsTOA("hist_TOTvsTOA","TOTvsTOA",  100, 0, -1, 100, 0, -1);
-  TH2D      hist_TOTvsVmax("hist_TOTvsVmax","hist_TOTvsVmax",  100, 0, -1, 100, 0, -1);
+  TH2D hist_TOTvsTOA("hist_TOTvsTOA","TOTvsTOA",  100, 0, -1, 100, 0, -1);
+  TH2D hist_TOTvsVmax("hist_TOTvsVmax","hist_TOTvsVmax",  100, 0, -1, 100, 0, -1);
 
   TH1D hist_convol("hist_convol;Time[s];Vout [V]","hist_convol", c.Nsamples, minplot, maxplot );
   TH1D hist_signal("hist_signal;Time[s];Vout [V]","hist_signal", c.Nsamples, minplot, maxplot );
@@ -161,9 +162,13 @@ int main(int argv, char** argc)
 
 
 #if TCODE_ENABLE==true
-  TH2D *TOAmaps   = new TH2D("TOAmaps","TOAmaps",   100, 0, TCODE_PIXEL_XMAX, 100, 0, TCODE_PIXEL_YMAX);
-  TH2D *Vmaxmaps  = new TH2D("Vmaxmaps","Vmaxmaps", 100, 0, TCODE_PIXEL_XMAX, 100, 0, TCODE_PIXEL_YMAX);
+  //TH2D *TOAmaps   = new TH2D("TOAmaps","TOAmaps",   100, 0, TCODE_PIXEL_YMAX, 100, 0, TCODE_PIXEL_XMAX);
+  //TH2D *Vmaxmaps  = new TH2D("Vmaxmaps","Vmaxmaps", 100, 0, TCODE_PIXEL_YMAX, 100, 0, TCODE_PIXEL_XMAX);
+  TGraph2D *TOAmaps = new TGraph2D();
+  TGraph2D *Vmaxmaps = new TGraph2D();
 #endif
+  
+  
   
   
   /* ----------------------------------------------
@@ -174,7 +179,15 @@ int main(int argv, char** argc)
   listoffiles->Sort();
   TIter nextfile( listoffiles );
   TSystemFile *currentfile;
-  TString currentfilename, line;
+  TString currentfilename;
+  TString line;
+
+  /* ----------------------------------------------
+   * Preparing the list of noise input files 
+   * --------------------------------------------*/
+  TList* listofnoisefiles = tfboost::GetFileList(c.NoiseDirectory); 
+  TIter nextnoisefile( listofnoisefiles );
+
 
 
   /*-----------------------------------------------
@@ -194,6 +207,8 @@ int main(int argv, char** argc)
   }
    
 
+
+
   /* ----------------------------------------------
    * Main loop on input files
    * --------------------------------------------*/
@@ -205,7 +220,6 @@ int main(int argv, char** argc)
     currentfilename = currentfile->GetName();
     if(c.UseSameCurve) currentfilename = c.SingleFile;
 
-    
     if ( currentfile->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension) ) continue;
     
     RULE_LINE;
@@ -234,7 +248,7 @@ int main(int argv, char** argc)
     
     
 #if TCODE_ENABLE==true
-    std::pair<double,double> pos = tfboost::tcode::GetHitPosition2(currentfilename);
+    std::pair<double,double> pos = tfboost::tcode::GetHitPosition<TCODE_SELECT_POSFUNC>(currentfilename);
     double pos_x = pos.first;
     double pos_y = pos.second;
 #endif
@@ -329,9 +343,10 @@ int main(int argv, char** argc)
 
     
     if(!c.MakeConvolution){
-      // Read the convoluted signal from file
-      conv_data_h.clear();
-      tfboost::ReadConvolution( c.conv_inputfile, conv_data_h, c.Nsamples);
+      // The input signals are already the convoluted ones
+      // so skip the convolution and copy the input signals
+      // in conv_data_h
+      hydra::copy(current, conv_data_h);
       
     } else {
 
@@ -379,20 +394,24 @@ int main(int argv, char** argc)
       }//end switch
 
 
-
-     /*-------------------------------------------------
-      * Digitization of the signal
-      * This step is done only if we are requesting noise
-      *------------------------------------------------*/
-      if(c.MakeDigitization && !c.AddNoise)
+      // Time Digitization of the signal
+      // This step is done only if we are not requesting noise
+      if(c.MakeTimeDigitization && !c.DoMeasurementsWithNoise)
       {
-        tfboost::DigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
+        tfboost::TimeDigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
 
         // Override all the conv information
         c.Nsamples = conv_data_h.size();
         c.dT = c.sampling_dT;
         hist_convol.SetBins(c.Nsamples, min, maxplot);
       }
+
+
+      // Voltage Digitization of the signal
+      // This step is done only if we are not requesting noise
+      if(c.MakeVoltageDigitization && !c.DoMeasurementsWithNoise)
+        tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
+
       
 
     } // end MakeConvolution
@@ -402,10 +421,11 @@ int main(int argv, char** argc)
 
     /* ----------------------------------------------
      * Filling histogram for visualization
-     * --------------------------------------------*/ 
-    auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
-    
-    if(PlotConv) tfboost::FillHistWithFunction( hist_convol, conv_spline);
+     * --------------------------------------------*/     
+    if(PlotConv) {
+        auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
+        tfboost::FillHistWithFunction( hist_convol, conv_spline);
+    }
     
     
     
@@ -449,9 +469,6 @@ int main(int argv, char** argc)
     
     measures[_toa_le]     = c.TOTcorrection? tfboost::algo::CorrectTOA(measures[_toa_le], measures[_tot], c.TOT_a, c.TOT_b) : measures[_toa_le];
 
-
-    //TOAmaps->SetBinContent( pos_y+1, pos_x+1, ::abs(time[TOA_CFD]-0.2432374637e-9)/7.47e-11 );
-    //Vmaxmaps->SetBinContent( pos_y+1, pos_x+1, 1e3 * measures[_vpeak] );
  
     
     if(c.MakeTheoreticalTOA){
@@ -464,6 +481,13 @@ int main(int argv, char** argc)
 
     histograms.FillMeasures( measures);
 
+#if TCODE_ENABLE==true
+    if(measures[_toa_cfd] > -1.0 && pos_x>56){
+      //TOAmaps->SetBinContent( TOAmaps->FindBin( pos_x, pos_y), measures[_toa_cfd] );
+      TOAmaps->SetPoint(TOAmaps->GetN(),pos_x,pos_y,measures[_toa_cfd]); 
+      //Vmaxmaps->SetBinContent( Vmaxmaps->FindBin( pos_x, pos_y), measures[_vpeak] );
+      Vmaxmaps->SetPoint(Vmaxmaps->GetN(),pos_x,pos_y,measures[_vpeak] ); }
+#endif
   
     hist_TOTvsTOA  .Fill( measures[_tot], measures[_toa_le] );
     hist_TOTvsVmax .Fill( measures[_tot], measures[_vpeak]  );
@@ -486,39 +510,76 @@ int main(int argv, char** argc)
 
 
     /*-------------------------------------------------
-     * Measurements with noise
+     * Section where the noise is added to signal
      *------------------------------------------------*/
-    if(c.AddNoise)
+    if(c.DoMeasurementsWithNoise)
     {
-      auto noise = tfboost::Noise(c.sigma_noise, c.UseRedNoise, c.r_rednoise);
       
-      noise.AddNoiseToSignal( conv_data_h, S() );
+      // if not from file, the noise is simulated
+      // using white or red spectrum model
+      if(c.AddSimulatedNoise){
+          auto noise = tfboost::Noise(c.sigma_noise, c.UseRedNoise, c.r_rednoise);
+          noise.AddNoiseToSignal( conv_data_h, S(), c );
+      }
+      
+      
+     // Digitization of the signal
+     // This step is done only if we are requesting noise
+      if(c.MakeTimeDigitization){
+        
+        tfboost::TimeDigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
 
-      // initialize indices
-      size_t timeatmax_idx=0, TOA_LE_noise_idx=0, TOA_CFD_noise_idx=0, TOA_RM_noise_idx=0;
-      
-      
-     /*-------------------------------------------------
-      * Digitization of the signal
-      * This step is done only if we are requesting noise
-      *------------------------------------------------*/ 
-      if(c.MakeDigitization)
-      {
-        tfboost::DigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
-
-        // Override all the conv information
+        // Override all relevant convolution information
         c.dT        = c.sampling_dT;
         c.Nsamples  = conv_data_h.size();
         hist_convol.SetBins(c.Nsamples, min, maxplot);
       }
       
       
+      // Introduce a Low Pass Filter
+      // simulating an oscilloscope
+      if(c.LowPassFilter && !c.FilterOnlyNoise){
+          auto flt       = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
+      }
       
+
+      // Voltage Digitization of the signal
+      // This step is done only if we are requesting noise
+      if(c.MakeVoltageDigitization)
+        tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
+
+
+      // if noise from file, the noise samples are read
+      // and added directly to the signal
+      if(c.AddNoiseFromFiles){
+        TSystemFile* currentnoisefile = (TSystemFile*) nextnoisefile();
+        TString currentnoisefilename  = currentnoisefile->GetName();
+        DEBUG(currentnoisefilename)
+
+        HostSignal_t noise_h;
+        tfboost::ReadSimple( c.NoiseDirectory+currentnoisefilename, 0, noise_h, c.Nsamples, 1e-3);
+        tfboost::AddNoiseToSignal(conv_data_h, noise_h, c);
+      }
+      
+
+
+      
+
       // Condition to avoid to process empty signal
       if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_noise) == conv_data_h.size() ) 
         { WARNING_LINE("Skipping empty event...") continue; }
       
       
+
+     /*-------------------------------------------------
+      * Start measurmenets with noise
+      *------------------------------------------------*/
+
+      // initialize indices
+      size_t timeatmax_idx=0, TOA_LE_noise_idx=0, TOA_CFD_noise_idx=0, TOA_RM_noise_idx=0;
+
       timeatmax_idx     = tfboost::algo::GetTimeAtPeak(conv_data_h);
       TOA_LE_noise_idx  = tfboost::algo::LeadingEdge(conv_data_h , c.LEthr);
       
@@ -533,8 +594,8 @@ int main(int argv, char** argc)
       {
         auto toa = tfboost::algo::LinearFitNearThr( c.LEthr, conv_data_h, time, c.bound_fit, c.PlotLinFit, "LEfit");
         
-        measures_noise[_toa_le]  = toa.first ; 
-        measures_noise[_dvdt_le] = 1e-6 * toa.second ;
+        measures_noise[_toa_le]  =      std::get<0>(toa) ;  
+        measures_noise[_dvdt_le] = 1e-6*std::get<1>(toa) ;
       }
       
       
@@ -542,30 +603,26 @@ int main(int argv, char** argc)
       if(c.MakeGaussianFitNearVmax && TOA_CFD>1)
       {
 
-        auto gfit = tfboost::algo::GaussianFitNearVmax( conv_data_h, time, c.bound_fit, c.PlotGausFit );
-        measures_noise[_tpeak] = time[gfit.second];
-        measures_noise[_vpeak] = gfit.first;
+        auto gaussfit = tfboost::algo::GaussianFitNearVmax( conv_data_h, time, c.bound_fit, c.PlotGausFit );
+        measures_noise[_tpeak] = time[std::get<1>(gaussfit)]; 
+        measures_noise[_vpeak] = std::get<0>(gaussfit);
 
-        TOA_CFD_noise_idx = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures_noise[_vpeak]);
-        
-        measures_noise[_toa_cfd]    = time[TOA_CFD_noise_idx];
-        measures_noise[_vonth_cfd]  = conv_data_h[ TOA_CFD_noise_idx ];
-        measures_noise[_vpeak]      = gfit.first;
-        
+        auto cfd_idx = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures_noise[_vpeak]);
+        measures_noise[_toa_cfd]    = time[cfd_idx];
+        measures_noise[_vonth_cfd]  = conv_data_h[ cfd_idx ];        
 
         if(c.MakeLinearFitNearThreshold && TOA_LE>1)
         {
-          auto toa  = tfboost::algo::LinearFitNearThr( c.CFD_fr*measures_noise[_vpeak], 
+          auto toa_cf = tfboost::algo::LinearFitNearThr( c.CFD_fr*measures_noise[_vpeak], 
                                                        conv_data_h, time, c.bound_fit, 
                                                        /*plot?*/c.PlotLinFit, "CFDfit");
                                                             
-          auto rm   = tfboost::algo::TimeRefMethod( conv_data_h, time, 
-                                                    measures_noise[_vpeak], c.RM_delay, c.bound_fit, 
-                                                    /*noise?*/true, /*plot?*/c.PlotRMfit);
-          
+          auto rm     = tfboost::algo::TimeRefMethod( conv_data_h, time, 
+                                                      measures_noise[_vpeak], c.RM_delay, c.bound_fit, 
+                                                      /*noise?*/true, /*plot?*/c.PlotRMfit);
                                                             
-          measures_noise[_toa_cfd]   = toa.first ;
-          measures_noise[_dvdt_cfd]  = 1e-6 * toa.second ;
+          measures_noise[_toa_cfd]   = std::get<0>(toa_cf);
+          measures_noise[_dvdt_cfd]  = 1e-6 * std::get<1>(toa_cf);
           measures_noise[_toa_rm]    = std::get<0>(rm);
           measures_noise[_vonth_rm]  = std::get<1>(rm);
           measures_noise[_dvdt_rm]   =  1e-6 * std::get<2>(rm);
@@ -574,34 +631,36 @@ int main(int argv, char** argc)
 
       }
 
-      measures_noise[_toa_le] = c.TOTcorrection? tfboost::algo::CorrectTOA(measures_noise[_toa_le], measures_noise[_tot], c.TOT_a, c.TOT_b) : measures_noise[_toa_le];
+      if(c.TOTcorrection)
+          measures_noise[_toa_le] = tfboost::algo::CorrectTOA(measures_noise[_toa_le], measures_noise[_tot], c.TOT_a, c.TOT_b);
+      
 
+     /*-------------------------------------------------
+      * Fill histograms for noise measurements
+      *------------------------------------------------*/
       histograms.FillMeasures_noise( measures_noise );
       
-#if TCODE_ENABLE==true
-      TOAmaps->SetBinContent( TOAmaps->FindBin( pos_x, pos_y), TOA_CFD_noise ); 
-      Vmaxmaps->SetBinContent( Vmaxmaps->FindBin( pos_x, pos_y), vmax ); 
-#endif
       
+      RULE_LINE_LIGHT;
+      std::cout << _START_INFO_;
+      std::cout << "Measurements with noise:\n";
+      std::cout << _END_INFO_;
+      std::cout << "Time on thresholds (LE)  = " << measures_noise[_toa_le]     << " (s)\n";
+      std::cout << "Time on thresholds (CFD) = " << measures_noise[_toa_cfd]    << " (s)\n";
+      std::cout << "Time on thresholds (RM)  = " << measures_noise[_toa_rm]     << " (s)\n";
+      std::cout << "V on thresholds (CFD)    = " << measures_noise[_vonth_cfd]  << " (V)\n";
+      std::cout << "V on thresholds (LE)     = " << measures_noise[_vonth_le]   << " (V)\n";
+      std::cout << "V on thresholds (RM)     = " << measures_noise[_vonth_rm]   << " (V)\n";
+      std::cout << "Vpeak                    = " << measures_noise[_vpeak]      << " (V)\n";
+      std::cout << "dv/dt (CFD)              = " << measures_noise[_dvdt_cfd]   << " (uV/ps)\n";
+      std::cout << "dv/dt (LE)               = " << measures_noise[_dvdt_le]    << " (uV/ps)\n";
+      std::cout << "dv/dt (RM)               = " << measures_noise[_dvdt_rm]    << " (uV/ps)\n";
 
-    RULE_LINE_LIGHT;
-    std::cout << _START_INFO_;
-    std::cout << "Measurements with noise:\n";
-    std::cout << _END_INFO_;
-    std::cout << "Time on thresholds (LE)  = " << measures_noise[_toa_le]     << " (s)\n";
-    std::cout << "Time on thresholds (CFD) = " << measures_noise[_toa_cfd]    << " (s)\n";
-    std::cout << "Time on thresholds (RM)  = " << measures_noise[_toa_rm]     << " (s)\n";
-    std::cout << "V on thresholds (CFD)    = " << measures_noise[_vonth_cfd]  << " (V)\n";
-    std::cout << "V on thresholds (LE)     = " << measures_noise[_vonth_le]   << " (V)\n";
-    std::cout << "V on thresholds (RM)     = " << measures_noise[_vonth_rm]   << " (V)\n";
-    std::cout << "Vpeak                    = " << measures_noise[_vpeak]      << " (V)\n";
-    std::cout << "dv/dt (CFD)              = " << measures_noise[_dvdt_cfd]   << " (uV/ps)\n";
-    std::cout << "dv/dt (LE)               = " << measures_noise[_dvdt_le]    << " (uV/ps)\n";
-    std::cout << "dv/dt (RM)               = " << measures_noise[_dvdt_rm]    << " (uV/ps)\n";
-
-    auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
       
-    if(PlotConv) tfboost::FillHistWithFunction( hist_convol, conv_spline);
+      if(PlotConv) {
+          auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
+          tfboost::FillHistWithFunction( hist_convol, conv_spline);
+      }
 
     }
    
@@ -647,7 +706,8 @@ int main(int argv, char** argc)
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsTOA_profile",   "TOT [s]",    "Vmax [V]", *prof2);
 
 
-  if(c.AddNoise) histograms.SaveHistograms_noise( c.OutputDirectory + "plots/" );
+  if(c.DoMeasurementsWithNoise) 
+    histograms.SaveHistograms_noise( c.OutputDirectory + "plots/" );
 
 
 
@@ -670,24 +730,32 @@ int main(int argv, char** argc)
   LOG.PrintMessage("Number of files analyzed: ", INDEX);
   LOG.Exit();
 
-  
-//  gStyle->SetOptStat(0);
-//  gStyle->SetPalette(kRainBow);
+#if TCODE_ENABLE==true
+  gStyle->SetOptStat(0);
+  gStyle->SetPalette(kRainBow);
 
-//  TCanvas canv_TOAmaps("canv_TOAmaps", "canv_TOAmaps", 4*200, 4*200);
-//  TOAmaps->SetMinimum(0.15e-9);
-//  TOAmaps->SetMaximum(0.5e-9);
-//  //TOAmaps->SetMinimum(0.0);
-//  TOAmaps->Draw("colz");
-//  canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.pdf");
-//    canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.C");
+  TCanvas canv_TOAmaps( "canv_TOAmaps", "canv_TOAmaps", 4*TCODE_PIXEL_YMAX, 4*TCODE_PIXEL_XMAX);
+  //TOAmaps->SetMinimum(0.15e-9);
+  //TOAmaps->SetMaximum(0.5e-9);
+  //TOAmaps->SetMinimum(0.0);  
+  TOAmaps->Draw("colz");
+  canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.pdf");
+  //canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.C");
 
-//  TCanvas canv_Vmaxmaps("canv_Vmaxmaps", "canv_Vmaxmaps", 4*200, 4*200);
-//  //Vmaxmaps->SetMinimum(TOAmaps->GetMinimum(0.));
-//    Vmaxmaps->SetMinimum(0.0);
-//  Vmaxmaps->Draw("colz");
-//  canv_Vmaxmaps.SaveAs( c.OutputDirectory + "plots/" +"canv_Vmaxmaps.pdf");
-//  
+  TCanvas canv_Vmaxmaps("canv_Vmaxmaps", "canv_Vmaxmaps", 4*TCODE_PIXEL_YMAX, 4*TCODE_PIXEL_XMAX);
+  //Vmaxmaps->SetMinimum(TOAmaps->GetMinimum(0.));
+  //Vmaxmaps->SetMinimum(0.0);
+  Vmaxmaps->Draw("colz");
+  canv_Vmaxmaps.SaveAs( c.OutputDirectory + "plots/" +"canv_Vmaxmaps.pdf");
+  //canv_Vmaxmaps.SaveAs( c.OutputDirectory + "plots/" +"canv_Vmaxmaps.C");
+#endif
+
+  auto main_end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> main_elapsed = main_end - main_start;
+
+  RULE_LINE;
+  std::cout << _START_INFO_ << "Total time  " << _END_INFO_ << "  = " <<main_elapsed.count() << " (ms)\n";
+  RULE_LINE;
 
   return 0;
 }

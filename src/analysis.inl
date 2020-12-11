@@ -394,17 +394,24 @@ int main(int argv, char** argc)
       }//end switch
 
 
-      // Digitization of the signal
-      // This step is done only if we are requesting noise
-      if(c.MakeDigitization && !c.DoMeasurementsWithNoise)
+      // Time Digitization of the signal
+      // This step is done only if we are not requesting noise
+      if(c.MakeTimeDigitization && !c.DoMeasurementsWithNoise)
       {
-        tfboost::DigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
+        tfboost::TimeDigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
 
         // Override all the conv information
         c.Nsamples = conv_data_h.size();
         c.dT = c.sampling_dT;
         hist_convol.SetBins(c.Nsamples, min, maxplot);
       }
+
+
+      // Voltage Digitization of the signal
+      // This step is done only if we are not requesting noise
+      if(c.MakeVoltageDigitization && !c.DoMeasurementsWithNoise)
+        tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
+
       
 
     } // end MakeConvolution
@@ -512,20 +519,36 @@ int main(int argv, char** argc)
       // using white or red spectrum model
       if(c.AddSimulatedNoise){
           auto noise = tfboost::Noise(c.sigma_noise, c.UseRedNoise, c.r_rednoise);
-          noise.AddNoiseToSignal( conv_data_h, S() );
+          noise.AddNoiseToSignal( conv_data_h, S(), c );
       }
       
       
      // Digitization of the signal
      // This step is done only if we are requesting noise
-      if(c.MakeDigitization){
-        tfboost::DigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
+      if(c.MakeTimeDigitization){
+        
+        tfboost::TimeDigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
 
         // Override all relevant convolution information
         c.dT        = c.sampling_dT;
         c.Nsamples  = conv_data_h.size();
         hist_convol.SetBins(c.Nsamples, min, maxplot);
       }
+      
+      
+      // Introduce a Low Pass Filter
+      // simulating an oscilloscope
+      if(c.LowPassFilter && !c.FilterOnlyNoise){
+          auto flt       = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
+      }
+      
+
+      // Voltage Digitization of the signal
+      // This step is done only if we are requesting noise
+      if(c.MakeVoltageDigitization)
+        tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
 
 
       // if noise from file, the noise samples are read
@@ -537,10 +560,13 @@ int main(int argv, char** argc)
 
         HostSignal_t noise_h;
         tfboost::ReadSimple( c.NoiseDirectory+currentnoisefilename, 0, noise_h, c.Nsamples, 1e-3);
-        tfboost::AddNoiseToSignal(conv_data_h, noise_h);
+        tfboost::AddNoiseToSignal(conv_data_h, noise_h, c);
       }
       
+
+
       
+
       // Condition to avoid to process empty signal
       if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_noise) == conv_data_h.size() ) 
         { WARNING_LINE("Skipping empty event...") continue; }

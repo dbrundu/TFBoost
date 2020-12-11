@@ -29,6 +29,8 @@
 #define TFBOOST_NOISE_H_
 
 #include <tfboost/Types.h>
+#include <tfboost/ConfigParser.h>
+
 
 namespace tfboost { 
 
@@ -80,35 +82,55 @@ public:
     
     
     
-    inline void AddNoiseToSignal(HostSignal_t& data_h, size_t rng_seed) 
+    inline void AddNoiseToSignal(HostSignal_t& data_h, size_t rng_seed, tfboost::ConfigParser const& c) 
     {
-        const size_t N = data_h.size();
+        const size_t N0 = data_h.size();
+
+        // use a larger size to "warm-up" the noise
+        const size_t M = N0/3;
+        const size_t N  = N0+M; 
         
         hydra::Gaussian<double> gauss(0.0, fsigmanoise);
         
-        DevSignal_t data_d(N);
-        DevSignal_t noise_d(N);
+        DevSignal_t  data_d(N0);
+        DevSignal_t  noise_d(N);
         HostSignal_t noise_h(N);
         
         hydra::copy(data_h , data_d);
         
         hydra::fill_random(noise_d , gauss, rng_seed );
         
-        if(fuserednoise){
-        
+        if(fuserednoise)
+        {
             hydra::copy(noise_d , noise_h);
             
             HostSignal_t noise_h_final(N);
             noise_h_final[0] = noise_h[0];
             
-            #pragma unroll
             for(size_t i=1; i<N ; ++i)
                 noise_h_final[i] = fcorrelation * noise_h_final[i-1] + ::sqrt(1.0 - fcorrelation*fcorrelation)*noise_h[i];
             
-                    
             hydra::copy(noise_h_final , noise_d);
+            hydra::copy(noise_h_final , noise_h);
         }
         
+        ///////////////////////////////////
+        if(c.LowPassFilter && c.FilterOnlyNoise)
+        {
+           HostSignal_t time_temp(N);
+           for(size_t i=0; i<N; ++i) time_temp[i] = i*c.dT;
+
+           auto flt        = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+           auto conv_temp  = hydra::make_spiline<double>(time_temp, noise_h);
+
+           tfboost::Do_Convolution(hydra::fft::fftw_f64, flt, conv_temp, noise_h, 0, (N-1)*c.dT, N);
+           hydra::copy(noise_h , noise_d);
+        }
+        ///////////////////////////////////
+
+        // erase the warm-up 
+        noise_d.erase (noise_d.begin(), noise_d.begin()+M);
+
         auto zipped_range = hydra::zip( data_d, noise_d);
         
         hydra::for_each( zipped_range, [] __hydra_dual__ ( hydra::tuple<double&, double&> X){
@@ -128,22 +150,42 @@ private:
 };
 
 
+
+
 /*
  *  Function to add noise samples, stoed in the noise container
  *  to the signal samples
  */
 template<typename SIGNAL, typename NOISE>
-void inline AddNoiseToSignal(SIGNAL& signal, NOISE const& noise){
+void inline AddNoiseToSignal(SIGNAL& signal, NOISE const& noise,  tfboost::ConfigParser const& c){
 
     const size_t signal_N = signal.size();
     const size_t noise_N  = noise.size();
 
     SAFE_EXIT(noise_N < signal_N, "Impossible to add noise, too few samples.")
 
-    DevSignal_t signal_d(signal_N);
-    DevSignal_t noise_d(noise_N);
+    DevSignal_t  signal_d(signal_N);
+    DevSignal_t  noise_d(noise_N);
+    HostSignal_t noise_h(noise_N);
+
     hydra::copy(signal, signal_d);
     hydra::copy(noise, noise_d);
+    hydra::copy(noise, noise_h);
+
+
+    ///////////////////////////////////
+    if(c.LowPassFilter && c.FilterOnlyNoise)
+    {
+        HostSignal_t time_temp(noise_N);
+        for(size_t i=0; i<noise_N; ++i) time_temp[i] = i*c.dT;
+
+        auto flt        = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+        auto conv_temp  = hydra::make_spiline<double>(time_temp, noise_h);
+
+        tfboost::Do_Convolution(hydra::fft::fftw_f64, flt, conv_temp, noise_h, 0, (noise_N-1)*c.dT, noise_N);
+        hydra::copy(noise_h , noise_d);
+    }
+    ///////////////////////////////////
 
     auto zipped_range = hydra::zip(signal_d, noise_d);
 

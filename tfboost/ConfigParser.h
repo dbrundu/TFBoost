@@ -44,41 +44,38 @@ struct ConfigParser
     ConfigParser( libconfig::Setting const& cfg_root )
     {
 
-        InputDirectory        = (const char*) cfg_root["InputDirectory"];
-        OutputDirectory       = (const char*) cfg_root["OutputDirectory"];
-        NoiseDirectory        = (const char*) cfg_root["NoiseDirectory"];
-        tf_inputfile          = (const char*) cfg_root["TFFile"];
-        TransferFunction      = (const char*) cfg_root["TransferFunction"];
-        InputFileExtension    = (const char*) cfg_root["InputFileExtension"];
-        SingleFile            = (const char*) cfg_root["FileName"];
-        token                 = (const char*) cfg_root["token"];
         column                       = (int)  cfg_root["column"];
         offset                       = (int)  cfg_root["offset"]; 
         NlinesToSkip                 = (int)  cfg_root["NlinesToSkip"];
+        ADCnbits                     = (int)  cfg_root["ADCnbits"];
+
         LandauFluctuation            = (bool) cfg_root["LandauFluctuation"];
         MakeConvolution              = (bool) cfg_root["MakeConvolution"];
         SaveSinglePlotConvolution    = (bool) cfg_root["SaveSinglePlotConvolution"];
         SaveConvDataToFile           = (bool) cfg_root["SaveConvDataToFile"];
         MakeLinearFitNearThreshold   = (bool) cfg_root["MakeLinearFitNearThreshold"];
         MakeGaussianFitNearVmax      = (bool) cfg_root["MakeGaussianFitNearVmax"];
-        
         AddSimulatedNoise            = (bool) cfg_root["AddSimulatedNoise"];
         DoMeasurementsWithNoise      = (bool) cfg_root["DoMeasurementsWithNoise"];
         AddNoiseFromFiles            = (bool) cfg_root["AddNoiseFromFiles"];
-        
+        FilterOnlyNoise              = (bool) cfg_root["FilterOnlyNoise"];
         UseRedNoise                  = (bool) cfg_root["UseRedNoise"];
         MakeTheoreticalTOA           = (bool) cfg_root["MakeTheoreticalTOA"];
         UseSameCurve                 = (bool) cfg_root["UseSameCurve"];
         IdxConvtoSave                = (int)  cfg_root["IdxConvtoSave"];
         Nfiles                       = (int)  cfg_root["MaxInputFiles"];
-        MakeDigitization             = (bool) cfg_root["MakeDigitization"];
+        MakeTimeDigitization         = (bool) cfg_root["MakeTimeDigitization"];
+        MakeVoltageDigitization      = (bool) cfg_root["MakeVoltageDigitization"];
+
         randomphase                  = (bool) cfg_root["randomphase"];
         TimeReferenceResolution      = (bool) cfg_root["TimeReferenceResolution"];
         TOTcorrection                = (bool) cfg_root["TOTcorrection"];
         PlotRMfit                    = (bool) cfg_root["PlotRMfit"];
         PlotLinFit                   = (bool) cfg_root["PlotLinFit"];
         PlotGausFit                  = (bool) cfg_root["PlotGausFit"];
+        LowPassFilter                = (bool) cfg_root["LowPassFilter"];
         DelayMonitoring              = (int)  cfg_root["DelayMonitoring"];
+        LowPassOrder                 = (int)  cfg_root["LowPassOrder"];
         TOT_a                      = (double) cfg_root["TOT_a"];
         TOT_b                      = (double) cfg_root["TOT_b"];
         LE_reject_nonoise          = (double) cfg_root["LE_reject_nonoise"];
@@ -86,8 +83,19 @@ struct ConfigParser
         landaufactor_mean          = (double) cfg_root["landaufactor_mean"];
         landaufactor_sigma         = (double) cfg_root["landaufactor_sigma"]; 
         timeref_sigma              = (double) cfg_root["timeref_sigma"]; 
-        
+        LowPassFrequency           = (double) cfg_root["LowPassFrequency"];
+        ADCmin                     = (double) cfg_root["ADCmin"];
+        ADCmax                     = (double) cfg_root["ADCmax"];
 
+        InputDirectory        = (const char*) cfg_root["InputDirectory"];
+        OutputDirectory       = (const char*) cfg_root["OutputDirectory"];
+        NoiseDirectory        = AddNoiseFromFiles? (const char*) cfg_root["NoiseDirectory"] : "./";
+        tf_inputfile          = (const char*) cfg_root["TFFile"];
+        TransferFunction      = (const char*) cfg_root["TransferFunction"];
+        InputFileExtension    = (const char*) cfg_root["InputFileExtension"];
+        SingleFile            = (const char*) cfg_root["FileName"];
+        token                 = (const char*) cfg_root["token"];
+        
         const libconfig::Setting& cfg_tf  = cfg_root[TransferFunction];
 
         Nsamples                   = (int)    cfg_tf["Nsamples"];
@@ -151,23 +159,25 @@ struct ConfigParser
 
     bool LandauFluctuation, MakeConvolution, SaveSinglePlotConvolution;
     bool SaveConvDataToFile, MakeLinearFitNearThreshold, MakeGaussianFitNearVmax, TimeReferenceResolution;
-    bool AddSimulatedNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeDigitization, randomphase, TOTcorrection;
+    bool AddSimulatedNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeTimeDigitization, randomphase, TOTcorrection;
     bool DoMeasurementsWithNoise, AddNoiseFromFiles;
     bool PlotRMfit, PlotLinFit, PlotGausFit;
+    bool LowPassFilter, FilterOnlyNoise, MakeVoltageDigitization;
     
-    int column, ID, Nbins;
+    int column, ID, Nbins, LowPassOrder, ADCnbits;
     
     size_t offset, NlinesToSkip, IdxConvtoSave, Nfiles, bound_fit, DelayMonitoring;
     
     double LEthr, CFD_fr, sigma_noise, r_rednoise, LE_reject_nonoise, LE_reject_noise, RM_delay;
     double minplot, maxplot, TOT_a, TOT_b;
-    double landaufactor_mean, landaufactor_sigma, timeref_sigma;
+    double landaufactor_mean, landaufactor_sigma, timeref_sigma, LowPassFrequency;
+    double ADCmin, ADCmax;
     
     mutable size_t Nsamples;
     mutable double dT;
     mutable double sampling_dT;
     
-    
+
     
 private: // for initial configurations
     

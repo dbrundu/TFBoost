@@ -42,7 +42,7 @@ namespace detail {
      * Fill the data and time containers
      */
     template<typename Iterable, typename SPLINE, typename RNG>
-    inline void DoDigitization(Iterable& data, 
+    inline void DoTimeDigitization(Iterable& data, 
                                Iterable& time, 
                                SPLINE const& signal, 
                                double const& dT, 
@@ -81,7 +81,7 @@ namespace detail {
  * Resize the original containers properly
  */
 template<typename Iterable, typename RNG>
-inline void DigitizeSignal(Iterable& data, 
+inline void TimeDigitizeSignal(Iterable& data, 
                            Iterable& time, 
                             double const& dT, 
                             double const& Tmax, 
@@ -94,7 +94,7 @@ inline void DigitizeSignal(Iterable& data,
     //time and data are the not digitized ones
     auto conv_spline = hydra::make_spiline<double>(time, data );
 
-    tfboost::detail::DoDigitization(conv_dig, time_dig, conv_spline, dT, Tmax, rng, rndmphase);
+    tfboost::detail::DoTimeDigitization(conv_dig, time_dig, conv_spline, dT, Tmax, rng, rndmphase);
                                 
 
     // override time and conv_data containers
@@ -104,6 +104,40 @@ inline void DigitizeSignal(Iterable& data,
     hydra::copy(time_dig , time);
 
 }
+
+
+
+
+/*
+ * Get the ADC digitized value given
+ * an input value
+ */
+inline double GetADCvalue(double const& value, 
+                          double const& min, 
+                          double const& max, 
+                          int const& nbits){
+  
+  const double n     = std::pow(2,nbits);
+  const double step  = (max-min)/n;
+  return step*std::floor(value/step);
+
+}
+
+
+
+/*
+ * Apply an ADC digitization to a signal 
+ */
+template<typename Iterable>
+inline void VoltageDigitizeSignal(Iterable& data, 
+                                  double const& ADCmin, 
+                                  double const& ADCmax, 
+                                  int const& ADCnbits){
+
+    for(auto& x : data) x = tfboost::GetADCvalue(x, ADCmin, ADCmax, ADCnbits);
+
+}
+
 
 
 

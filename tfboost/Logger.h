@@ -99,11 +99,19 @@ inline void Logger::PrintConfig( tfboost::ConfigParser const& c) {
     if(c.UseSameCurve) 
       m_file << "- File used:                "  << c.SingleFile << "\n";
    
-    m_file << "MakeDigitization:           "    << bool_cast(c.MakeDigitization) << "\n";
+    m_file << "MakeTimeDigitization:         "    << bool_cast(c.MakeTimeDigitization) << "\n";
+    m_file << "MakeVoltageDigitization:      "    << bool_cast(c.MakeVoltageDigitization) << "\n";
    
-    if(c.MakeDigitization) {
+    if(c.MakeTimeDigitization) {
       m_file << " - randomphase:             "  << bool_cast(c.randomphase) << "\n";
-      m_file << " - sampling_dT:             "  << c.sampling_dT << "\n"; }
+      m_file << " - sampling_dT:             "  << c.sampling_dT << "\n"; 
+    }
+    
+    if(c.MakeVoltageDigitization) {
+      m_file << " - ADCmin:                  "  << c.ADCmin << "\n";
+      m_file << " - ADCmax:                  "  << c.ADCmax << "\n"; 
+      m_file << " - ADCnbits:                "  << c.ADCnbits << "\n"; 
+    }
    
     m_file << "TimeReferenceResolution:    "    << bool_cast(c.TimeReferenceResolution) << "\n\n";
     
