@@ -8,7 +8,7 @@
 
 <img src="logo.svg" width="500">
 
-TFBoost is a C++14 compliant application, highly based on [HYDRA v.3](https://github.com/MultithreadCorner/Hydra), to perform the convolution between a signal (for example a voltage or current signal from a sensor) and a transfer function of a signal analyzer system (for example a readout electronics) in massively parallel platforms on Linux systems. The transfer function can be read from a file as a set of sampling points, or can be chosen from a set of analytical functions provided by the library and fully configurable. 
+TFBoost is a C++14 compliant application, highly based on [HYDRA v.3](https://github.com/MultithreadCorner/Hydra) and mainly with a functional design, to perform the convolution between a signal (for example a voltage or current signal from a sensor) and a transfer function of a signal analyzer system (for example a readout electronics) in massively parallel platforms on Linux systems. The transfer function can be read from a file as a set of sampling points, or can be chosen from a set of analytical functions provided by the library and fully configurable. 
 The available transfer functions are: 
 - Two Transimpedance, with 1 and 2 stages, 
 - CSA, 
@@ -25,7 +25,7 @@ TFBoost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra
 
 
 ## Disclaimer
-TFBoost is currently an `alpha` version and is under development. Please report any problems throught GitHub Issues if necessary. The current design is a preliminary stage, the final design will be composed of semi-independent modules and algorithms that can be instantiated and chained in run time, depending on the configuration provided by the user.
+TFBoost is currently an `alpha` version and is under development. Please report any problems throught GitHub Issues if necessary. The current design is in a preliminary stage, the final design will be composed of semi-independent modules and algorithms that can be instantiated and chained in run time, depending on the configuration provided by the user.
 
 
 ## Installation, Build and Run
