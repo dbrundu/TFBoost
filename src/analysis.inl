@@ -133,7 +133,7 @@ int main(int argv, char** argc)
   size_t INDEX = 0;
   
   hydra::SeedRNG S{};
-  hydra::default_random_engine engine( S() );
+  hydra::default_random_engine engine( S() ); 
   TRandom3 root_rng( S() );
   
   
@@ -176,7 +176,7 @@ int main(int argv, char** argc)
    * related variables for the main loop
    * --------------------------------------------*/
   TList* listoffiles = tfboost::GetFileList(c.InputDirectory); 
-  listoffiles->Sort();
+  //listoffiles->Sort();
   TIter nextfile( listoffiles );
   TSystemFile *currentfile;
   TString currentfilename;
@@ -307,9 +307,7 @@ int main(int argv, char** argc)
     /* ----------------------------------------------
      * Time Reference resolution
      * --------------------------------------------*/ 
-    if(c.TimeReferenceResolution){
-      double TR_res = root_rng.Gaus( 0.0 , c.timeref_sigma);
-      for(auto& t : time ) t += TR_res; }
+    double TR_res = c.TimeReferenceResolution? root_rng.Gaus( 0.0 , c.timeref_sigma) : 0.0;
     
 
 
@@ -440,15 +438,15 @@ int main(int argv, char** argc)
         continue; }
 
     size_t TOA_LE         = tfboost::algo::LeadingEdge(conv_data_h, c.LEthr);
-    measures[_toa_le]     = time[TOA_LE];
+    measures[_toa_le]     = time[TOA_LE] ;
 
     size_t TimeAtPeak     = tfboost::algo::GetTimeAtPeak(conv_data_h);
-    measures[_tpeak]      = time[TimeAtPeak];
+    measures[_tpeak]      = time[TimeAtPeak] ;
     
     measures[_vpeak]      = tfboost::algo::GetVAtPeak(conv_data_h);
     
     size_t TOA_CFD        = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures[_vpeak]);
-    measures[_toa_cfd]    = time[TOA_CFD];
+    measures[_toa_cfd]    = time[TOA_CFD] ;
     
     auto rm_nonoise       = tfboost::algo::TimeRefMethod( conv_data_h, time, measures[_vpeak], c.RM_delay, c.bound_fit,/*noise?*/false, /*plot?*/false );
     measures[_toa_rm]     = std::get<0>( rm_nonoise ) ;
@@ -465,9 +463,15 @@ int main(int argv, char** argc)
     
     measures[_vonth_cfd]  = conv_data_h[TOA_CFD];
     
-    measures[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr);
+    measures[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
     
     measures[_toa_le]     = c.TOTcorrection? tfboost::algo::CorrectTOA(measures[_toa_le], measures[_tot], c.TOT_a, c.TOT_b) : measures[_toa_le];
+
+    // adding time tagger resolution
+    if(c.TimeReferenceResolution)
+      for(auto key : {_toa_le, _tpeak, _toa_cfd, _toa_rm, _tot} )
+        measures[key] += TR_res;
+    
 
  
     
@@ -484,9 +488,9 @@ int main(int argv, char** argc)
 #if TCODE_ENABLE==true
     if(measures[_toa_cfd] > -1.0 && pos_x>56){
       //TOAmaps->SetBinContent( TOAmaps->FindBin( pos_x, pos_y), measures[_toa_cfd] );
-      TOAmaps->SetPoint(TOAmaps->GetN(),pos_x,pos_y,measures[_toa_cfd]); 
+      TOAmaps->SetPoint(TOAmaps->GetN(),pos_x,pos_y, measures[_toa_cfd] ); 
       //Vmaxmaps->SetBinContent( Vmaxmaps->FindBin( pos_x, pos_y), measures[_vpeak] );
-      Vmaxmaps->SetPoint(Vmaxmaps->GetN(),pos_x,pos_y,measures[_vpeak] ); }
+      Vmaxmaps->SetPoint(Vmaxmaps->GetN(),pos_x,pos_y, measures[_vpeak]  ); }
 #endif
   
     hist_TOTvsTOA  .Fill( measures[_tot], measures[_toa_le] );
@@ -512,6 +516,7 @@ int main(int argv, char** argc)
     /*-------------------------------------------------
      * Section where the noise is added to signal
      *------------------------------------------------*/
+
     if(c.DoMeasurementsWithNoise)
     {
       
@@ -556,7 +561,6 @@ int main(int argv, char** argc)
       if(c.AddNoiseFromFiles){
         TSystemFile* currentnoisefile = (TSystemFile*) nextnoisefile();
         TString currentnoisefilename  = currentnoisefile->GetName();
-        DEBUG(currentnoisefilename)
 
         HostSignal_t noise_h;
         tfboost::ReadSimple( c.NoiseDirectory+currentnoisefilename, 0, noise_h, c.Nsamples, 1e-3);
@@ -583,10 +587,10 @@ int main(int argv, char** argc)
       timeatmax_idx     = tfboost::algo::GetTimeAtPeak(conv_data_h);
       TOA_LE_noise_idx  = tfboost::algo::LeadingEdge(conv_data_h , c.LEthr);
       
-      measures_noise[_tpeak]     = time[timeatmax_idx];
-      measures_noise[_toa_le]    = time[TOA_LE_noise_idx];
+      measures_noise[_tpeak]     = time[timeatmax_idx] ;
+      measures_noise[_toa_le]    = time[TOA_LE_noise_idx]  ;
       measures_noise[_vonth_le]  = conv_data_h[TOA_LE_noise_idx];
-      measures_noise[_tot]       = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr);
+      measures_noise[_tot]       = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
       
       
       
@@ -594,7 +598,7 @@ int main(int argv, char** argc)
       {
         auto toa = tfboost::algo::LinearFitNearThr( c.LEthr, conv_data_h, time, c.bound_fit, c.PlotLinFit, "LEfit");
         
-        measures_noise[_toa_le]  =      std::get<0>(toa) ;  
+        measures_noise[_toa_le]  =      std::get<0>(toa);  
         measures_noise[_dvdt_le] = 1e-6*std::get<1>(toa) ;
       }
       
@@ -602,13 +606,12 @@ int main(int argv, char** argc)
       
       if(c.MakeGaussianFitNearVmax && TOA_CFD>1)
       {
-
         auto gaussfit = tfboost::algo::GaussianFitNearVmax( conv_data_h, time, c.bound_fit, c.PlotGausFit );
-        measures_noise[_tpeak] = time[std::get<1>(gaussfit)]; 
+        measures_noise[_tpeak] = time[std::get<1>(gaussfit)] ; 
         measures_noise[_vpeak] = std::get<0>(gaussfit);
 
         auto cfd_idx = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures_noise[_vpeak]);
-        measures_noise[_toa_cfd]    = time[cfd_idx];
+        measures_noise[_toa_cfd]    = time[cfd_idx] ;
         measures_noise[_vonth_cfd]  = conv_data_h[ cfd_idx ];        
 
         if(c.MakeLinearFitNearThreshold && TOA_LE>1)
@@ -623,17 +626,20 @@ int main(int argv, char** argc)
                                                             
           measures_noise[_toa_cfd]   = std::get<0>(toa_cf);
           measures_noise[_dvdt_cfd]  = 1e-6 * std::get<1>(toa_cf);
-          measures_noise[_toa_rm]    = std::get<0>(rm);
+          measures_noise[_toa_rm]    = std::get<0>(rm) ;
           measures_noise[_vonth_rm]  = std::get<1>(rm);
           measures_noise[_dvdt_rm]   =  1e-6 * std::get<2>(rm);
           
         }
-
       }
 
       if(c.TOTcorrection)
           measures_noise[_toa_le] = tfboost::algo::CorrectTOA(measures_noise[_toa_le], measures_noise[_tot], c.TOT_a, c.TOT_b);
       
+    // adding time tagger resolution
+    if(c.TimeReferenceResolution)
+      for(auto key : {_toa_le, _tpeak, _toa_cfd, _toa_rm, _tot} )
+        measures_noise[key] += TR_res;
 
      /*-------------------------------------------------
       * Fill histograms for noise measurements

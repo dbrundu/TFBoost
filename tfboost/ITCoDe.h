@@ -30,7 +30,7 @@
 #define INTERFACE_TCODE_H_
 
 
-#define TCODE_ENABLE true
+#define TCODE_ENABLE false
 
 #define TCODE_PIXEL_XMAX 56
 #define TCODE_PIXEL_YMAX 195

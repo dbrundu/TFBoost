@@ -24,6 +24,10 @@ Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, deve
 TFBoost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/). For the best performances at least TBB or OMP backends are needed. Optionally  [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. [GCC >= v.8](https://gcc.gnu.org/) is needed. 
 
 
+## Disclaimer
+TFBoost is currently an `alpha` version and is under development. Please report any problems throught GitHub Issues if necessary. The current design is a preliminary stage, the final design will be composed of semi-independent modules and algorithms that can be instantiated and chained in run time, depending on the configuration provided by the user.
+
+
 ## Installation, Build and Run
 The first step is checkout [HYDRA v.3](https://github.com/MultithreadCorner/Hydra) and TFBoost:
 ```bash
@@ -65,4 +69,8 @@ make simple_analysis_tbb
 
 ## Authors
 TFBoost was created by [Davide Brundu](https://github.com/dbrundu) and Gian Matteo Cossu, within the TIMESPOT collaboration.
+
+
+## Reporting and Contributing
+There are different ways to report bugs, problems or to contribute in general. We prefer that any problem or possible bug is reported through GitHub issues. If you want to contribute to solve a bug or improve the code please open a Pull Request. For general questions on how to proper use the code, or any doubts, please contact directly the authors.
 

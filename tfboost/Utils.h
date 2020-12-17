@@ -142,6 +142,7 @@ inline void SaveCanvas(TString const& directory,
     if(tf1ptr) hist.Fit( tf1ptr , "R" );
     canv.SaveAs( directory+title+TString(".pdf") );
     canv.SaveAs( directory+title+TString(".C") );
+    canv.SaveAs( directory+title+TString(".root") );
 }
 
 
@@ -160,6 +161,7 @@ inline void SaveCanvas(TString const& directory,
     hist.Draw();
     canv.SaveAs( directory+title+TString(".pdf") );
     canv.SaveAs( directory+title+TString(".C") );
+    canv.SaveAs( directory+title+TString(".root") );
 }
 
 
