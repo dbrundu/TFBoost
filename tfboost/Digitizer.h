@@ -119,7 +119,7 @@ inline double GetADCvalue(double const& value,
   
   const double n     = std::pow(2,nbits);
   const double step  = (max-min)/n;
-  return step*std::floor(value/step);
+  return step*std::trunc(value/step);
 
 }
 
