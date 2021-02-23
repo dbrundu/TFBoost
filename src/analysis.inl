@@ -160,6 +160,9 @@ int main(int argv, char** argc)
   TH1D hist_signal("hist_signal;Time[s];Vout [V]","hist_signal", c.Nsamples, minplot, maxplot );
   TH1D hist_kernel("hist_kernel;Time[s];Vout [V]","hist_kernel", c.Nsamples/30, minplot, maxplot );
 
+  TH1D hist_rms_noise("hist_rms_noise;RMS[V];Counts","hist_rms_noise", 100, 0, -1 );
+
+
 
 #if TCODE_ENABLE==true
   //TH2D *TOAmaps   = new TH2D("TOAmaps","TOAmaps",   100, 0, TCODE_PIXEL_YMAX, 100, 0, TCODE_PIXEL_XMAX);
@@ -581,6 +584,13 @@ int main(int argv, char** argc)
       * Start measurmenets with noise
       *------------------------------------------------*/
 
+      // calculating RMS of noise, if the offset is present
+      size_t new_offset = c.offset*1e-12 / c.sampling_dT;
+
+      double rms_noise = 0.0;
+	  for (size_t i=0; i<new_offset; i++) rms_noise += conv_data_h[i] * conv_data_h[i];
+      rms_noise = ::sqrt(rms_noise/new_offset);
+
       // initialize indices
       size_t timeatmax_idx=0, TOA_LE_noise_idx=0, TOA_CFD_noise_idx=0, TOA_RM_noise_idx=0;
 
@@ -645,6 +655,7 @@ int main(int argv, char** argc)
       * Fill histograms for noise measurements
       *------------------------------------------------*/
       histograms.FillMeasures_noise( measures_noise );
+      hist_rms_noise.Fill(rms_noise);
       
       
       RULE_LINE_LIGHT;
@@ -661,6 +672,7 @@ int main(int argv, char** argc)
       std::cout << "dv/dt (CFD)              = " << measures_noise[_dvdt_cfd]   << " (uV/ps)\n";
       std::cout << "dv/dt (LE)               = " << measures_noise[_dvdt_le]    << " (uV/ps)\n";
       std::cout << "dv/dt (RM)               = " << measures_noise[_dvdt_rm]    << " (uV/ps)\n";
+      std::cout << "RMS of noise             = " << rms_noise                   << " (V)\n";
 
       
       if(PlotConv) {
@@ -702,8 +714,10 @@ int main(int argv, char** argc)
   histograms.SaveHistograms( c.OutputDirectory + "plots/" );
    
 
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOT_2d",     "Time [s]",    "TOA [s]", hist_TOTvsTOA, "colz"); 
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsVmax",   "TOT [s]",    "Vmax [V]", hist_TOTvsVmax, "colz");
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOT_2d",    "Time [s]", "TOA [s]",  hist_TOTvsTOA,  "colz"); 
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsVmax", "TOT [s]",  "Vmax [V]", hist_TOTvsVmax, "colz");
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "rms_noise", "RMS [V]",  "Counts",   hist_rms_noise);
+
   
   TProfile* prof =  hist_TOTvsVmax.ProfileX();
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsVmax_profile",   "TOT [s]",    "Vmax [V]", *prof);

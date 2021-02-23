@@ -183,6 +183,8 @@ MESSAGE(STATUS "Project build dir: ${PROJECT_BINARY_DIR}" )
 include(${TFBOOST_CMAKE_DIR}/AddTarget.cmake)
 include(${TFBOOST_CMAKE_DIR}/AddExample.cmake)
 
+ADD_TARGET(analyze_single_signal)
 ADD_TARGET(analysis)
 ADD_TARGET(deconvolution)
+#ADD_TARGET(toyMC)
 ADD_EXAMPLE(simple_analysis)

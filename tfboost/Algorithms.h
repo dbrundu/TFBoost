@@ -48,13 +48,9 @@ template<typename Iterable>
 inline size_t LeadingEdge(Iterable const& vout, double const& Vthr)
 {
     auto trigger = [=] (double v) { return v > Vthr; };
-    
     auto it = hydra_thrust::find_if(vout.begin(), vout.end(), trigger );
-    
     ERROR_RETURN( it==vout.end(), "In LeadingEdge: no element found.", vout.size() )
-    
     return  it-vout.begin();
-    
 }
 
 
@@ -164,6 +160,29 @@ inline double CorrectTOA(double const& toa, double const& tot, double const& a, 
 
 }
 
+
+
+template<typename Iterable>
+inline double TimeCentroid(Iterable const& vout, Iterable const& time){
+
+  ERROR_RETURN( vout.size()!=time.size(), "Error in TimeCentroid. Exit with -1.", -1. )
+  
+  double centroid = 0.0;
+  double  weights = 0.0;
+
+  for (size_t i=0; i<vout.size(); ++i) {
+    centroid += time[i] * vout[i];
+    weights += vout[i];
+  }
+
+  if (weights != 0.0) {
+    return centroid/weights;
+  }
+  else {
+    return 0.0;
+  }
+
+}
 
 
 

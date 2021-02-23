@@ -96,22 +96,43 @@
 #include <sys/stat.h>
 
 // TFBOOST
+#include <tfboost/Types.h>
 #include <tfboost/Utils.h>
+#include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
 #include <tfboost/functions/TIA_BJT_2stages_GM.h>
 #include <tfboost/functions/TIA_IdealInt.h>
 #include <tfboost/functions/TIA_MOS.h>
-#include <tfboost/functions/DoConvolution.h>
-#include <tfboost/noise/Noise.h>
-#include <tfboost/ReadConvolution.h>
-#include <tfboost/Algorithms.h>
 #include <tfboost/functions/ButterworthFilter.h>
+#include <tfboost/DoConvolution.h>
+#include <tfboost/Noise.h>
+#include <tfboost/InputOutput.h>
+#include <tfboost/Algorithms.h>
+#include <tfboost/Digitizer.h>
 
 
 namespace libconf = libconfig;
 
+template<typename DATA>
+double GetVariance(DATA x, double m_x){    
+    size_t n = x.size();
 
+    double s_x=0;
+    
+    for(int i=0; i<n; ++i){
+        s_x += (x[i] - m_x)*(x[i] - m_x);
+    }
+    s_x /= n;
+    return s_x;
+}
+
+
+void getGreenToRed(double percent){
+            double r = percent<50 ? 255 : std::floor(255-(percent*2-100)*255/100);
+            double g = percent>50 ? 255 : std::floor((percent*2)*255/100);
+            std::cout << r << " " << g << std::endl;
+ }
 
 int main(int argv, char** argc)
 {
@@ -130,12 +151,14 @@ int main(int argv, char** argc)
   const libconf::Setting& cfg_root  = Cfg.getRoot();
   
   TString OutputDirectory          = (const char*) cfg_root["OutputDirectory"];
-  const TString conv_inputfile     = (const char*) cfg_root["InputFileConv"]; 
+  const TString conv_inputfile     = (const char*) cfg_root["InputFileConvorTF"]; 
   const TString InputFile_current  = (const char*) cfg_root["InputFileCurrent"]; 
   const TString OutputFileName     = (const char*) cfg_root["OutputFileName"]; 
+  const bool deconvolution         = (bool)        cfg_root["Deconvolution"];
 
   const char*  token         = (const char*) cfg_root["token"];
-  const int    column        = (int)  cfg_root["column"];
+  const int    columnT       = (int)  cfg_root["columnT"];
+  const int    columnI       = (int)  cfg_root["columnI"];
   const size_t offset        = (int)  cfg_root["offset"];
   const size_t Nsamples      = (int)  cfg_root["Nsamples"];
   const size_t Nlinestoskip  = (int)  cfg_root["Nlinestoskip"];
@@ -156,21 +179,22 @@ int main(int argv, char** argc)
 
   const double dT      = 1e-12;
   const double min     = 0.0;
-  const double max     = (Nsamples-1)*dT;
+  const double max     = (Nsamples)*dT;
   const double min_kernel  = -0.5*(max-min);
   const double max_kernel  =  0.5*(max-min);
   
   auto flt = tfboost::ButterworthFilter<double>( frequency, order, dT);
   
   hydra::SeedRNG S{};
+  TRandom3 root_rng( S() );
 
 
   /* ----------------------------------------------
    * Initialization of histograms
    * --------------------------------------------*/
-  TH1D *hist_convol     = new TH1D("hist_deconvol;Time[s];Vout [V]","hist_convol", Nsamples/30, min, max );
-  TH1D *hist_signal     = new TH1D("hist_signal;Time[s];Vout [V]","hist_signal", Nsamples, min, 0.1*max );
-  TH1D *hist_kernel     = new TH1D("hist_kernel;Time[s];Vout [V]","hist_kernel", Nsamples, min, max);
+  TH1D *hist_convol     = new TH1D("hist_deconvol;Time[s];Vout [V]",deconvolution? "Deconvoluted kernel" : "Output signal", Nsamples+1, min, max/4 );
+  TH1D *hist_signal     = new TH1D("hist_signal;Time[s];Vout [V]","signal", Nsamples+1, min, max/4 );
+  TH1D *hist_kernel     = new TH1D("hist_kernel;Time[s];Vout [V]",deconvolution? "Output Signal" : "kernel", Nsamples+1, min, max/4);
   
   
   
@@ -207,13 +231,15 @@ int main(int argv, char** argc)
       
       TObjArray *tokens = line.Tokenize( token );
       
-      TString data_str  = ((TObjString*) tokens->At( column ) )->GetString();
+      TString data_str  = ((TObjString*) tokens->At( columnI ) )->GetString();
+      TString time_str  = ((TObjString*) tokens->At( columnT ) )->GetString();
         
       const double data = atof(data_str);
+      const double tm   = dT*offset + 1e-12*atof(time_str);
         
       idx.push_back(j);
-      time.push_back(j*dT);
-      current.push_back(data);
+      time.push_back(tm);
+      current.push_back(1e-6*data);
         
       tokens->Delete();
       delete tokens;
@@ -225,17 +251,25 @@ int main(int argv, char** argc)
     
   if(Nsamples - current.size() > 0)
   {
+    double t0 = time.back();
+    size_t j = 1;
+    
     for(size_t k=current.size(); k<Nsamples; ++k)
     {
       idx.push_back(k);
-      time.push_back(k*dT);
+      time.push_back(t0 + j*dT);
       current.push_back(0.0);
+      ++j;
     }
   }
    
   SAFE_EXIT( current.size() != Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
 
   auto signal = hydra::make_spiline<double>(time, current);
+  DEBUG(time[0])
+  DEBUG(time.back())
+  DEBUG(time.size())
+
     
     
     
@@ -260,26 +294,62 @@ int main(int argv, char** argc)
   time2.reserve(Nsamples);
   voltage2.reserve(Nsamples);
 
-  tfboost::ReadTF( conv_inputfile, Nlinestoskip, time2, voltage2, scale);
+  tfboost::ReadTF( conv_inputfile, Nlinestoskip, time2, voltage2, time.back(), dT, scale, true, true);
+  
+  //hydra::default_random_engine engine( S() ); 
+  //tfboost::TimeDigitizeSignal( voltage2, time2, 50e-12, time.back(), engine, false);
+
+  ///////////////////////////////
+  // Remove baseline
+  ///////////////////////////////
+  
+  double mean = 0.0;
+  for(size_t i=400; i<500; ++i){
+    mean += voltage2[i];
+  }
+  mean /= (100);
+  
+  for(auto& x : voltage2) {x -= mean; 
+    //x*=1.56; 
+    // x+=root_rng.Gaus( 0.0 , 0.0005);
+     }
 
   auto kernel = hydra::make_spiline<double>(time2, voltage2);
+  DEBUG(time2[0])
+  DEBUG(time2.back())
+  DEBUG(time2.size())
         
-  tfboost::Do_DeConvolution(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
+
+        
+  if(deconvolution){
+    tfboost::Do_DeConvolution(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
+  } else {
+    tfboost::Do_Convolution(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
+  }  
   
   if(filter){
     auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
     tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, Nsamples);
   }
 
-  auto conv = hydra::make_spiline<double>(time, conv_data_h);
+  hydra::host::vector<double> time_f;
+  double dT_f = (max-min)/Nsamples;
+  for(size_t i=0; i<conv_data_h.size(); ++i) time_f.push_back(i*dT_f);
+
+  auto conv = hydra::make_spiline<double>(time_f, conv_data_h);
+  DEBUG(time_f[0])
+  DEBUG(time_f.back())
+  DEBUG(time_f.size())
+
+//  PRINT_ELEMENTS(conv_data_h.size(), conv_data_h)
 
 
   /* ----------------------------------------------
    * Performing plots and save results
    * --------------------------------------------*/
-  for(size_t i=1;  i < (size_t) Nsamples+1; ++i) {
+  for(size_t i=1;  i < (size_t) Nsamples; ++i) {
     hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) ); 
-    hist_convol->SetBinContent(i, conv(hist_convol->GetBinCenter(i)));// conv_data_h[i-1] );
+    hist_convol->SetBinContent(i, conv(hist_convol->GetBinCenter(i)));
     hist_signal->SetBinContent(i, signal(hist_signal->GetBinCenter(i)) ); 
   }
 
@@ -307,10 +377,59 @@ int main(int argv, char** argc)
   //hist_convol->SetLineColor(1);
   //hist_convol->Draw("same");
       
-  canvas.SaveAs(OutputDirectory + "plots/hist_convol_functor.pdf");
+  canvas.SaveAs(OutputDirectory + "plots/" + OutputFileName + ".pdf");
   
-  tfboost::SaveConvToFile(conv_data_h, time, dT, OutputDirectory + OutputFileName );
+  tfboost::SaveConvToFile(conv_data_h, time, dT, OutputDirectory + OutputFileName + ".txt" );
     
+// int a=0;
+// int b=0;
+// double max[11] = {14.3856, 14.883, 14.4768, 15.5438, 15.2651, 9.77783, 6.36696, 6.04976, 15.062, 14.5116, 10.7266};
+
+// for(auto l : {"0","1","2","3","4","5","6","7","8","9","10"} ){
+// b=0;
+//     for(auto m : {"0","1","2","3","4","5","6","7","8","9","10"} ){
+
+
+//   hydra::host::vector<double> time_10;
+//   hydra::host::vector<double> voltage_10;
+//   time_10.reserve(16384);
+//   voltage_10.reserve(16384);
+
+//   tfboost::ReadTF( TString("results_deconv/laserIR_")+l+"_150.txt", 0, time_10, voltage_10, 16384*1e-12, 1e-12, 1.0, true);
+//   for(auto& x : voltage_10) x/=max[a];
+//   double mean_10 = 0.0;
+//   for(auto const& x : voltage_10) mean_10 += x;
+//   mean_10 /= 16384.;
+//   double var_10 = GetVariance(voltage_10, mean_10);
+
+//   hydra::host::vector<double> time_0;
+//   hydra::host::vector<double> voltage_0;
+//   time_0.reserve(16384);
+//   voltage_0.reserve(16384);
+
+//   tfboost::ReadTF( TString("results_deconv/laserIR_")+m+"_150.txt", 0, time_0, voltage_0, 16384*1e-12, 1e-12, 1.0, true);
+//   for(auto& x : voltage_0) x/=max[b];
+//   double mean_0 = 0.0;
+//   for(auto const& x : voltage_0) mean_0 += x;
+//   mean_0 /= 16384.;
+//   double var_0 = GetVariance(voltage_0, mean_0);
+
+
+//   double cross_corr = 0.0;
+//   for(size_t i = 0; i<16384; ++i){
+//       cross_corr += (voltage_10[i] - mean_10)*(voltage_0[i] - mean_0);
+//   }
+//   cross_corr /= 16383.;
+
+//   cross_corr /= (sqrt(var_10*var_0));
+
+//   std::cout <<  "l="<<l << ", m="<<m << ", cross_corr=" << 534.1709*cross_corr - 434.1709 << " -> ";
+//   getGreenToRed(534.1709*cross_corr - 434.1709);
+//   b++;
+//   }
+// a++;
+// }
+  
   return 0;
 }
 

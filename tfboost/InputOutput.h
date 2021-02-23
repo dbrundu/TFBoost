@@ -70,6 +70,36 @@ void ReadSimple(TString const& file, int column, Iterable& iterable, size_t cons
 
 
 /*
+ * Read data from a file with one
+ * or multiple columns separated by spaces
+ * and fill a container with data
+ * corresponding to a specific column
+ */
+template<typename ARRAY, typename IterableT, typename IterableV>
+void ReadSimple(TString const& file, ARRAY const& columns, const char* token, IterableT& iterable_t, IterableV& iterable_v, int Nlinestoskip = 0, double scale=1.0)
+{
+        
+        TString line;
+        std::ifstream myFile( file.Data() );
+        
+        SAFE_EXIT(!myFile.is_open(), "Input file cannot be open.")
+                
+        line.ReadLine(myFile);
+        
+        while(myFile.good()) {
+            detail::PushBackTokens(line, token, columns, iterable_t, iterable_v);
+            line.ReadLine(myFile); }
+        
+        myFile.close();
+        
+        if(scale!=1.0)
+            for(auto& x : iterable_v) x *= scale;
+}
+
+
+
+
+/*
  * Read a transfer function from a file.
  * The format must be two columns separated by spaces
  * containing time and the transfer function response.
@@ -80,7 +110,10 @@ void ReadTF(TString const& file,
             int Nlinestoskip, 
             Iterable& iterable_t, 
             Iterable& iterable_V, 
+            double const& tmax,
+            double const& dT0,
             double const& scale = 1.0, 
+            bool reset_timeoffset = false, 
             bool doublerange=false)
 {
         Iterable iterable_t_temp, iterable_V_temp;
@@ -101,10 +134,19 @@ void ReadTF(TString const& file,
         
         if(scale!=1.0) 
             for(auto& x : iterable_V_temp) x *= scale;
+            
+        if(reset_timeoffset){
+            double t0 = iterable_t_temp[0];
+            for(auto& x : iterable_t_temp) x = x-t0; }
+
+        while(iterable_t_temp.back()<tmax){
+            iterable_t_temp.push_back(iterable_t_temp.back()+dT0);
+            iterable_V_temp.push_back(0.0);
+            }
+
 
         double dT = iterable_t_temp[1] - iterable_t_temp[0];
 
-        
         if(doublerange){
         
             double last_t = iterable_t_temp.back();
