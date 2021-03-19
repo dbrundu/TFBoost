@@ -128,8 +128,8 @@ class HistogramsManager {
             if(conf.max < conf.min) hist->SetBuffer(1000);
             hist->GetXaxis()->SetTitle(conf.xtitle);
             hist->GetYaxis()->SetTitle(conf.ytitle);
-            hist->GetYaxis()->SetLabelSize(0.03);
-            hist->GetYaxis()->SetTitleOffset(1.5);
+            //hist->GetYaxis()->SetLabelSize(0.03);
+            //hist->GetYaxis()->SetTitleOffset(1.5);
             
         }
         
