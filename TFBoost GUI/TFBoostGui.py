@@ -752,9 +752,10 @@ def WaveAnalysis():
         btnRM.place_forget()
         btnRM1.place_forget()
         btnRM2.place_forget()
-
+        TF_label2.place_forget()
+        TF_label3.place_forget()
         link1.place_forget()
-
+        btnFromFile.place_forget()
   
 
     TF.update()
@@ -775,8 +776,8 @@ def WaveAnalysis():
 
     btnRM3.place(x=500,y=620)
     
-    TF_label2 = Label(TF, text='Single Stage TIA with Bipolar transistor',font = ("Modern",9))
-    TF_label3 = Label(TF, text='only critical damping case is considered',font = ("Modern",9))
+    #TF_label2 = Label(TF, text='Single Stage TIA with Bipolar transistor',font = ("Modern",9))
+    #TF_label3 = Label(TF, text='only critical damping case is considered',font = ("Modern",9))
 
     #link1 = Label(TF, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
     #link1.place(x=380,y=305,width=400)
