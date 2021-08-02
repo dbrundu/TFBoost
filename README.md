@@ -19,11 +19,11 @@ The input signals are read from files as a set of sampling points. The applicati
 
 TFBoost has also a Graphical User Interface written in Python3:
 
-to run the gui enter the folder 'TFBoost GUI' and type:
+to run the GUI open a terminal in the folder 'TFBoost GUI' and type:
 ```bash
 python3 TFBoostGui.py
 ```
-to run the Results gui enter the folder 'TFBoost GUI' and type:
+to run the Results GUI open a terminal in the folder 'TFBoost GUI' and type:
 
 ```bash
 python3 Results.py
