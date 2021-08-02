@@ -19,16 +19,6 @@ The input signals are read from files as a set of sampling points. The applicati
 
 TFBoost has also a Graphical User Interface written in Python3:
 
-to run the GUI open a terminal in the folder 'TFBoost GUI' and type:
-```bash
-python3 TFBoostGui.py
-```
-to run the Results GUI open a terminal in the folder 'TFBoost GUI' and type:
-
-```bash
-python3 Results.py
-```
-
 <img src="gui.png" width="800">
 <img src="gui2.png" width="800">
 
@@ -76,6 +66,16 @@ At this point you can run the examples: please read at the examples section for 
 make analysis_tbb
 ./analysis_tbb 
 ```
+to run TFBoost using the GUI, open a terminal in the folder 'TFBoost GUI' and type:
+```bash
+python3 TFBoostGui.py
+```
+to run the Results GUI open a terminal in the folder 'TFBoost GUI' and type:
+
+```bash
+python3 Results.py
+```
+
 
 ## Build and Run the examples
 An example of a simple analysis is available. The input files are obtained from an ideal silicon sensor and the files are in the `examples/input_files` directory. The configuration file named `config.cfg` is inside the `examples/` directory, while the rusults will be saved inside `<build>/results/`.  After the `cmake` command the example and can be run simply as:
