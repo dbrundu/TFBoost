@@ -17,11 +17,16 @@ The available transfer functions are:
 
 The input signals are read from files as a set of sampling points. The application performs also a set of measurements on the convoluted output signals such as: arrival time, with leading edge and constant fraction discrimination, maximum value and its corresponding time, slope and voltange on discrimination thresholds, etc. Morover a simulated noise, white or red, can be added to the output signal. The computation of the convolution can be turned off, and the set of measurements can thus be applied to real signals.
 
+TFBoost has also a Graphical User Interface written in Python3
+<img src="gui.png" width="500">
+
 Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, developed within the TIMESPOT collaboration to simulate the response of solid state sensors, TFBoost will be part of a complete software for simulation of signals in solid state detectors, from the generation in the sensor to the output of the readout electronics.
 
 
 ## Dependencies
 TFBoost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/). For the best performances at least TBB or OMP backends are needed. Optionally  [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. [GCC >= v.8](https://gcc.gnu.org/) is needed. 
+
+The graphical user interface require Python3 and the packages: tkinter, filedialog, PIL, ImageTk, subprocess, os, math, pandas webbrowser, random, matplotlib
 
 
 ## Disclaimer
@@ -68,7 +73,7 @@ make simple_analysis_tbb
 ```
 
 ## Authors
-TFBoost was created by [Davide Brundu](https://github.com/dbrundu) and Gian Matteo Cossu, within the TIMESPOT collaboration.
+TFBoost was created by [Davide Brundu](https://github.com/dbrundu) and [Gian Matteo Cossu](https://github.com/gianmatteocossu), within the TIMESPOT collaboration.
 
 
 ## Reporting and Contributing
