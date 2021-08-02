@@ -1593,7 +1593,7 @@ def writeCFG( ):
 
     text_file.close()
     
-    subprocess.run(["./analysis_tbb", "ls -l"])
+    subprocess.run(["./../build/analysis_tbb", "ls -l"])
 
 
 my_logo = ImageTk.PhotoImage(Image.open("TFB_guiFiles/logo.png"))
