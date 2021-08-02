@@ -19,6 +19,7 @@ The input signals are read from files as a set of sampling points. The applicati
 
 TFBoost has also a Graphical User Interface written in Python3
 <img src="gui.png" width="800">
+<img src="gui2.png" width="800">
 
 Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, developed within the TIMESPOT collaboration to simulate the response of solid state sensors, TFBoost will be part of a complete software for simulation of signals in solid state detectors, from the generation in the sensor to the output of the readout electronics.
 
