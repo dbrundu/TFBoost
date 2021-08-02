@@ -38,7 +38,7 @@ Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, deve
 ## Dependencies
 TFBoost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/). For the best performances at least TBB or OMP backends are needed. Optionally  [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. [GCC >= v.8](https://gcc.gnu.org/) is needed. 
 
-The graphical user interface require Python3 and the packages: tkinter, filedialog, PIL, ImageTk, subprocess, os, math, pandas webbrowser, random, matplotlib
+The graphical user interface require Python3 and the packages: tkinter, filedialog, PIL, ImageTk, subprocess, os, math, pandas, webbrowser, random, matplotlib
 
 
 ## Disclaimer
