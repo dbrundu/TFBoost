@@ -179,7 +179,7 @@ int main(int argv, char** argc)
 
   const double dT      = 1e-12;
   const double min     = 0.0;
-  const double max     = (Nsamples)*dT;
+  const double max     = (Nsamples-1)*dT;
   const double min_kernel  = -0.5*(max-min);
   const double max_kernel  =  0.5*(max-min);
   
@@ -235,11 +235,13 @@ int main(int argv, char** argc)
       TString time_str  = ((TObjString*) tokens->At( columnT ) )->GetString();
         
       const double data = atof(data_str);
-      const double tm   = dT*offset + 1e-12*atof(time_str);
+      const double tm   = dT*offset + atof(time_str);
         
       idx.push_back(j);
       time.push_back(tm);
-      current.push_back(1e-6*data);
+      current.push_back(data);
+
+      //std::cout<<tm<<" "<<data<<std::endl;
         
       tokens->Delete();
       delete tokens;
@@ -303,7 +305,8 @@ int main(int argv, char** argc)
   // Remove baseline
   ///////////////////////////////
   
-  double mean = 0.0;
+  /*
+    double mean = 0.0;
   for(size_t i=400; i<500; ++i){
     mean += voltage2[i];
   }
@@ -312,12 +315,13 @@ int main(int argv, char** argc)
   for(auto& x : voltage2) {x -= mean; 
     //x*=1.56; 
     // x+=root_rng.Gaus( 0.0 , 0.0005);
-     }
+     } */
 
   auto kernel = hydra::make_spiline<double>(time2, voltage2);
+
   DEBUG(time2[0])
   DEBUG(time2.back())
-  DEBUG(time2.size())
+  DEBUG(time2.size()) 
         
 
         
@@ -333,7 +337,7 @@ int main(int argv, char** argc)
   }
 
   hydra::host::vector<double> time_f;
-  double dT_f = (max-min)/Nsamples;
+  double dT_f = (max-min)/(Nsamples-1);
   for(size_t i=0; i<conv_data_h.size(); ++i) time_f.push_back(i*dT_f);
 
   auto conv = hydra::make_spiline<double>(time_f, conv_data_h);
@@ -378,8 +382,23 @@ int main(int argv, char** argc)
   //hist_convol->Draw("same");
       
   canvas.SaveAs(OutputDirectory + "plots/" + OutputFileName + ".pdf");
+
+
+  //1ns delay for Transfer Function
+  for(int i=0; i<Nsamples; i++){
+
+  conv_data_h[Nsamples-i]=conv_data_h[Nsamples-i-1000];
+
+  if(Nsamples-1-1000<0){
+    conv_data_h[Nsamples-i-1000]=0;
+  }
+
+
+  }
+ 
+
   
-  tfboost::SaveConvToFile(conv_data_h, time, dT, OutputDirectory + OutputFileName + ".txt" );
+  tfboost::SaveConvToFile(conv_data_h, time_f, dT, OutputDirectory + OutputFileName + ".txt" );
     
 // int a=0;
 // int b=0;

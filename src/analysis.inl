@@ -280,9 +280,9 @@ int main(int argv, char** argc)
       TObjArray *tokens = line.Tokenize( c.token.Data() );
       
       TString data_str  = ((TObjString*) tokens->At( c.column ) )->GetString();
-      if(data_str == "0" && s==c.offset) continue; //--> to avoid misaligned TCoDe input files 
+      //if(data_str == "0" && s==c.offset) continue; //--> to avoid misaligned TCoDe input files 
         
-      double data = landau*atof(data_str);
+      double data = landau*atof(data_str);//landau*atof(data_str);
          
       idx.push_back(s);
       time.push_back( s * c.dT);
@@ -509,6 +509,7 @@ int main(int argv, char** argc)
     std::cout << "V on thresholds (CFD)    = " << measures[_vonth_cfd]  << " (V)\n";
     std::cout << "V on thresholds (LE)     = " << measures[_vonth_le]   << " (V)\n";
     std::cout << "V on thresholds (RM)     = " << measures[_vonth_rm]   << " (V)\n";
+    std::cout << "Tpeak                    = " << measures[_tpeak]      << " (s)\n";
     std::cout << "Vpeak                    = " << measures[_vpeak]      << " (V)\n";
     std::cout << "dv/dt (CFD)              = " << measures[_dvdt_cfd]   << " (uV/ps)\n";
     std::cout << "dv/dt (LE)               = " << measures[_dvdt_le]    << " (uV/ps)\n";
@@ -617,7 +618,7 @@ int main(int argv, char** argc)
       if(c.MakeGaussianFitNearVmax && TOA_CFD>1)
       {
         auto gaussfit = tfboost::algo::GaussianFitNearVmax( conv_data_h, time, c.bound_fit, c.PlotGausFit );
-        measures_noise[_tpeak] = time[std::get<1>(gaussfit)] ; 
+        measures_noise[_tpeak] = std::get<1>(gaussfit); 
         measures_noise[_vpeak] = std::get<0>(gaussfit);
 
         auto cfd_idx = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures_noise[_vpeak]);
@@ -669,6 +670,7 @@ int main(int argv, char** argc)
       std::cout << "V on thresholds (LE)     = " << measures_noise[_vonth_le]   << " (V)\n";
       std::cout << "V on thresholds (RM)     = " << measures_noise[_vonth_rm]   << " (V)\n";
       std::cout << "Vpeak                    = " << measures_noise[_vpeak]      << " (V)\n";
+      std::cout << "Tpeak                    = " << measures_noise[_tpeak]      << " (s)\n";
       std::cout << "dv/dt (CFD)              = " << measures_noise[_dvdt_cfd]   << " (uV/ps)\n";
       std::cout << "dv/dt (LE)               = " << measures_noise[_dvdt_le]    << " (uV/ps)\n";
       std::cout << "dv/dt (RM)               = " << measures_noise[_dvdt_rm]    << " (uV/ps)\n";

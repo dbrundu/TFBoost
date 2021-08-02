@@ -196,7 +196,8 @@ void SaveConvToFile(Iterable const& data, Iterable_t const& time, double dT, TSt
     double vmax = data[k];
 
     for(size_t i=0; i<data.size(); ++i) 
-        outdata << time[i] << " " << data[i] << " " << vmax <<  std::endl;
+        //outdata << time[i] << " " << data[i] << " " << vmax <<  std::endl;
+        outdata << time[i] << " " << data[i] <<  std::endl;
     
     outdata.close();
 }

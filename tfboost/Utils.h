@@ -140,9 +140,9 @@ inline void SaveCanvas(TString const& directory,
     hist.GetYaxis()->SetTitleOffset(1.5);
     hist.Draw(opt);
     if(tf1ptr) hist.Fit( tf1ptr , "R" );
-    canv.SaveAs( directory+title+TString(".pdf") );
+    //canv.SaveAs( directory+title+TString(".pdf") );
     canv.SaveAs( directory+title+TString(".C") );
-    canv.SaveAs( directory+title+TString(".root") );
+    //canv.SaveAs( directory+title+TString(".root") );
 }
 
 
@@ -159,9 +159,9 @@ inline void SaveCanvas(TString const& directory,
     TString title = hist.GetName();
     TCanvas canv( title, title, 800,800);
     hist.Draw();
-    canv.SaveAs( directory+title+TString(".pdf") );
+    //canv.SaveAs( directory+title+TString(".pdf") );
     canv.SaveAs( directory+title+TString(".C") );
-    canv.SaveAs( directory+title+TString(".root") );
+    //canv.SaveAs( directory+title+TString(".root") );
 }
 
 
