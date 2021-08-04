@@ -139,244 +139,208 @@ def noisefromfiles():
 
 def singlestg():
 
-    if(logo3.winfo_exists() or logo6.winfo_exists()):
-        logo3.place_forget()
-        logo6.place_forget()
-        G1.place_forget()
-        G2.place_forget()
-        grm1.place_forget()
-        grm2.place_forget()
-        tauo1.place_forget()
-        tauo2.place_forget()
-        tauo3.place_forget()
-        grm1.place_forget()
-        grm2.place_forget()
-        grm3.place_forget()
-        gG1.place_forget()
-        gG2.place_forget()
-        G_entry.place_forget()
-        tauo_entry.place_forget()
-        gmr_entry.place_forget() 
-        btnRM.place_forget()
-        btnRM2.place_forget()
-
-    TF.update()
 
     stat1.set(1)
     stat2.set(0)
     stat3.set(0)
     stat4.set(0)
     stat5.set(0)
-        
-    logo5 =Label(TF,image=my_logo5)
-    logo4 =Label(TF,image=my_logo4)
-    logo5.place(x=400,y=230)
-    logo4.place(x=500,y=230)
 
-    logo2 =Label(TF,image=my_logo2)
-    logo2.place(x=20,y=170)
-    btnRM1.place(x=500,y=620)
+    if (logo3.winfo_exists() ):
+        framedouble.place_forget()
+
+    if (logo6.winfo_exists()):
+        framecsa.place_forget()
+
+    if (btnFromFile.winfo_exists()):
+        frameFF.place_forget()
+
+    if (btnRM4.winfo_exists()):
+        frameWA.place_forget()   
+
+    framesingle.place(x=20,y=170)
+
+    # png circuit
+    logo2 =Label(framesingle,image=my_logo2)
+    logo2.place(x=20,y=0)
     
-    TF_label2 = Label(TF, text='Single Stage TIA with Bipolar transistor',font = ("Modern",9))
-    TF_label2.place(x=380,y=170,width=400)
-    TF_label3 = Label(TF, text='only critical damping case is considered',font = ("Modern",9))
-    TF_label3.place(x=380,y=190,width=400)
 
-    link1 = Label(TF, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
-    link1.place(x=380,y=305,width=400)
+    TF_label2 = Label(framesingle, text='Single Stage TIA with Bipolar transistor',font = ("Modern",9))
+    TF_label2.place(x=380,y=20,width=400)
+    TF_label3 = Label(framesingle, text='only critical damping case is considered',font = ("Modern",9))
+    TF_label3.place(x=380,y=40,width=400)
+
+    #png equation
+    logo4 =Label(framesingle,image=my_logo4)
+    logo4.place(x=500,y=70)
+
+    link1 = Label(framesingle, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
+    link1.place(x=380,y=150,width=400)
     link1.bind("<Button-1>", lambda e: callback("https://arxiv.org/abs/2008.09867"))
-    
-    # r_pi show
-    global rpi1,rpi2,rpi3
-    rpi1 =Label(TF,text='r   =',font = ("Modern",10))
-    rpi2 =Label(TF,text=' \u03C0',font = ("Modern",6))
+
+    rpi1 =Label(framesingle,text='r   =',font = ("Modern",10))
+    rpi2 =Label(framesingle,text=' \u03C0',font = ("Modern",6))
+    rpi1.place(x=135,y=200)
+    rpi2.place(x=140,y=210)
     global rpi_entry 
-    rpi1.place_forget()
-    rpi2.place_forget()
-    rpi3.place_forget()
-    rpi_entry.place_forget()
-    rpi_entry = Entry(TF,font = ("Modern",10))
-    rpi1.place(x=135,y=380)
-    rpi2.place(x=140,y=390)
-    rpi_entry.place(x=170,y=380,width=60)
-    rpi_entry.insert(END,'150')
-    rpi3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rpi3.place(x=230,y=380)
+    rpi_entry = Entry(framesingle,font = ("Modern",10))
+    rpi_entry.place(x=170,y=200,width=60)
+    rpi_entry.insert(END,'220')
+    rpi3 =Label(framesingle,text='\u03A9',font = ("Modern",10))
+    rpi3.place(x=230,y=200)
 
     # R_F show
-    rF1 =Label(TF,text='R    =',font = ("Modern",10))
-    rF2 =Label(TF,text=' f',font = ("Modern",6))
-    rF1.place(x=127,y=410)
-    rF2.place(x=140,y=420)
+    rF1 =Label(framesingle,text='R    =',font = ("Modern",10))
+    rF2 =Label(framesingle,text=' f',font = ("Modern",6))
+    rF1.place(x=127,y=230)
+    rF2.place(x=140,y=240)
     global rF_entry
-    rF_entry = Entry(TF,font = ("Modern",10))
-    rF_entry.place(x=170,y=410,width=60)
+    rF_entry = Entry(framesingle,font = ("Modern",10))
+    rF_entry.place(x=170,y=230,width=60)
     rF_entry.insert(END,'4300')
-    rF3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rF3.place(x=230,y=410)
+    rF3 =Label(framesingle,text='\u03A9',font = ("Modern",10))
+    rF3.place(x=230,y=230)
 
     # R_C show
-    rC1 =Label(TF,text='R    =',font = ("Modern",10))
-    rC2 =Label(TF,text=' C',font = ("Modern",6))
-    rC1.place(x=127,y=440)
-    rC2.place(x=140,y=450)
+    rC1 =Label(framesingle,text='R    =',font = ("Modern",10))
+    rC2 =Label(framesingle,text=' C',font = ("Modern",6))
+    rC1.place(x=127,y=260)
+    rC2.place(x=140,y=270)
     global rC_entry
-    rC_entry = Entry(TF,font = ("Modern",10))
-    rC_entry.place(x=170,y=440,width=60)
+    rC_entry = Entry(framesingle,font = ("Modern",10))
+    rC_entry.place(x=170,y=260,width=60)
     rC_entry.insert(END,'50')
-    rC3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rC3.place(x=230,y=440)
+    rC3 =Label(framesingle,text='\u03A9',font = ("Modern",10))
+    rC3.place(x=230,y=260)
 
     # C_in show
-    Cin1 =Label(TF,text='C    =',font = ("Modern",10))
-    Cin2 =Label(TF,text=' in',font = ("Modern",6))
-    Cin1.place(x=127,y=470)
-    Cin2.place(x=140,y=480)
+    Cin1 =Label(framesingle,text='C    =',font = ("Modern",10))
+    Cin2 =Label(framesingle,text=' in',font = ("Modern",6))
+    Cin1.place(x=127,y=290)
+    Cin2.place(x=140,y=300)
     global Cin_entry
-    Cin_entry = Entry(TF,font = ("Modern",10))
-    Cin_entry.place(x=170,y=470,width=60)
+    Cin_entry = Entry(framesingle,font = ("Modern",10))
+    Cin_entry.place(x=170,y=290,width=60)
     Cin_entry.insert(END,'2e-12')
-    Cin3 =Label(TF,text='F',font = ("Modern",10))
-    Cin3.place(x=230,y=470)
+    Cin3 =Label(framesingle,text='F',font = ("Modern",10))
+    Cin3.place(x=230,y=290)
 
     # C_f show
-    Cf1 =Label(TF,text='C    =',font = ("Modern",10))
-    Cf2 =Label(TF,text=' f',font = ("Modern",6))
-    Cf1.place(x=127,y=500)
-    Cf2.place(x=140,y=510)
+    Cf1 =Label(framesingle,text='C    =',font = ("Modern",10))
+    Cf2 =Label(framesingle,text=' f',font = ("Modern",6))
+    Cf1.place(x=127,y=320)
+    Cf2.place(x=140,y=330)
     global Cf_entry
-    Cf_entry = Entry(TF,font = ("Modern",10))
-    Cf_entry.place(x=170,y=500,width=60)
+    Cf_entry = Entry(framesingle,font = ("Modern",10))
+    Cf_entry.place(x=170,y=320,width=60)
     Cf_entry.insert(END,'50e-15')
-    Cf3 =Label(TF,text='F',font = ("Modern",10))
-    Cf3.place(x=230,y=500)
+    Cf3 =Label(framesingle,text='F',font = ("Modern",10))
+    Cf3.place(x=230,y=320)
 
     # C_L show
-    CL1 =Label(TF,text='C    =',font = ("Modern",10))
-    CL2 =Label(TF,text=' L',font = ("Modern",6))
-    CL1.place(x=127,y=530)
-    CL2.place(x=140,y=540)
+    CL1 =Label(framesingle,text='C    =',font = ("Modern",10))
+    CL2 =Label(framesingle,text=' L',font = ("Modern",6))
+    CL1.place(x=127,y=350)
+    CL2.place(x=140,y=360)
     global CL_entry
-    CL_entry = Entry(TF,font = ("Modern",10))
-    CL_entry.place(x=170,y=530,width=60)
+    CL_entry = Entry(framesingle,font = ("Modern",10))
+    CL_entry.place(x=170,y=350,width=60)
     CL_entry.insert(END,'4e-12')
-    CL3 =Label(TF,text='F',font = ("Modern",10))
-    CL3.place(x=230,y=530)
+    CL3 =Label(framesingle,text='F',font = ("Modern",10))
+    CL3.place(x=230,y=350)
 
     # gm show
-    gm1 =Label(TF,text='g    =',font = ("Modern",10))
-    gm2 =Label(TF,text='m',font = ("Modern",6))
-    gm1.place(x=127,y=560)
-    gm2.place(x=140,y=570)
+    gm1 =Label(framesingle,text='g    =',font = ("Modern",10))
+    gm2 =Label(framesingle,text='m',font = ("Modern",6))
+    gm1.place(x=127,y=380)
+    gm2.place(x=140,y=390)
     global gm_entry
-    gm_entry = Entry(TF,font = ("Modern",10))
-    gm_entry.place(x=170,y=560,width=60)
+    gm_entry = Entry(framesingle,font = ("Modern",10))
+    gm_entry.place(x=170,y=380,width=60)
     gm_entry.insert(END,'0.5')
-    gm3 =Label(TF,text='S',font = ("Modern",10))
-    gm3.place(x=230,y=560)
+    gm3 =Label(framesingle,text='S',font = ("Modern",10))
+    gm3.place(x=230,y=380)
 
     # R_m calculation
-    rm1 =Label(TF,text='R     =',font = ("Modern",10))
-    rm2 =Label(TF,text='m0',font = ("Modern",6))
-    rm1.place(x=123,y=650)
-    rm2.place(x=137,y=660)
+    rm1 =Label(framesingle,text='R     =',font = ("Modern",10))
+    rm2 =Label(framesingle,text='m0',font = ("Modern",6))
+    rm1.place(x=123,y=470)
+    rm2.place(x=137,y=480)
     global rm_entry
-    rm_entry = Entry(TF,font = ("Modern",10))
-    rm_entry.place(x=170,y=650,width=75)
-    rm3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rm3.place(x=250,y=650)
+    rm_entry = Entry(framesingle,font = ("Modern",10))
+    rm_entry.place(x=170,y=470,width=75)
+    rm3 =Label(framesingle,text='\u03A9',font = ("Modern",10))
+    rm3.place(x=250,y=470)
 
     # tau calculation
-    tau1 =Label(TF,text='\u03C4    =',font = ("Modern",10))
-    tau1.place(x=123,y=680)
+    tau1 =Label(framesingle,text='\u03C4    =',font = ("Modern",10))
+    tau1.place(x=123,y=500)
     global tau_entry
-    tau_entry = Entry(TF,font = ("Modern",10))
-    tau_entry.place(x=170,y=680,width=75)
-    tau3 =Label(TF,text='s',font = ("Modern",10))
-    tau3.place(x=250,y=680)
-    
+    tau_entry = Entry(framesingle,font = ("Modern",10))
+    tau_entry.place(x=170,y=500,width=75)
+    tau3 =Label(framesingle,text='s',font = ("Modern",10))
+    tau3.place(x=250,y=500)
+
+    global btnRM1
+    btnRM1 = Button(framesingle, text="Get TIA Values\n and \n SET Transfer Function",command=rm,font = ("Arial",9))
+    btnRM1.place(x=500,y=440)
+
     # NSAMPLES show
-    nsamples =Label(TF,text='N° Samples',font = ("Modern",10))
-    nsamples.place(x=450,y=380)
+    nsamples =Label(framesingle,text='N° Samples  =',font = ("Modern",10))
+    nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(TF,font = ("Modern",10))
-    nsamples_entry.place(x=550,y=380,width=70)
+    nsamples_entry = Entry(framesingle,font = ("Modern",10))
+    nsamples_entry.place(x=550,y=200,width=70)
     nsamples_entry.insert(END,'16384')
 
     # dT show
-    dt1 =Label(TF,text='dT  =',font = ("Modern",10))
-    dt1.place(x=500,y=410)
+    dt1 =Label(framesingle,text='dT  =',font = ("Modern",10))
+    dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(TF,font = ("Modern",10))
-    dt_entry.place(x=550,y=410,width=70)
+    dt_entry = Entry(framesingle,font = ("Modern",10))
+    dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(END,'1e-12')
-    dt3 =Label(TF,text='s',font = ("Modern",10))
-    dt3.place(x=630,y=410)
+    dt3 =Label(framesingle,text='s',font = ("Modern",10))
+    dt3.place(x=630,y=230)
 
     # Bound show
-    bound1 =Label(TF,text='Bound Fit integer  =',font = ("Modern",10))
-    bound1.place(x=405,y=440)
+    bound1 =Label(framesingle,text='Bound Fit integer  =',font = ("Modern",10))
+    bound1.place(x=405,y=260)
     global bound_entry
-    bound_entry = Entry(TF,font = ("Modern",10))
-    bound_entry.place(x=550,y=440,width=70)
+    bound_entry = Entry(framesingle,font = ("Modern",10))
+    bound_entry.place(x=550,y=260,width=70)
     bound_entry.insert(END,'5')
 
     # Leading Edge show
-    LE1 =Label(TF,text='Leading Edge threshold  =',font = ("Modern",10))
-    LE1.place(x=365,y=500)
+    LE1 =Label(framesingle,text='Leading Edge threshold  =',font = ("Modern",10))
+    LE1.place(x=365,y=290)
     global LE_entry
-    LE_entry = Entry(TF,font = ("Modern",10))
-    LE_entry.place(x=550,y=500,width=70)
+    LE_entry = Entry(framesingle,font = ("Modern",10))
+    LE_entry.place(x=550,y=290,width=70)
     LE_entry.insert(END,'0.01')
-    LE3 =Label(TF,text='V',font = ("Modern",10))
-    LE3.place(x=630,y=500)
+    LE3 =Label(framesingle,text='V',font = ("Modern",10))
+    LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(TF,text='CFD threshold fraction    =',font = ("Modern",10))
-    CFD1.place(x=362,y=530)
+    CFD1 =Label(framesingle,text='CFD threshold fraction    =',font = ("Modern",10))
+    CFD1.place(x=362,y=320)
     global CFD_entry
-    CFD_entry = Entry(TF,font = ("Modern",10))
-    CFD_entry.place(x=550,y=530,width=70)
+    CFD_entry = Entry(framesingle,font = ("Modern",10))
+    CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(TF,text='ARC method delay        =',font = ("Modern",10))
-    ARC1.place(x=365,y=560)
+    ARC1 =Label(framesingle,text='ARC method delay        =',font = ("Modern",10))
+    ARC1.place(x=370,y=350)
     global ARC_entry
-    ARC_entry = Entry(TF,font = ("Modern",10))
-    ARC_entry.place(x=550,y=560,width=70)
+    ARC_entry = Entry(framesingle,font = ("Modern",10))
+    ARC_entry.place(x=550,y=350,width=70)
     ARC_entry.insert(END,'200e-12')
-    ARC1 =Label(TF,text='s',font = ("Modern",10))
-    ARC1.place(x=630,y=560)
+    ARC1 =Label(framedouble,text='s',font = ("Modern",10))
+    ARC1.place(x=630,y=350)
+
 
 def csastg():
-
-    if(rpi1.winfo_exists() ):
-        logo3.place_forget()
-        logo2.place_forget()
-        G1.place_forget()
-        G2.place_forget()
-        grm1.place_forget()
-        grm2.place_forget()
-        tauo1.place_forget()
-        tauo2.place_forget()
-        tauo3.place_forget()
-        grm1.place_forget()
-        grm2.place_forget()
-        grm3.place_forget()
-        gG1.place_forget()
-        gG2.place_forget()
-        G_entry.place_forget()
-        tauo_entry.place_forget()
-        gmr_entry.place_forget() 
-        btnRM.place_forget()
-        btnRM1.place_forget()
-        rpi1.place_forget()
-        rpi2.place_forget()
-        rpi3.place_forget()
-        rpi_entry.place_forget()
-    
-    TF.update()
 
     stat1.set(0)
     stat2.set(0)
@@ -384,460 +348,358 @@ def csastg():
     stat4.set(0)
     stat5.set(0)
         
-    logo5 =Label(TF,image=my_logo5)
-    logo4 =Label(TF,image=my_logo4)
-    logo5.place(x=400,y=230)
-    logo4.place(x=500,y=230)
+    if (logo2.winfo_exists()):
+        framesingle.place_forget()
 
-    logo6 =Label(TF,image=my_logo6)
-    logo6.place(x=20,y=170)
+    if (logo3.winfo_exists()):
+        framedouble.place_forget()
+  
+    if (btnFromFile.winfo_exists()):
+        frameFF.place_forget()
 
-    btnRM2.place(x=500,y=620)
-    
-    TF_label2 = Label(TF, text='Single Stage MOS Charge Sensitive Amplifier',font = ("Modern",9))
-    TF_label2.place(x=380,y=170,width=400)
-    TF_label3 = Label(TF, text='all damping behavior are possible with values provided',font = ("Modern",9))
-    TF_label3.place(x=380,y=190,width=400)
+    if (btnRM4.winfo_exists()):
+        frameWA.place_forget()
 
-    link1 = Label(TF, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
-    link1.place(x=380,y=305,width=400)
+    framecsa.place(x=20,y=170)
+
+
+    # png circuit
+    logo6 =Label(framecsa,image=my_logo6)
+    logo6.place(x=20,y=0)
+
+    TF_label2 = Label(framecsa, text='Single Stage MOS Charge Sensitive Amplifier',font = ("Modern",9))
+    TF_label2.place(x=380,y=20,width=400)
+    TF_label3 = Label(framecsa, text='all damping behavior are possible with values provided',font = ("Modern",9))
+    TF_label3.place(x=380,y=40,width=400)
+
+    #png equation
+    logo4 =Label(framecsa,image=my_logo4)
+    logo4.place(x=500,y=70)
+
+    link1 = Label(framecsa, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
+    link1.place(x=380,y=150,width=400)
     link1.bind("<Button-1>", lambda e: callback("https://arxiv.org/abs/2008.09867"))
-    
-    logo7 =Label(TF,image=my_logo7)
-    logo7.place(x=50,y=400)
-    rpi1.place_forget()
-    rpi2.place_forget()
-    rpi3.place_forget()
-    rpi_entry.place_forget()
+
+
     # R_F show
-    rF1 =Label(TF,text='R    =',font = ("Modern",10))
-    rF2 =Label(TF,text=' f',font = ("Modern",6))
-    rF1.place(x=127,y=410)
-    rF2.place(x=140,y=420)
+    rF1 =Label(framecsa,text='R    =',font = ("Modern",10))
+    rF2 =Label(framecsa,text=' f',font = ("Modern",6))
+    rF1.place(x=127,y=230)
+    rF2.place(x=140,y=240)
     global rF_entry
-    rF_entry = Entry(TF,font = ("Modern",10))
-    rF_entry.place(x=170,y=410,width=60)
+    rF_entry = Entry(framecsa,font = ("Modern",10))
+    rF_entry.place(x=170,y=230,width=60)
     rF_entry.insert(END,'3e6')
-    rF3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rF3.place(x=230,y=410)
+    rF3 =Label(framecsa,text='\u03A9',font = ("Modern",10))
+    rF3.place(x=230,y=230)
 
     # R_C show
-    rC1 =Label(TF,text='R    =',font = ("Modern",10))
-    rC2 =Label(TF,text=' D',font = ("Modern",6))
-    rC1.place(x=127,y=440)
-    rC2.place(x=140,y=450)
+    rC1 =Label(framecsa,text='R    =',font = ("Modern",10))
+    rC2 =Label(framecsa,text=' C',font = ("Modern",6))
+    rC1.place(x=127,y=260)
+    rC2.place(x=140,y=270)
     global rC_entry
-    rC_entry = Entry(TF,font = ("Modern",10))
-    rC_entry.place(x=170,y=440,width=60)
+    rC_entry = Entry(framecsa,font = ("Modern",10))
+    rC_entry.place(x=170,y=260,width=60)
     rC_entry.insert(END,'570e3')
-    rC3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rC3.place(x=230,y=440)
+    rC3 =Label(framecsa,text='\u03A9',font = ("Modern",10))
+    rC3.place(x=230,y=260)
 
     # C_in show
-    Cin1 =Label(TF,text='C    =',font = ("Modern",10))
-    Cin2 =Label(TF,text=' in',font = ("Modern",6))
-    Cin1.place(x=127,y=470)
-    Cin2.place(x=140,y=480)
+    Cin1 =Label(framecsa,text='C    =',font = ("Modern",10))
+    Cin2 =Label(framecsa,text=' in',font = ("Modern",6))
+    Cin1.place(x=127,y=290)
+    Cin2.place(x=140,y=300)
     global Cin_entry
-    Cin_entry = Entry(TF,font = ("Modern",10))
-    Cin_entry.place(x=170,y=470,width=60)
-    Cin_entry.insert(END,'105e-15')
-    Cin3 =Label(TF,text='F',font = ("Modern",10))
-    Cin3.place(x=230,y=470)
+    Cin_entry = Entry(framecsa,font = ("Modern",10))
+    Cin_entry.place(x=170,y=290,width=60)
+    Cin_entry.insert(END,'100e-15')
+    Cin3 =Label(framecsa,text='F',font = ("Modern",10))
+    Cin3.place(x=230,y=290)
 
     # C_f show
-    Cf1 =Label(TF,text='C    =',font = ("Modern",10))
-    Cf2 =Label(TF,text=' f',font = ("Modern",6))
-    Cf1.place(x=127,y=500)
-    Cf2.place(x=140,y=510)
+    Cf1 =Label(framecsa,text='C    =',font = ("Modern",10))
+    Cf2 =Label(framecsa,text=' f',font = ("Modern",6))
+    Cf1.place(x=127,y=320)
+    Cf2.place(x=140,y=330)
     global Cf_entry
-    Cf_entry = Entry(TF,font = ("Modern",10))
-    Cf_entry.place(x=170,y=500,width=60)
+    Cf_entry = Entry(framecsa,font = ("Modern",10))
+    Cf_entry.place(x=170,y=320,width=60)
     Cf_entry.insert(END,'5e-15')
-    Cf3 =Label(TF,text='F',font = ("Modern",10))
-    Cf3.place(x=230,y=500)
+    Cf3 =Label(framecsa,text='F',font = ("Modern",10))
+    Cf3.place(x=230,y=320)
 
     # C_L show
-    CL1 =Label(TF,text='C    =',font = ("Modern",10))
-    CL2 =Label(TF,text=' L',font = ("Modern",6))
-    CL1.place(x=127,y=530)
-    CL2.place(x=140,y=540)
+    CL1 =Label(framecsa,text='C    =',font = ("Modern",10))
+    CL2 =Label(framecsa,text=' L',font = ("Modern",6))
+    CL1.place(x=127,y=350)
+    CL2.place(x=140,y=360)
     global CL_entry
-    CL_entry = Entry(TF,font = ("Modern",10))
-    CL_entry.place(x=170,y=530,width=60)
-    CL_entry.insert(END,'20e-15')
-    CL3 =Label(TF,text='F',font = ("Modern",10))
-    CL3.place(x=230,y=530)
+    CL_entry = Entry(framecsa,font = ("Modern",10))
+    CL_entry.place(x=170,y=350,width=60)
+    CL_entry.insert(END,'21e-15')
+    CL3 =Label(framecsa,text='F',font = ("Modern",10))
+    CL3.place(x=230,y=350)
 
     # gm show
-    gm1 =Label(TF,text='g    =',font = ("Modern",10))
-    gm2 =Label(TF,text='m',font = ("Modern",6))
-    gm1.place(x=127,y=560)
-    gm2.place(x=140,y=570)
+    gm1 =Label(framecsa,text='g    =',font = ("Modern",10))
+    gm2 =Label(framecsa,text='m',font = ("Modern",6))
+    gm1.place(x=127,y=380)
+    gm2.place(x=140,y=390)
     global gm_entry
-    gm_entry = Entry(TF,font = ("Modern",10))
-    gm_entry.place(x=170,y=560,width=60)
+    gm_entry = Entry(framecsa,font = ("Modern",10))
+    gm_entry.place(x=170,y=380,width=60)
     gm_entry.insert(END,'55e-6')
-    gm3 =Label(TF,text='S',font = ("Modern",10))
-    gm3.place(x=230,y=560)
+    gm3 =Label(framecsa,text='S',font = ("Modern",10))
+    gm3.place(x=230,y=380)
 
     # R_m calculation
-    rm1 =Label(TF,text='R     =',font = ("Modern",10))
-    rm2 =Label(TF,text='m0',font = ("Modern",6))
-    rm1.place(x=123,y=650)
-    rm2.place(x=137,y=660)
+    rm1 =Label(framecsa,text='R     =',font = ("Modern",10))
+    rm2 =Label(framecsa,text='m0',font = ("Modern",6))
+    rm1.place(x=123,y=470)
+    rm2.place(x=137,y=480)
     global rm_entry
-    rm_entry = Entry(TF,font = ("Modern",10))
-    rm_entry.place(x=170,y=650,width=75)
-    rm3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rm3.place(x=250,y=650)
+    rm_entry = Entry(framecsa,font = ("Modern",10))
+    rm_entry.place(x=170,y=470,width=75)
+    rm3 =Label(framecsa,text='\u03A9',font = ("Modern",10))
+    rm3.place(x=250,y=470)
 
     # tau calculation
-    tau1 =Label(TF,text='\u03C4    =',font = ("Modern",10))
-    tau1.place(x=123,y=680)
+    tau1 =Label(framecsa,text='\u03C4    =',font = ("Modern",10))
+    tau1.place(x=123,y=500)
     global tau_entry
-    tau_entry = Entry(TF,font = ("Modern",10))
-    tau_entry.place(x=170,y=680,width=75)
-    tau3 =Label(TF,text='s',font = ("Modern",10))
-    tau3.place(x=250,y=680)
-    
+    tau_entry = Entry(framecsa,font = ("Modern",10))
+    tau_entry.place(x=170,y=500,width=75)
+    tau3 =Label(framecsa,text='s',font = ("Modern",10))
+    tau3.place(x=250,y=500)
+
+    # zeta calculation
+    zeta1 =Label(framecsa,text='\u03B6    =',font = ("Modern",10))
+    zeta1.place(x=123,y=530)
+    global zeta_entry
+    zeta_entry = Entry(framecsa,font = ("Modern",10))
+    zeta_entry.place(x=170,y=530,width=75)
+  
+    global btnRM
+    btnRM = Button(framecsa, text="Get CSA Values\n and \n SET Transfer Function",command=rmcsa,font = ("Arial",9))
+    btnRM.place(x=500,y=440)
+
     # NSAMPLES show
-    nsamples =Label(TF,text='N° Samples',font = ("Modern",10))
-    nsamples.place(x=450,y=380)
+    nsamples =Label(framecsa,text='N° Samples  =',font = ("Modern",10))
+    nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(TF,font = ("Modern",10))
-    nsamples_entry.place(x=550,y=380,width=70)
-    nsamples_entry.insert(END,'262144')
+    nsamples_entry = Entry(framecsa,font = ("Modern",10))
+    nsamples_entry.place(x=550,y=200,width=70)
+    nsamples_entry.insert(END,'131072')
 
     # dT show
-    dt1 =Label(TF,text='dT  =',font = ("Modern",10))
-    dt1.place(x=500,y=410)
+    dt1 =Label(framecsa,text='dT  =',font = ("Modern",10))
+    dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(TF,font = ("Modern",10))
-    dt_entry.place(x=550,y=410,width=70)
+    dt_entry = Entry(framecsa,font = ("Modern",10))
+    dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(END,'1e-12')
-    dt3 =Label(TF,text='s',font = ("Modern",10))
-    dt3.place(x=630,y=410)
+    dt3 =Label(framecsa,text='s',font = ("Modern",10))
+    dt3.place(x=630,y=230)
 
     # Bound show
-    bound1 =Label(TF,text='Bound Fit integer  =',font = ("Modern",10))
-    bound1.place(x=405,y=440)
+    bound1 =Label(framecsa,text='Bound Fit integer  =',font = ("Modern",10))
+    bound1.place(x=405,y=260)
     global bound_entry
-    bound_entry = Entry(TF,font = ("Modern",10))
-    bound_entry.place(x=550,y=440,width=70)
+    bound_entry = Entry(framecsa,font = ("Modern",10))
+    bound_entry.place(x=550,y=260,width=70)
     bound_entry.insert(END,'5')
 
     # Leading Edge show
-    LE1 =Label(TF,text='Leading Edge threshold  =',font = ("Modern",10))
-    LE1.place(x=365,y=500)
+    LE1 =Label(framecsa,text='Leading Edge threshold  =',font = ("Modern",10))
+    LE1.place(x=365,y=290)
     global LE_entry
-    LE_entry = Entry(TF,font = ("Modern",10))
-    LE_entry.place(x=550,y=500,width=70)
+    LE_entry = Entry(framecsa,font = ("Modern",10))
+    LE_entry.place(x=550,y=290,width=70)
     LE_entry.insert(END,'0.01')
-    LE3 =Label(TF,text='V',font = ("Modern",10))
-    LE3.place(x=630,y=500)
+    LE3 =Label(framecsa,text='V',font = ("Modern",10))
+    LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(TF,text='CFD threshold fraction    =',font = ("Modern",10))
-    CFD1.place(x=362,y=530)
+    CFD1 =Label(framecsa,text='CFD threshold fraction    =',font = ("Modern",10))
+    CFD1.place(x=362,y=320)
     global CFD_entry
-    CFD_entry = Entry(TF,font = ("Modern",10))
-    CFD_entry.place(x=550,y=530,width=70)
+    CFD_entry = Entry(framecsa,font = ("Modern",10))
+    CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(TF,text='ARC method delay        =',font = ("Modern",10))
-    ARC1.place(x=365,y=560)
+    ARC1 =Label(framecsa,text='ARC method delay        =',font = ("Modern",10))
+    ARC1.place(x=370,y=350)
     global ARC_entry
-    ARC_entry = Entry(TF,font = ("Modern",10))
-    ARC_entry.place(x=550,y=560,width=70)
-    ARC_entry.insert(END,'200e-12')
-    ARC1 =Label(TF,text='s',font = ("Modern",10))
-    ARC1.place(x=630,y=560)
+    ARC_entry = Entry(framecsa,font = ("Modern",10))
+    ARC_entry.place(x=550,y=350,width=70)
+    ARC_entry.insert(END,'5e-9')
+    ARC1 =Label(framecsa,text='s',font = ("Modern",10))
+    ARC1.place(x=630,y=350)
+    
 
 def FromFile():
-
-    if(logo3.winfo_exists() ):
-        logo3.place_forget()
-        logo2.place_forget()
-        G1.place_forget()
-        G2.place_forget()
-        grm1.place_forget()
-        grm2.place_forget()
-        tauo1.place_forget()
-        tauo2.place_forget()
-        tauo3.place_forget()
-        tauo_entry.place_forget()
-        grm1.place_forget()
-        grm2.place_forget()
-        grm3.place_forget()
-        gG1.place_forget()
-        gG2.place_forget()
-        G_entry.place_forget()
-        gm_entry.place_forget()
-        gm1.place_forget()
-        gm2.place_forget()
-        gm3.place_forget()
-        rm1.place_forget()
-        rm2.place_forget()
-        rm3.place_forget()
-        rm_entry.place_forget()
-        Cin1.place_forget()
-        Cin2.place_forget()
-        Cin3.place_forget()
-        Cin_entry.place_forget()
-        Cf1.place_forget()
-        Cf2.place_forget()
-        Cf3.place_forget()
-        Cf_entry.place_forget()
-        CL1.place_forget()
-        CL2.place_forget()
-        CL3.place_forget()
-        CL_entry.place_forget()
-        rpi1.place_forget()
-        rpi2.place_forget()
-        rpi3.place_forget()
-        rpi_entry.place_forget()
-        rF1.place_forget()
-        rF2.place_forget()
-        rF3.place_forget()
-        rF_entry.place_forget()
-        rC1.place_forget()
-        rC2.place_forget()
-        rC3.place_forget()
-        rC_entry.place_forget()
-        tau1.place_forget()
-        tau3.place_forget()
-        tau_entry.place_forget()
-        rm_entry.place_forget()
-        tauo_entry.place_forget()
-        gmr_entry.place_forget() 
-        btnRM.place_forget()
-        btnRM1.place_forget()
-        btnRM2.place_forget()
-        TF_label2.place_forget()
-        TF_label3.place_forget()
-        link1.place_forget()
-
-  
-
-    TF.update()
-
+    
     stat1.set(0)
     stat2.set(0)
     stat3.set(0)
     stat4.set(1)
     stat5.set(0)
-        
-    logo3.place_forget()
-    logo2.place_forget()
 
-    btnFromFile.place(x=20,y=200)
+    if (logo2.winfo_exists()):
+        framesingle.place_forget()
 
-    btnRM3.place(x=50,y=500)
+    if (logo3.winfo_exists()):
+        framedouble.place_forget()
 
+    if (logo6.winfo_exists()):
+        framecsa.place_forget()
+
+    if (btnRM4.winfo_exists()):
+        frameWA.place_forget()
+  
     
+    frameFF.place(x=20,y=170)
+
+    btnFromFile.place(x=20,y=50)
+    btnRM3.place(x=50,y=300)
+
     # NSAMPLES show
-    nsamples =Label(TF,text='N° Samples',font = ("Modern",10))
-    nsamples.place(x=450,y=380)
+    nsamples =Label(frameFF,text='N° Samples  =',font = ("Modern",10))
+    nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(TF,font = ("Modern",10))
-    nsamples_entry.place(x=550,y=380,width=70)
+    nsamples_entry = Entry(frameFF,font = ("Modern",10))
+    nsamples_entry.place(x=550,y=200,width=70)
     nsamples_entry.insert(END,'16384')
 
     # dT show
-    dt1 =Label(TF,text='dT  =',font = ("Modern",10))
-    dt1.place(x=500,y=410)
+    dt1 =Label(frameFF,text='dT  =',font = ("Modern",10))
+    dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(TF,font = ("Modern",10))
-    dt_entry.place(x=550,y=410,width=70)
+    dt_entry = Entry(frameFF,font = ("Modern",10))
+    dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(END,'1e-12')
-    dt3 =Label(TF,text='s',font = ("Modern",10))
-    dt3.place(x=630,y=410)
+    dt3 =Label(frameFF,text='s',font = ("Modern",10))
+    dt3.place(x=630,y=230)
 
     # Bound show
-    bound1 =Label(TF,text='Bound Fit integer  =',font = ("Modern",10))
-    bound1.place(x=405,y=440)
+    bound1 =Label(frameFF,text='Bound Fit integer  =',font = ("Modern",10))
+    bound1.place(x=405,y=260)
     global bound_entry
-    bound_entry = Entry(TF,font = ("Modern",10))
-    bound_entry.place(x=550,y=440,width=70)
+    bound_entry = Entry(frameFF,font = ("Modern",10))
+    bound_entry.place(x=550,y=260,width=70)
     bound_entry.insert(END,'5')
 
     # Leading Edge show
-    LE1 =Label(TF,text='Leading Edge threshold  =',font = ("Modern",10))
-    LE1.place(x=365,y=500)
+    LE1 =Label(frameFF,text='Leading Edge threshold  =',font = ("Modern",10))
+    LE1.place(x=365,y=290)
     global LE_entry
-    LE_entry = Entry(TF,font = ("Modern",10))
-    LE_entry.place(x=550,y=500,width=70)
+    LE_entry = Entry(frameFF,font = ("Modern",10))
+    LE_entry.place(x=550,y=290,width=70)
     LE_entry.insert(END,'0.01')
-    LE3 =Label(TF,text='V',font = ("Modern",10))
-    LE3.place(x=630,y=500)
+    LE3 =Label(frameFF,text='V',font = ("Modern",10))
+    LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(TF,text='CFD threshold fraction    =',font = ("Modern",10))
-    CFD1.place(x=362,y=530)
+    CFD1 =Label(frameFF,text='CFD threshold fraction    =',font = ("Modern",10))
+    CFD1.place(x=362,y=320)
     global CFD_entry
-    CFD_entry = Entry(TF,font = ("Modern",10))
-    CFD_entry.place(x=550,y=530,width=70)
+    CFD_entry = Entry(frameFF,font = ("Modern",10))
+    CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(TF,text='ARC method delay        =',font = ("Modern",10))
-    ARC1.place(x=365,y=560)
+    ARC1 =Label(frameFF,text='ARC method delay        =',font = ("Modern",10))
+    ARC1.place(x=370,y=350)
     global ARC_entry
-    ARC_entry = Entry(TF,font = ("Modern",10))
-    ARC_entry.place(x=550,y=560,width=70)
+    ARC_entry = Entry(frameFF,font = ("Modern",10))
+    ARC_entry.place(x=550,y=350,width=70)
     ARC_entry.insert(END,'200e-12')
-    ARC1 =Label(TF,text='s',font = ("Modern",10))
-    ARC1.place(x=630,y=560)
-
+    ARC1 =Label(frameFF,text='s',font = ("Modern",10))
+    ARC1.place(x=630,y=350)
+    
 
 def WaveAnalysis():
-
-    if(logo3.winfo_exists() ):
-        logo3.place_forget()
-        logo2.place_forget()
-        G1.place_forget()
-        G2.place_forget()
-        grm1.place_forget()
-        grm2.place_forget()
-        tauo1.place_forget()
-        tauo2.place_forget()
-        tauo3.place_forget()
-        tauo_entry.place_forget()
-        grm1.place_forget()
-        grm2.place_forget()
-        grm3.place_forget()
-        gG1.place_forget()
-        gG2.place_forget()
-        G_entry.place_forget()
-        gm_entry.place_forget()
-        gm1.place_forget()
-        gm2.place_forget()
-        gm3.place_forget()
-        rm1.place_forget()
-        rm2.place_forget()
-        rm3.place_forget()
-        rm_entry.place_forget()
-        Cin1.place_forget()
-        Cin2.place_forget()
-        Cin3.place_forget()
-        Cin_entry.place_forget()
-        Cf1.place_forget()
-        Cf2.place_forget()
-        Cf3.place_forget()
-        Cf_entry.place_forget()
-        CL1.place_forget()
-        CL2.place_forget()
-        CL3.place_forget()
-        CL_entry.place_forget()
-        rpi1.place_forget()
-        rpi2.place_forget()
-        rpi3.place_forget()
-        rpi_entry.place_forget()
-        rF1.place_forget()
-        rF2.place_forget()
-        rF3.place_forget()
-        rF_entry.place_forget()
-        rC1.place_forget()
-        rC2.place_forget()
-        rC3.place_forget()
-        rC_entry.place_forget()
-        tau1.place_forget()
-        tau3.place_forget()
-        tau_entry.place_forget()
-        rm_entry.place_forget()
-        tauo_entry.place_forget()
-        gmr_entry.place_forget() 
-        btnRM.place_forget()
-        btnRM1.place_forget()
-        btnRM2.place_forget()
-        TF_label2.place_forget()
-        TF_label3.place_forget()
-        link1.place_forget()
-        btnFromFile.place_forget()
-  
-
-    TF.update()
 
     stat1.set(0)
     stat2.set(0)
     stat3.set(0)
     stat4.set(0)
     stat5.set(1)
-        
-    #logo5 =Label(TF,image=my_logo5)
-    #logo4 =Label(TF,image=my_logo4)
 
-    #logo2 =Label(TF,image=my_logo2)
 
-    logo3.place_forget()
-    logo2.place_forget()
+    if (logo2.winfo_exists()):
+        framesingle.place_forget()
 
-    btnRM3.place(x=500,y=620)
+    if (logo3.winfo_exists()):
+        framedouble.place_forget()
+
+    if (logo6.winfo_exists()):
+        framecsa.place_forget()
+
+    if (btnRM3.winfo_exists()):
+        frameFF.place_forget()
+  
     
-    #TF_label2 = Label(TF, text='Single Stage TIA with Bipolar transistor',font = ("Modern",9))
-    #TF_label3 = Label(TF, text='only critical damping case is considered',font = ("Modern",9))
+    frameWA.place(x=20,y=170)
 
-    #link1 = Label(TF, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
-    #link1.place(x=380,y=305,width=400)
-    #link1.bind("<Button-1>", lambda e: callback("https://arxiv.org/abs/2008.09867"))
-    
+    btnRM4.place(x=50,y=300)
 
     # NSAMPLES show
-    nsamples =Label(TF,text='N° Samples',font = ("Modern",10))
-    nsamples.place(x=450,y=380)
+    nsamples =Label(frameWA,text='N° Samples  =',font = ("Modern",10))
+    nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(TF,font = ("Modern",10))
-    nsamples_entry.place(x=550,y=380,width=70)
+    nsamples_entry = Entry(frameWA,font = ("Modern",10))
+    nsamples_entry.place(x=550,y=200,width=70)
     nsamples_entry.insert(END,'16384')
 
     # dT show
-    dt1 =Label(TF,text='dT  =',font = ("Modern",10))
-    dt1.place(x=500,y=410)
+    dt1 =Label(frameWA,text='dT  =',font = ("Modern",10))
+    dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(TF,font = ("Modern",10))
-    dt_entry.place(x=550,y=410,width=70)
+    dt_entry = Entry(frameWA,font = ("Modern",10))
+    dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(END,'1e-12')
-    dt3 =Label(TF,text='s',font = ("Modern",10))
-    dt3.place(x=630,y=410)
+    dt3 =Label(frameWA,text='s',font = ("Modern",10))
+    dt3.place(x=630,y=230)
 
     # Bound show
-    bound1 =Label(TF,text='Bound Fit integer  =',font = ("Modern",10))
-    bound1.place(x=405,y=440)
+    bound1 =Label(frameWA,text='Bound Fit integer  =',font = ("Modern",10))
+    bound1.place(x=405,y=260)
     global bound_entry
-    bound_entry = Entry(TF,font = ("Modern",10))
-    bound_entry.place(x=550,y=440,width=70)
+    bound_entry = Entry(frameWA,font = ("Modern",10))
+    bound_entry.place(x=550,y=260,width=70)
     bound_entry.insert(END,'5')
 
     # Leading Edge show
-    LE1 =Label(TF,text='Leading Edge threshold  =',font = ("Modern",10))
-    LE1.place(x=365,y=500)
+    LE1 =Label(frameWA,text='Leading Edge threshold  =',font = ("Modern",10))
+    LE1.place(x=365,y=290)
     global LE_entry
-    LE_entry = Entry(TF,font = ("Modern",10))
-    LE_entry.place(x=550,y=500,width=70)
+    LE_entry = Entry(frameWA,font = ("Modern",10))
+    LE_entry.place(x=550,y=290,width=70)
     LE_entry.insert(END,'0.01')
-    LE3 =Label(TF,text='V',font = ("Modern",10))
-    LE3.place(x=630,y=500)
+    LE3 =Label(frameWA,text='V',font = ("Modern",10))
+    LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(TF,text='CFD threshold fraction    =',font = ("Modern",10))
-    CFD1.place(x=362,y=530)
+    CFD1 =Label(frameWA,text='CFD threshold fraction    =',font = ("Modern",10))
+    CFD1.place(x=362,y=320)
     global CFD_entry
-    CFD_entry = Entry(TF,font = ("Modern",10))
-    CFD_entry.place(x=550,y=530,width=70)
+    CFD_entry = Entry(frameWA,font = ("Modern",10))
+    CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(TF,text='ARC method delay        =',font = ("Modern",10))
-    ARC1.place(x=365,y=560)
+    ARC1 =Label(frameWA,text='ARC method delay        =',font = ("Modern",10))
+    ARC1.place(x=370,y=350)
     global ARC_entry
-    ARC_entry = Entry(TF,font = ("Modern",10))
-    ARC_entry.place(x=550,y=560,width=70)
+    ARC_entry = Entry(frameWA,font = ("Modern",10))
+    ARC_entry.place(x=550,y=350,width=70)
     ARC_entry.insert(END,'200e-12')
-    ARC1 =Label(TF,text='s',font = ("Modern",10))
-    ARC1.place(x=630,y=560)
-
+    ARC1 =Label(frameWA,text='s',font = ("Modern",10))
+    ARC1.place(x=630,y=350)
+    
 
 
 
@@ -916,7 +778,9 @@ def rmcsa() :
 
     zeta = 0.5 * (a2*(c1+c2*(1+g))+rp*c3)/(math.sqrt((rp*a2*z)*(1+g)))
 
-    print(zeta)
+    my_formatter = "{0:.2f}"
+    zeta_entry.delete(0,END)
+    zeta_entry.insert(END,my_formatter.format(zeta))
     
     if(stat2==1):
         G = float(G_entry.get())
@@ -953,17 +817,26 @@ def rmcsa() :
 
 def doublestg():
 
-    if(logo4.winfo_exists() or logo6.winfo_exists() ):
-        logo4.place_forget()
-        btnRM1.place_forget()
-        btnRM2.place_forget()
-
+    
     stat1.set(0)
     stat2.set(1)
     stat3.set(0)
     stat4.set(0)
     stat5.set(0) 
+
+
+    if (logo4.winfo_exists()):
+        framesingle.place_forget()
+
+    if (logo6.winfo_exists()):
+        framecsa.place_forget()
+
+    if (btnFromFile.winfo_exists()):
+        frameFF.place_forget()
   
+    framedouble.place(x=20,y=170)
+
+
 
     # r_pi show
     global rpi1,rpi2,rpi3, rF1,rF2,rF3
@@ -974,224 +847,228 @@ def doublestg():
     global tau1,tau2,tau3, grm1,grm2,grm3
     global gG1,gG2
 
-    global logo2, logo3, link1, TF_label2, TF_label3
+    # png circuit
+    logo2 =Label(framedouble,image=my_logo2)
+    logo2.place(x=20,y=0)
 
-    logo2 =Label(TF,image=my_logo2)
-    logo2.place(x=20,y=170)
-    logo3 =Label(TF,image=my_logo3)
-    logo3.place(x=450,y=230)
+    TF_label2 = Label(framedouble, text='Double Stage TIA defined as a single stage TIA',font = ("Modern",9))
+    TF_label2.place(x=380,y=20,width=400)
+    TF_label3 = Label(framedouble, text='followed by a single pole voltage gain transfer function',font = ("Modern",9))
+    TF_label3.place(x=380,y=40,width=400)
 
-    TF_label2 = Label(TF, text='Double Stage TIA defined as a single stage TIA',font = ("Modern",9))
-    TF_label2.place(x=380,y=170,width=400)
-    TF_label3 = Label(TF, text='followed by a single pole voltage gain transfer function',font = ("Modern",9))
-    TF_label3.place(x=380,y=190,width=400)
+    #png equation
+    logo3 =Label(framedouble,image=my_logo3)
+    logo3.place(x=450,y=70)
 
-    link1 = Label(TF, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
-    link1.place(x=380,y=305,width=400)
+    link1 = Label(framedouble, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
+    link1.place(x=380,y=150,width=400)
     link1.bind("<Button-1>", lambda e: callback("https://arxiv.org/abs/2008.09867"))
 
 
-    rpi1 =Label(TF,text='r   =',font = ("Modern",10))
-    rpi2 =Label(TF,text=' \u03C0',font = ("Modern",6))
-    rpi1.place(x=135,y=380)
-    rpi2.place(x=140,y=390)
+    rpi1 =Label(framedouble,text='r   =',font = ("Modern",10))
+    rpi2 =Label(framedouble,text=' \u03C0',font = ("Modern",6))
+    rpi1.place(x=135,y=200)
+    rpi2.place(x=140,y=210)
     global rpi_entry 
-    rpi_entry = Entry(TF,font = ("Modern",10))
-    rpi_entry.place(x=170,y=380,width=60)
+    rpi_entry = Entry(framedouble,font = ("Modern",10))
+    rpi_entry.place(x=170,y=200,width=60)
     rpi_entry.insert(END,'220')
-    rpi3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rpi3.place(x=230,y=380)
+    rpi3 =Label(framedouble,text='\u03A9',font = ("Modern",10))
+    rpi3.place(x=230,y=200)
 
     # R_F show
-    rF1 =Label(TF,text='R    =',font = ("Modern",10))
-    rF2 =Label(TF,text=' f',font = ("Modern",6))
-    rF1.place(x=127,y=410)
-    rF2.place(x=140,y=420)
+    rF1 =Label(framedouble,text='R    =',font = ("Modern",10))
+    rF2 =Label(framedouble,text=' f',font = ("Modern",6))
+    rF1.place(x=127,y=230)
+    rF2.place(x=140,y=240)
     global rF_entry
-    rF_entry = Entry(TF,font = ("Modern",10))
-    rF_entry.place(x=170,y=410,width=60)
+    rF_entry = Entry(framedouble,font = ("Modern",10))
+    rF_entry.place(x=170,y=230,width=60)
     rF_entry.insert(END,'4300')
-    rF3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rF3.place(x=230,y=410)
+    rF3 =Label(framedouble,text='\u03A9',font = ("Modern",10))
+    rF3.place(x=230,y=230)
 
     # R_C show
-    rC1 =Label(TF,text='R    =',font = ("Modern",10))
-    rC2 =Label(TF,text=' C',font = ("Modern",6))
-    rC1.place(x=127,y=440)
-    rC2.place(x=140,y=450)
+    rC1 =Label(framedouble,text='R    =',font = ("Modern",10))
+    rC2 =Label(framedouble,text=' C',font = ("Modern",6))
+    rC1.place(x=127,y=260)
+    rC2.place(x=140,y=270)
     global rC_entry
-    rC_entry = Entry(TF,font = ("Modern",10))
-    rC_entry.place(x=170,y=440,width=60)
+    rC_entry = Entry(framedouble,font = ("Modern",10))
+    rC_entry.place(x=170,y=260,width=60)
     rC_entry.insert(END,'50')
-    rC3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rC3.place(x=230,y=440)
+    rC3 =Label(framedouble,text='\u03A9',font = ("Modern",10))
+    rC3.place(x=230,y=260)
 
     # C_in show
-    Cin1 =Label(TF,text='C    =',font = ("Modern",10))
-    Cin2 =Label(TF,text=' in',font = ("Modern",6))
-    Cin1.place(x=127,y=470)
-    Cin2.place(x=140,y=480)
+    Cin1 =Label(framedouble,text='C    =',font = ("Modern",10))
+    Cin2 =Label(framedouble,text=' in',font = ("Modern",6))
+    Cin1.place(x=127,y=290)
+    Cin2.place(x=140,y=300)
     global Cin_entry
-    Cin_entry = Entry(TF,font = ("Modern",10))
-    Cin_entry.place(x=170,y=470,width=60)
+    Cin_entry = Entry(framedouble,font = ("Modern",10))
+    Cin_entry.place(x=170,y=290,width=60)
     Cin_entry.insert(END,'2e-12')
-    Cin3 =Label(TF,text='F',font = ("Modern",10))
-    Cin3.place(x=230,y=470)
+    Cin3 =Label(framedouble,text='F',font = ("Modern",10))
+    Cin3.place(x=230,y=290)
 
     # C_f show
-    Cf1 =Label(TF,text='C    =',font = ("Modern",10))
-    Cf2 =Label(TF,text=' f',font = ("Modern",6))
-    Cf1.place(x=127,y=500)
-    Cf2.place(x=140,y=510)
+    Cf1 =Label(framedouble,text='C    =',font = ("Modern",10))
+    Cf2 =Label(framedouble,text=' f',font = ("Modern",6))
+    Cf1.place(x=127,y=320)
+    Cf2.place(x=140,y=330)
     global Cf_entry
-    Cf_entry = Entry(TF,font = ("Modern",10))
-    Cf_entry.place(x=170,y=500,width=60)
+    Cf_entry = Entry(framedouble,font = ("Modern",10))
+    Cf_entry.place(x=170,y=320,width=60)
     Cf_entry.insert(END,'50e-15')
-    Cf3 =Label(TF,text='F',font = ("Modern",10))
-    Cf3.place(x=230,y=500)
+    Cf3 =Label(framedouble,text='F',font = ("Modern",10))
+    Cf3.place(x=230,y=320)
 
     # C_L show
-    CL1 =Label(TF,text='C    =',font = ("Modern",10))
-    CL2 =Label(TF,text=' L',font = ("Modern",6))
-    CL1.place(x=127,y=530)
-    CL2.place(x=140,y=540)
+    CL1 =Label(framedouble,text='C    =',font = ("Modern",10))
+    CL2 =Label(framedouble,text=' L',font = ("Modern",6))
+    CL1.place(x=127,y=350)
+    CL2.place(x=140,y=360)
     global CL_entry
-    CL_entry = Entry(TF,font = ("Modern",10))
-    CL_entry.place(x=170,y=530,width=60)
+    CL_entry = Entry(framedouble,font = ("Modern",10))
+    CL_entry.place(x=170,y=350,width=60)
     CL_entry.insert(END,'4e-12')
-    CL3 =Label(TF,text='F',font = ("Modern",10))
-    CL3.place(x=230,y=530)
+    CL3 =Label(framedouble,text='F',font = ("Modern",10))
+    CL3.place(x=230,y=350)
 
     # gm show
-    gm1 =Label(TF,text='g    =',font = ("Modern",10))
-    gm2 =Label(TF,text='m',font = ("Modern",6))
-    gm1.place(x=127,y=560)
-    gm2.place(x=140,y=570)
+    gm1 =Label(framedouble,text='g    =',font = ("Modern",10))
+    gm2 =Label(framedouble,text='m',font = ("Modern",6))
+    gm1.place(x=127,y=380)
+    gm2.place(x=140,y=390)
     global gm_entry
-    gm_entry = Entry(TF,font = ("Modern",10))
-    gm_entry.place(x=170,y=560,width=60)
+    gm_entry = Entry(framedouble,font = ("Modern",10))
+    gm_entry.place(x=170,y=380,width=60)
     gm_entry.insert(END,'0.5')
-    gm3 =Label(TF,text='S',font = ("Modern",10))
-    gm3.place(x=230,y=560)
+    gm3 =Label(framedouble,text='S',font = ("Modern",10))
+    gm3.place(x=230,y=380)
 
     # G0 show
     global G1
     global G2
-    G1 =Label(TF,text='G    =',font = ("Modern",10))
-    G2 =Label(TF,text='0',font = ("Modern",6))
-    G1.place(x=127,y=590)
-    G2.place(x=140,y=600)
+    G1 =Label(framedouble,text='G    =',font = ("Modern",10))
+    G2 =Label(framedouble,text='0',font = ("Modern",6))
+    G1.place(x=127,y=410)
+    G2.place(x=140,y=420)
     global G_entry
-    G_entry = Entry(TF,font = ("Modern",10))
-    G_entry.place(x=170,y=590,width=60)
+    G_entry = Entry(framedouble,font = ("Modern",10))
+    G_entry.place(x=170,y=410,width=60)
     G_entry.insert(END,'10')
-    #G3 =Label(TF,text='S',font = ("Modern",10))
+    #G3 =Label(framedouble,text='S',font = ("Modern",10))
     #G3.place(x=230,y=590)
 
     # tau2 show
     global tauo_entry
-    tauo1 =Label(TF,text='\u03C4    =',font = ("Modern",10))
-    tauo2 =Label(TF,text='*',font = ("Modern",7))
-    tauo1.place(x=130,y=620)
-    tauo2.place(x=140,y=618)
-    tauo_entry = Entry(TF,font = ("Modern",10))
-    tauo_entry.place(x=170,y=620,width=75)
+    tauo1 =Label(framedouble,text='\u03C4    =',font = ("Modern",10))
+    tauo2 =Label(framedouble,text='*',font = ("Modern",7))
+    tauo1.place(x=130,y=440)
+    tauo2.place(x=140,y=438)
+    tauo_entry = Entry(framedouble,font = ("Modern",10))
+    tauo_entry.place(x=170,y=440,width=75)
     tauo_entry.insert(END,'150e-12')
-    tauo3 =Label(TF,text='s',font = ("Modern",10))
-    tauo3.place(x=250,y=620)
+    tauo3 =Label(framedouble,text='s',font = ("Modern",10))
+    tauo3.place(x=250,y=440)
 
     # R_m calculation
-    rm1 =Label(TF,text='R     =',font = ("Modern",10))
-    rm2 =Label(TF,text='m0',font = ("Modern",6))
-    rm1.place(x=123,y=650)
-    rm2.place(x=137,y=660)
+    rm1 =Label(framedouble,text='R     =',font = ("Modern",10))
+    rm2 =Label(framedouble,text='m0',font = ("Modern",6))
+    rm1.place(x=123,y=470)
+    rm2.place(x=137,y=480)
     global rm_entry
-    rm_entry = Entry(TF,font = ("Modern",10))
-    rm_entry.place(x=170,y=650,width=75)
-    rm3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    rm3.place(x=250,y=650)
+    rm_entry = Entry(framedouble,font = ("Modern",10))
+    rm_entry.place(x=170,y=470,width=75)
+    rm3 =Label(framedouble,text='\u03A9',font = ("Modern",10))
+    rm3.place(x=250,y=470)
 
     # tau calculation
-    tau1 =Label(TF,text='\u03C4    =',font = ("Modern",10))
-    tau1.place(x=123,y=680)
+    tau1 =Label(framedouble,text='\u03C4    =',font = ("Modern",10))
+    tau1.place(x=123,y=500)
     global tau_entry
-    tau_entry = Entry(TF,font = ("Modern",10))
-    tau_entry.place(x=170,y=680,width=75)
-    tau3 =Label(TF,text='s',font = ("Modern",10))
-    tau3.place(x=250,y=680)
+    tau_entry = Entry(framedouble,font = ("Modern",10))
+    tau_entry.place(x=170,y=500,width=75)
+    tau3 =Label(framedouble,text='s',font = ("Modern",10))
+    tau3.place(x=250,y=500)
 
     # G0Rm0 calculation
 
-    grm1 =Label(TF,text='R     =',font = ("Modern",10))
-    grm2 =Label(TF,text='m0',font = ("Modern",6))
-    grm1.place(x=123,y=710)
-    grm2.place(x=137,y=720)
-    gG1 =Label(TF,text='G',font = ("Modern",10))
-    gG2 =Label(TF,text='0',font = ("Modern",6))
-    gG1.place(x=100,y=710)
-    gG2.place(x=115,y=720)
+    grm1 =Label(framedouble,text='R     =',font = ("Modern",10))
+    grm2 =Label(framedouble,text='m0',font = ("Modern",6))
+    grm1.place(x=123,y=530)
+    grm2.place(x=137,y=540)
+    gG1 =Label(framedouble,text='G',font = ("Modern",10))
+    gG2 =Label(framedouble,text='0',font = ("Modern",6))
+    gG1.place(x=100,y=530)
+    gG2.place(x=115,y=540)
     global gmr_entry
-    gmr_entry = Entry(TF,font = ("Modern",10))
-    gmr_entry.place(x=170,y=710,width=75)
-    grm3 =Label(TF,text='\u03A9',font = ("Modern",10))
-    grm3.place(x=250,y=710)
-
-    btnRM.place(x=500,y=620)
+    gmr_entry = Entry(framedouble,font = ("Modern",10))
+    gmr_entry.place(x=170,y=530,width=75)
+    grm3 =Label(framedouble,text='\u03A9',font = ("Modern",10))
+    grm3.place(x=250,y=530)
+    
+    global btnRM
+    btnRM = Button(framedouble, text="Get TIA Values\n and \n SET Transfer Function",command=rm,font = ("Arial",9))
+    btnRM.place(x=500,y=440)
 
     # NSAMPLES show
-    nsamples =Label(TF,text='N° Samples',font = ("Modern",10))
-    nsamples.place(x=450,y=380)
+    nsamples =Label(framedouble,text='N° Samples  =',font = ("Modern",10))
+    nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(TF,font = ("Modern",10))
-    nsamples_entry.place(x=550,y=380,width=70)
+    nsamples_entry = Entry(framedouble,font = ("Modern",10))
+    nsamples_entry.place(x=550,y=200,width=70)
     nsamples_entry.insert(END,'16384')
 
     # dT show
-    dt1 =Label(TF,text='dT  =',font = ("Modern",10))
-    dt1.place(x=500,y=410)
+    dt1 =Label(framedouble,text='dT  =',font = ("Modern",10))
+    dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(TF,font = ("Modern",10))
-    dt_entry.place(x=550,y=410,width=70)
+    dt_entry = Entry(framedouble,font = ("Modern",10))
+    dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(END,'1e-12')
-    dt3 =Label(TF,text='s',font = ("Modern",10))
-    dt3.place(x=630,y=410)
+    dt3 =Label(framedouble,text='s',font = ("Modern",10))
+    dt3.place(x=630,y=230)
 
     # Bound show
-    bound1 =Label(TF,text='Bound Fit integer  =',font = ("Modern",10))
-    bound1.place(x=405,y=440)
+    bound1 =Label(framedouble,text='Bound Fit integer  =',font = ("Modern",10))
+    bound1.place(x=405,y=260)
     global bound_entry
-    bound_entry = Entry(TF,font = ("Modern",10))
-    bound_entry.place(x=550,y=440,width=70)
+    bound_entry = Entry(framedouble,font = ("Modern",10))
+    bound_entry.place(x=550,y=260,width=70)
     bound_entry.insert(END,'5')
 
     # Leading Edge show
-    LE1 =Label(TF,text='Leading Edge threshold  =',font = ("Modern",10))
-    LE1.place(x=365,y=500)
+    LE1 =Label(framedouble,text='Leading Edge threshold  =',font = ("Modern",10))
+    LE1.place(x=365,y=290)
     global LE_entry
-    LE_entry = Entry(TF,font = ("Modern",10))
-    LE_entry.place(x=550,y=500,width=70)
+    LE_entry = Entry(framedouble,font = ("Modern",10))
+    LE_entry.place(x=550,y=290,width=70)
     LE_entry.insert(END,'0.01')
-    LE3 =Label(TF,text='V',font = ("Modern",10))
-    LE3.place(x=630,y=500)
+    LE3 =Label(framedouble,text='V',font = ("Modern",10))
+    LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(TF,text='CFD threshold fraction    =',font = ("Modern",10))
-    CFD1.place(x=362,y=530)
+    CFD1 =Label(framedouble,text='CFD threshold fraction    =',font = ("Modern",10))
+    CFD1.place(x=362,y=320)
     global CFD_entry
-    CFD_entry = Entry(TF,font = ("Modern",10))
-    CFD_entry.place(x=550,y=530,width=70)
+    CFD_entry = Entry(framedouble,font = ("Modern",10))
+    CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(TF,text='ARC method delay        =',font = ("Modern",10))
-    ARC1.place(x=365,y=560)
+    ARC1 =Label(framedouble,text='ARC method delay        =',font = ("Modern",10))
+    ARC1.place(x=370,y=350)
     global ARC_entry
-    ARC_entry = Entry(TF,font = ("Modern",10))
-    ARC_entry.place(x=550,y=560,width=70)
+    ARC_entry = Entry(framedouble,font = ("Modern",10))
+    ARC_entry.place(x=550,y=350,width=70)
     ARC_entry.insert(END,'200e-12')
-    ARC1 =Label(TF,text='s',font = ("Modern",10))
-    ARC1.place(x=630,y=560)
+    ARC1 =Label(framedouble,text='s',font = ("Modern",10))
+    ARC1.place(x=630,y=350)
 
+    
    
 
  #
@@ -1226,20 +1103,38 @@ def openTFgui():
     my_canvas1 = Canvas(TF,width=750,height=1,bg='black')
     my_canvas1.place(x=20,y=150)
 
-    global btnRM1
-    btnRM1 = Button(TF, text="Get TIA Values\n and \n SET Transfer Function",command=rm,font = ("Arial",9))
+    
+    global framesingle
+    framesingle = Frame(TF,height=630,width=780)
+
+    global framedouble
+    framedouble = Frame(TF,height=630,width=780)
+
+    global framecsa
+    framecsa = Frame(TF,height=630,width=780)
+
+    global frameFF
+    frameFF = Frame(TF,height=630,width=780)
+
+    global frameWA
+    frameWA = Frame(TF,height=630,width=780)
+
+    global logo2, logo3, link1, TF_label2, TF_label3
 
     global btnRM2
     btnRM2 = Button(TF, text="Get CSA Values\n and \n SET Transfer Function",command=rmcsa,font = ("Arial",9))
 
-    global btnRM
-    btnRM = Button(TF, text="Get TIA Values\n and \n SET Transfer Function",command=rm,font = ("Arial",9))
+    global FF_label
+    FF_label = Label(frameFF, text='',font = ("Modern",9))
 
     global btnRM3
-    btnRM3 = Button(TF, text="SET \nTransfer Function",command=rm,font = ("Arial",9))
+    btnRM3 = Button(frameFF, text="SET \nTransfer Function",command=rm,font = ("Arial",9))
+
+    global btnRM4
+    btnRM4 = Button(frameWA, text="SET \nTransfer Function",command=rm,font = ("Arial",9))
 
     global btnFromFile
-    btnFromFile = Button(TF, text="Choose Transfer Function file",command=FromFileopen,font = ("Arial",9))
+    btnFromFile = Button(frameFF, text="Choose Transfer Function file",command=FromFileopen,font = ("Arial",9))
 
     global my_logo2
     my_logo2 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/singlestage.png"))
@@ -1271,7 +1166,7 @@ def openTFgui():
     global my_logo6
     my_logo6 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/csastage.png"))
     global logo6
-    logo6 =Label(TF,image=my_logo6)
+    logo6 =Label(TF,image=my_logo6) 
 
     doublestg()
 
@@ -1279,6 +1174,10 @@ def openTFgui():
 
 def callback(url):
     webbrowser.open_new(url)
+
+def resultON():
+    subprocess.Popen('python3 Results.py', shell=True)
+
 
 def writeCFG( ):
     text_file = open("../etc/configuration.cfg", 'w+')
@@ -1818,14 +1717,14 @@ my_label11.place(x=85,y=650)
 var15 = IntVar()
 Checkbutton(root, variable=var15,font = ("Arial",9)).place(x=335, y=649) """
 
-make_btn = Button(root, text='MAKE NEW ANALYSIS',command=openTFgui,font = ("Arial",11))
+make_btn = Button(root, text='MAKE NEW ANALYSIS',command=openTFgui,font = ("Arial",13))
 make_btn.place(x=400,y=645)
 
 btn_write = Button(root, text=" RUN ",command=writeCFG,font = ("Arial",16))
 btn_write.place(x=400,y=700)
 
-#btn_result = Button(root, text="RESULTS",font = ("Arial",16))
-#btn_result.place(x=400,y=700)
+btn_result = Button(root, text="RESULTS",command=resultON,font = ("Arial",16))
+btn_result.place(x=490,y=700)
 
 
 
