@@ -565,6 +565,8 @@ def FromFile():
     btnFromFile.place(x=20,y=50)
     btnRM3.place(x=50,y=300)
 
+    btn_dec.place(x=50,y=250)
+
     # NSAMPLES show
     nsamples =Label(frameFF,text='N° Samples  =',font = ("Modern",10))
     nsamples.place(x=440,y=200)
@@ -1129,6 +1131,9 @@ def openTFgui():
 
     global btnRM3
     btnRM3 = Button(frameFF, text="SET \nTransfer Function",command=rm,font = ("Arial",9))
+ 
+    global btn_dec
+    btn_dec = Button(frameFF, text="Make \n   Deconvolution  ",command=deconv,font = ("Arial",9))
 
     global btnRM4
     btnRM4 = Button(frameWA, text="SET \nTransfer Function",command=rm,font = ("Arial",9))
@@ -1177,6 +1182,9 @@ def callback(url):
 
 def resultON():
     subprocess.Popen('python3 Results.py', shell=True)
+
+def deconv():
+    subprocess.Popen('python3 Deconvolution.py', shell=True)
 
 
 def writeCFG( ):
@@ -1721,10 +1729,10 @@ make_btn = Button(root, text='MAKE NEW ANALYSIS',command=openTFgui,font = ("Aria
 make_btn.place(x=400,y=645)
 
 btn_write = Button(root, text=" RUN ",command=writeCFG,font = ("Arial",16))
-btn_write.place(x=400,y=700)
+btn_write.place(x=400,y=690)
 
 btn_result = Button(root, text="RESULTS",command=resultON,font = ("Arial",16))
-btn_result.place(x=490,y=700)
+btn_result.place(x=490,y=690)
 
 
 

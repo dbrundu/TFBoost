@@ -122,6 +122,7 @@ def run_results ():
     plt.ylabel('Voltage [V]')
 
     plt.legend()
+    plt.tight_layout(pad=1.0)
     plt.show()
     
 def openHistTOACFD ():
