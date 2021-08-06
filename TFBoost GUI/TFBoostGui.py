@@ -1261,10 +1261,12 @@ def check_current():
     labelWarning0.place(x=100,y=450)
     labelWarning = Label(CC, text='Please make sure  to set the correct timestep in the "dT" entry in the transfer function', font=  ("Arial",12), fg='red')
     labelWarning.place(x=100,y=480)
-    labelWarning1 = Label(CC, text='section. If the waveforms are negative use the scale factor to invert them.', font=  ("Arial",12), fg='red')
+    labelWarning1 = Label(CC, text='section, and the number of samples in "N° Samples" for the duration of the signal.', font=  ("Arial",12), fg='red')
     labelWarning1.place(x=100,y=510)
+    labelWarning2b = Label(CC, text='If the waveforms are negative please use the scale factor to invert them.', font=  ("Arial",12), fg='red')
+    labelWarning2b.place(x=100,y=540)
     labelWarning2 = Label(CC, text='*************************************************************************************************** ', font=  ("Arial",12), fg='red')
-    labelWarning2.place(x=100,y=540)
+    labelWarning2.place(x=100,y=570)
 
     CC.mainloop()
 
