@@ -80,6 +80,7 @@ struct ConfigParser
         TOT_b                      = (double) cfg_root["TOT_b"];
         LE_reject_nonoise          = (double) cfg_root["LE_reject_nonoise"];
         LE_reject_noise            = (double) cfg_root["LE_reject_noise"]; 
+        scale_factor               = (double) cfg_root["scale_factor"]; 
         landaufactor_mean          = (double) cfg_root["landaufactor_mean"];
         landaufactor_sigma         = (double) cfg_root["landaufactor_sigma"]; 
         timeref_sigma              = (double) cfg_root["timeref_sigma"]; 
@@ -170,7 +171,7 @@ struct ConfigParser
     
     double LEthr, CFD_fr, sigma_noise, r_rednoise, LE_reject_nonoise, LE_reject_noise, RM_delay;
     double minplot, maxplot, TOT_a, TOT_b;
-    double landaufactor_mean, landaufactor_sigma, timeref_sigma, LowPassFrequency;
+    double scale_factor, landaufactor_mean, landaufactor_sigma, timeref_sigma, LowPassFrequency;
     double ADCmin, ADCmax;
     
     mutable size_t Nsamples;

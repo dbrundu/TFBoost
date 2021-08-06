@@ -39,12 +39,23 @@ import subprocess
 import webbrowser
 import math
 import random
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 root = tk.Tk();
 root.title('TFBoost GUI')
 root.geometry("800x750")
 root.resizable(0, 0)
 root.tk.call('wm', 'iconphoto', root._w, tk.PhotoImage(file='TFB_guiFiles/logoico.png'))
+
+def quit_me():
+    print('quit')
+    root.quit()
+    root.destroy()
+    exit()
+
+root.protocol("WM_DELETE_WINDOW", quit_me)
 
 
 global stat1,stat2,stat3,stat4,stat5
@@ -80,10 +91,13 @@ def openFileInput():
     folder_selected1 = filedialog.askdirectory()
     directory0 = os.path.split(folder_selected1)[0] + '/' + os.path.split(folder_selected1)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
-    text1.place (x=300,y=112)
+    text1.place (x=250,y=112)
     text1.configure(state="normal")
     text1.insert('end', directory0)
     text1.configure(state="disabled")
+
+    check_btn = Button(root, text="Check",command=check_current,font = ("Arial",9),bg='red')
+    check_btn.place(x=680,y=112)
     
 
 def openFileOutput():
@@ -91,7 +105,7 @@ def openFileOutput():
     folder_selected2 = filedialog.askdirectory()
     directory = os.path.split(folder_selected2)[0] + '/' + os.path.split(folder_selected2)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
-    text1.place (x=300,y=160)
+    text1.place (x=250,y=160)
     text1.configure(state="normal")
     text1.insert('end', directory)
     text1.configure(state="disabled")
@@ -120,8 +134,8 @@ def FromFileopen():
     FromFilePath = filedialog.askopenfile(initialdir="", title="Select a File")
     #filelabel = Label(root, text=filechosen,font = ("Arial",8))
     directoryFile = os.path.split(FromFilePath.name)[0] + '/' +os.path.split(FromFilePath.name)[1]
-    text1 = Text(TF, state='disabled', width=50, height=1)
-    text1.place (x=220,y=203,width=400)
+    text1 = Text(frameFF, state='disabled', width=50, height=1)
+    text1.place (x=230,y=50,width=400)
     text1.configure(state="normal")
     text1.insert('end', os.path.split(FromFilePath.name)[0] + '/' +os.path.split(FromFilePath.name)[1])
     text1.configure(state="disabled")
@@ -1177,6 +1191,83 @@ def openTFgui():
 
     TF.mainloop()
 
+
+def plotcheck():
+
+    plt.clf()
+
+    path1 =folder_selected1
+    files1 = os.listdir(path1)
+    index1 = random.randrange(0, len(files1))
+    print(files1[index1])
+
+    data1 = pd.read_csv(path1+'/'+files1[index1],sep='\s+',header=None)
+    data1 = pd.DataFrame(data1)
+
+    x1 = data1[0]
+    y1 = data1[1]
+
+    step = data1.at[11,0]-data1.at[10,0]
+
+    fig, ax = plt.subplots()
+
+    fig.set_figheight(3)
+    fig.set_figwidth(6)
+
+    plt.plot(x1, y1, 'r-')
+    plt.title('Results')
+    plt.xlabel('time (s)')
+    plt.ylabel('Current [A]')
+
+    plt.legend()
+    plt.tight_layout(pad=1.0)
+
+    global canvas
+    canvas = FigureCanvasTkAgg(fig, master=CC) # Convert the Figure to a tkinter widget
+    canvas.get_tk_widget().place(x=100, y=40) # Show the widget on the screen
+    canvas.draw() # Draw the graph on the canvas?
+
+    entrystep = Entry(CC,font=  ("Arial",12))
+    entrystep.place(x=370,y=400,width=90)    
+    entrystep.insert(END,format(step,"3.2e"))
+
+    plt.close()
+
+def check_current():
+    global CC
+    CC = Toplevel(root)
+    CC.geometry("800x750")
+    CC.resizable(0, 0)
+    CC.tk.call('wm', 'iconphoto', CC._w, tk.PhotoImage(file='TFB_guiFiles/logoico.png'))
+
+    CC.title("Check input files") 
+    TF_label = Label(CC, text='CHECK INPUT FILES TO ANALYZE',font = ("Modern",9))
+    TF_label.place(x=20,y=10)
+    my_canvas = Canvas(CC,width=750,height=1,bg='black')
+    my_canvas.place(x=20,y=27)
+
+    nextPlotBtn = Button (CC, text=" Next \nInput File  ",command=plotcheck,font = ("Arial",10))
+    nextPlotBtn.place(x=705,y=295)
+    
+    plotcheck()
+
+    label0 = Label(CC, text='Time step of the current waveform =', font=  ("Arial",12))
+    label0.place (x=100, y=400)
+    label01 = Label(CC, text='s', font=  ("Arial",12))
+    label01.place (x=470, y=400)
+
+
+    labelWarning0 = Label(CC, text='*****************************************   WARNING   ***************************************** ', font=  ("Arial",12), fg='red')
+    labelWarning0.place(x=100,y=450)
+    labelWarning = Label(CC, text='Please make sure  to set the correct timestep in the "dT" entry in the transfer function', font=  ("Arial",12), fg='red')
+    labelWarning.place(x=100,y=480)
+    labelWarning1 = Label(CC, text='section. If the waveforms are negative use the scale factor to invert them.', font=  ("Arial",12), fg='red')
+    labelWarning1.place(x=100,y=510)
+    labelWarning2 = Label(CC, text='*************************************************************************************************** ', font=  ("Arial",12), fg='red')
+    labelWarning2.place(x=100,y=540)
+
+    CC.mainloop()
+
 def callback(url):
     webbrowser.open_new(url)
 
@@ -1290,7 +1381,10 @@ def writeCFG( ):
         text_file.write('AddNoiseFromFiles            = true;\n')
         text_file.write('\nNoiseDirectory     =' + '"' + folder_selected3 + '";\n')
 
-    text_file.write('\nLandauFluctuation            = false;\n')
+    a_float = float(scale_entry.get())
+    formatted_float = "{:.2f}".format(a_float)
+    text_file.write('\nscale_factor               =' + str(formatted_float) + ';\n')
+    text_file.write('\nLandauFluctuation          = false;\n')
     text_file.write('landaufactor_mean            = 1.0;\n')
     text_file.write('landaufactor_sigma           = 0.0;\n')
     text_file.write('\n')
@@ -1511,7 +1605,7 @@ logo.place(x=20,y=10)
 my_label7 = Label(root, text='TFBOOST CONFIGURATION GUI',font = ("Modern",9))
 my_label7.place(x=20,y=85)
 
-my_button = Button(root, text="Choose directory for the input currents:",command=openFileInput,font = ("Arial",9))
+my_button = Button(root, text="Choose directory for the input files:  ",command=openFileInput,font = ("Arial",9))
 my_button.place(x=20,y=110)
 
 my_label3 = Label(root, text='Select file extention:',font = ("Arial",8))
@@ -1533,7 +1627,7 @@ selfcheck1 = Checkbutton(root, text="txt", variable=var1,command=switchstate1, f
 var2 = IntVar()
 selfcheck2 = Checkbutton(root, text="dat", variable=var2,command=switchstate2,font = ("Arial",8)).place(x=150, y=140)
 
-my_button2 = Button(root, text="Choose directory for the output files and plots:",command=openFileOutput,font = ("Arial",9))
+my_button2 = Button(root, text="Choose directory for the output files:",command=openFileOutput,font = ("Arial",9))
 my_button2.place(x=20,y=160)
 
 #---------------input file to process entry-----------------------------
@@ -1550,6 +1644,13 @@ my_label5.place(x=280,y=200)
 offset_entry = Entry(root,font = ("Arial",10))
 offset_entry.place(x=420,y=198,width=40)
 offset_entry.insert(END,'0')
+
+my_label50 = Label(root, text='Scale factor for the currents:',font = ("Arial",9))
+my_label50.place(x=490,y=200)
+
+scale_entry = Entry(root,font = ("Arial",10))
+scale_entry.place(x=650,y=198,width=40)
+scale_entry.insert(END,'1')
 
 my_label6 = Label(root, text='Use always the same curve:',font = ("Arial",9))
 my_label6.place(x=20,y=235)

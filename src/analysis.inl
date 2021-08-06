@@ -269,6 +269,8 @@ int main(int argv, char** argc)
     double landau = c.LandauFluctuation? 
                     root_rng.Landau(c.landaufactor_mean, c.landaufactor_sigma) : 1.0;
 
+    double scale = c.scale_factor;
+
 
     // Actual loop on file lines, fill all the containers
     size_t s = c.offset;
@@ -282,7 +284,7 @@ int main(int argv, char** argc)
       TString data_str  = ((TObjString*) tokens->At( c.column ) )->GetString();
       //if(data_str == "0" && s==c.offset) continue; //--> to avoid misaligned TCoDe input files 
         
-      double data = landau*atof(data_str);//landau*atof(data_str);
+      double data = scale*landau*atof(data_str);
          
       idx.push_back(s);
       time.push_back( s * c.dT);
