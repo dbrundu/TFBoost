@@ -1218,8 +1218,6 @@ def plotcheck():
     plt.title('Results')
     plt.xlabel('time (s)')
     plt.ylabel('Current [A]')
-
-    plt.legend()
     plt.tight_layout(pad=1.0)
 
     global canvas
@@ -1263,10 +1261,12 @@ def check_current():
     labelWarning.place(x=100,y=480)
     labelWarning1 = Label(CC, text='section, and the number of samples in "N° Samples" for the duration of the signal.', font=  ("Arial",12), fg='red')
     labelWarning1.place(x=100,y=510)
+    labelWarning1b = Label(CC, text='If the Transfer Function "From File" is chosen make sure the timestep is the same.', font=  ("Arial",12), fg='red')
+    labelWarning1b.place(x=100,y=540)
     labelWarning2b = Label(CC, text='If the waveforms are negative please use the scale factor to invert them.', font=  ("Arial",12), fg='red')
-    labelWarning2b.place(x=100,y=540)
+    labelWarning2b.place(x=100,y=570)
     labelWarning2 = Label(CC, text='*************************************************************************************************** ', font=  ("Arial",12), fg='red')
-    labelWarning2.place(x=100,y=570)
+    labelWarning2.place(x=100,y=600)
 
     CC.mainloop()
 
