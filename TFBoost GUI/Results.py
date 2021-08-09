@@ -41,6 +41,7 @@ import math
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
+import sys
 
 resW = tk.Tk();
 resW.title('TFBoost GUI')
@@ -50,6 +51,33 @@ resW.tk.call('wm', 'iconphoto', resW._w, tk.PhotoImage(file='TFB_guiFiles/logoic
 
 InputDone = IntVar();
 OutputDone = IntVar();
+
+print ('Number of arguments:')
+print(len(sys.argv))
+print('arguments.')
+print ('Argument List:', str(sys.argv))
+
+print(sys.argv[1])
+
+if (sys.argv[1]!=''):
+    folder_selected1 = sys.argv[1]
+    directory0 = os.path.split(folder_selected1)[0] + '/' + os.path.split(folder_selected1)[1]
+    text1 = Text(resW, state='disabled', width=50, height=1)
+    text1.place (x=300,y=112)
+    text1.configure(state="normal")
+    text1.insert('end', directory0)
+    text1.configure(state="disabled")
+    InputDone.set(1)
+
+if (sys.argv[2]!=''):
+    folder_selected2 = sys.argv[2]
+    directory = os.path.split(folder_selected2)[0] + '/' + os.path.split(folder_selected2)[1]
+    text1 = Text(resW, state='disabled', width=50, height=1)
+    text1.place (x=300,y=160)
+    text1.configure(state="normal")
+    text1.insert('end', directory)
+    text1.configure(state="disabled")
+    OutputDone.set(1)
 
 def openFileInput():
     global folder_selected1

@@ -50,7 +50,6 @@ root.resizable(0, 0)
 root.tk.call('wm', 'iconphoto', root._w, tk.PhotoImage(file='TFB_guiFiles/logoico.png'))
 
 def quit_me():
-    print('quit')
     root.quit()
     root.destroy()
     exit()
@@ -89,20 +88,23 @@ Bound_fit = DoubleVar()
 def openFileInput():
     global folder_selected1
     folder_selected1 = filedialog.askdirectory()
+    global directory0
     directory0 = os.path.split(folder_selected1)[0] + '/' + os.path.split(folder_selected1)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
     text1.place (x=250,y=112)
     text1.configure(state="normal")
     text1.insert('end', directory0)
     text1.configure(state="disabled")
-
-    check_btn = Button(root, text="Check",command=check_current,font = ("Arial",9),bg='red')
-    check_btn.place(x=680,y=112)
+    
+    check_current()
+    #check_btn = Button(root, text="Check",command=check_current,font = ("Arial",9),bg='SkyBlue3')
+    #check_btn.place(x=680,y=112)
     
 
 def openFileOutput():
     global folder_selected2
     folder_selected2 = filedialog.askdirectory()
+    global directory
     directory = os.path.split(folder_selected2)[0] + '/' + os.path.split(folder_selected2)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
     text1.place (x=250,y=160)
@@ -139,6 +141,10 @@ def FromFileopen():
     text1.configure(state="normal")
     text1.insert('end', os.path.split(FromFilePath.name)[0] + '/' +os.path.split(FromFilePath.name)[1])
     text1.configure(state="disabled")
+    
+    check_TransferFunction()
+    #check_btn = Button(frameFF, text="Check",command=check_TransferFunction,font = ("Arial",9),bg='SkyBlue3')
+    #check_btn.place(x=230,y=80)
 
 def noisefromfiles():
     global folder_selected3
@@ -313,7 +319,7 @@ def singlestg():
     global dt_entry
     dt_entry = Entry(framesingle,font = ("Modern",10))
     dt_entry.place(x=550,y=230,width=70)
-    dt_entry.insert(END,'1e-12')
+    dt_entry.insert(0,format(step,"3.2e"))
     dt3 =Label(framesingle,text='s',font = ("Modern",10))
     dt3.place(x=630,y=230)
 
@@ -336,16 +342,16 @@ def singlestg():
     LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(framesingle,text='CFD threshold fraction    =',font = ("Modern",10))
-    CFD1.place(x=362,y=320)
+    CFD1 =Label(framesingle,text='CFD threshold fraction  =',font = ("Modern",10))
+    CFD1.place(x=372,y=320)
     global CFD_entry
     CFD_entry = Entry(framesingle,font = ("Modern",10))
     CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(framesingle,text='ARC method delay        =',font = ("Modern",10))
-    ARC1.place(x=370,y=350)
+    ARC1 =Label(framesingle,text='ARC method delay  =',font = ("Modern",10))
+    ARC1.place(x=397,y=350)
     global ARC_entry
     ARC_entry = Entry(framesingle,font = ("Modern",10))
     ARC_entry.place(x=550,y=350,width=70)
@@ -387,8 +393,8 @@ def csastg():
     TF_label3.place(x=380,y=40,width=400)
 
     #png equation
-    logo4 =Label(framecsa,image=my_logo4)
-    logo4.place(x=500,y=70)
+    logo4 =Label(framecsa,image=my_logoCSA)
+    logo4.place(x=460,y=75)
 
     link1 = Label(framecsa, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
     link1.place(x=380,y=150,width=400)
@@ -470,29 +476,34 @@ def csastg():
     # R_m calculation
     rm1 =Label(framecsa,text='R     =',font = ("Modern",10))
     rm2 =Label(framecsa,text='m0',font = ("Modern",6))
-    rm1.place(x=123,y=470)
-    rm2.place(x=137,y=480)
+    rm1.place(x=23,y=440)
+    rm2.place(x=37,y=450)
     global rm_entry
     rm_entry = Entry(framecsa,font = ("Modern",10))
-    rm_entry.place(x=170,y=470,width=75)
+    rm_entry.place(x=70,y=440,width=75)
     rm3 =Label(framecsa,text='\u03A9',font = ("Modern",10))
-    rm3.place(x=250,y=470)
+    rm3.place(x=150,y=440)
+
+    rm_entry = Entry(framecsa,font = ("Modern",10))
+    rm_entry.place(x=70,y=440,width=75)
+    rm3 =Label(framecsa,text='\u03A9',font = ("Modern",10))
+    rm3.place(x=150,y=440)
 
     # tau calculation
     tau1 =Label(framecsa,text='\u03C4    =',font = ("Modern",10))
-    tau1.place(x=123,y=500)
+    tau1.place(x=23,y=470)
     global tau_entry
     tau_entry = Entry(framecsa,font = ("Modern",10))
-    tau_entry.place(x=170,y=500,width=75)
+    tau_entry.place(x=70,y=470,width=75)
     tau3 =Label(framecsa,text='s',font = ("Modern",10))
-    tau3.place(x=250,y=500)
+    tau3.place(x=150,y=470)
 
     # zeta calculation
     zeta1 =Label(framecsa,text='\u03B6    =',font = ("Modern",10))
-    zeta1.place(x=123,y=530)
+    zeta1.place(x=23,y=500)
     global zeta_entry
     zeta_entry = Entry(framecsa,font = ("Modern",10))
-    zeta_entry.place(x=170,y=530,width=75)
+    zeta_entry.place(x=70,y=500,width=75)
   
     global btnRM
     btnRM = Button(framecsa, text="Get CSA Values\n and \n SET Transfer Function",command=rmcsa,font = ("Arial",9))
@@ -504,7 +515,7 @@ def csastg():
     global nsamples_entry 
     nsamples_entry = Entry(framecsa,font = ("Modern",10))
     nsamples_entry.place(x=550,y=200,width=70)
-    nsamples_entry.insert(END,'131072')
+    nsamples_entry.insert(END,'262144')
 
     # dT show
     dt1 =Label(framecsa,text='dT  =',font = ("Modern",10))
@@ -512,7 +523,7 @@ def csastg():
     global dt_entry
     dt_entry = Entry(framecsa,font = ("Modern",10))
     dt_entry.place(x=550,y=230,width=70)
-    dt_entry.insert(END,'1e-12')
+    dt_entry.insert(0,format(step,"3.2e"))
     dt3 =Label(framecsa,text='s',font = ("Modern",10))
     dt3.place(x=630,y=230)
 
@@ -535,16 +546,16 @@ def csastg():
     LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(framecsa,text='CFD threshold fraction    =',font = ("Modern",10))
-    CFD1.place(x=362,y=320)
+    CFD1 =Label(framecsa,text='CFD threshold fraction  =',font = ("Modern",10))
+    CFD1.place(x=372,y=320)
     global CFD_entry
     CFD_entry = Entry(framecsa,font = ("Modern",10))
     CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(framecsa,text='ARC method delay        =',font = ("Modern",10))
-    ARC1.place(x=370,y=350)
+    ARC1 =Label(framecsa,text='ARC method delay  =',font = ("Modern",10))
+    ARC1.place(x=397,y=350)
     global ARC_entry
     ARC_entry = Entry(framecsa,font = ("Modern",10))
     ARC_entry.place(x=550,y=350,width=70)
@@ -595,7 +606,7 @@ def FromFile():
     global dt_entry
     dt_entry = Entry(frameFF,font = ("Modern",10))
     dt_entry.place(x=550,y=230,width=70)
-    dt_entry.insert(END,'1e-12')
+    #dt_entry.insert(END,'1e-12')
     dt3 =Label(frameFF,text='s',font = ("Modern",10))
     dt3.place(x=630,y=230)
 
@@ -618,16 +629,16 @@ def FromFile():
     LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(frameFF,text='CFD threshold fraction    =',font = ("Modern",10))
-    CFD1.place(x=362,y=320)
+    CFD1 =Label(frameFF,text='CFD threshold fraction  =',font = ("Modern",10))
+    CFD1.place(x=372,y=320)
     global CFD_entry
     CFD_entry = Entry(frameFF,font = ("Modern",10))
     CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(frameFF,text='ARC method delay        =',font = ("Modern",10))
-    ARC1.place(x=370,y=350)
+    ARC1 =Label(frameFF,text='ARC method delay  =',font = ("Modern",10))
+    ARC1.place(x=397,y=350)
     global ARC_entry
     ARC_entry = Entry(frameFF,font = ("Modern",10))
     ARC_entry.place(x=550,y=350,width=70)
@@ -676,7 +687,7 @@ def WaveAnalysis():
     global dt_entry
     dt_entry = Entry(frameWA,font = ("Modern",10))
     dt_entry.place(x=550,y=230,width=70)
-    dt_entry.insert(END,'1e-12')
+    dt_entry.insert(0,format(step,"3.2e"))
     dt3 =Label(frameWA,text='s',font = ("Modern",10))
     dt3.place(x=630,y=230)
 
@@ -698,17 +709,17 @@ def WaveAnalysis():
     LE3 =Label(frameWA,text='V',font = ("Modern",10))
     LE3.place(x=630,y=290)
 
-    # CFD show
-    CFD1 =Label(frameWA,text='CFD threshold fraction    =',font = ("Modern",10))
-    CFD1.place(x=362,y=320)
+     # CFD show
+    CFD1 =Label(frameWA,text='CFD threshold fraction  =',font = ("Modern",10))
+    CFD1.place(x=372,y=320)
     global CFD_entry
     CFD_entry = Entry(frameWA,font = ("Modern",10))
     CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(frameWA,text='ARC method delay        =',font = ("Modern",10))
-    ARC1.place(x=370,y=350)
+    ARC1 =Label(frameWA,text='ARC method delay  =',font = ("Modern",10))
+    ARC1.place(x=397,y=350)
     global ARC_entry
     ARC_entry = Entry(frameWA,font = ("Modern",10))
     ARC_entry.place(x=550,y=350,width=70)
@@ -794,9 +805,30 @@ def rmcsa() :
 
     zeta = 0.5 * (a2*(c1+c2*(1+g))+rp*c3)/(math.sqrt((rp*a2*z)*(1+g)))
 
+    tau = tau/zeta
+
     my_formatter = "{0:.2f}"
     zeta_entry.delete(0,END)
     zeta_entry.insert(END,my_formatter.format(zeta))
+
+    # label for dumping condition
+    damp1 =Label(framecsa,text='Condition:',font = ("Modern",10))
+    damp1.place(x=200,y=440)
+
+    if (zeta > 1.2):
+        cond='OVERDAMPED                       \n                          '
+        damp2 =Label(framecsa,text=cond,font = ("Modern",11), fg='red')
+        damp2.place(x=270,y=440)
+
+    if (zeta < 0.8):
+        cond='UNDERDAMPED                      \n                          '
+        damp2 =Label(framecsa,text=cond,font = ("Modern",11), fg='red')
+        damp2.place(x=270,y=440)
+
+    if (zeta > 0.8 and zeta < 1.2):
+        cond='CRITICALLY DAMPED\n(0.8<\u03B6<1.2)'
+        damp2 =Label(framecsa,text=cond,font = ("Modern",11), fg='red')
+        damp2.place(x=270,y=440)
     
     if(stat2==1):
         G = float(G_entry.get())
@@ -874,7 +906,7 @@ def doublestg():
 
     #png equation
     logo3 =Label(framedouble,image=my_logo3)
-    logo3.place(x=450,y=70)
+    logo3.place(x=470,y=70)
 
     link1 = Label(framedouble, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
     link1.place(x=380,y=150,width=400)
@@ -1044,7 +1076,7 @@ def doublestg():
     global dt_entry
     dt_entry = Entry(framedouble,font = ("Modern",10))
     dt_entry.place(x=550,y=230,width=70)
-    dt_entry.insert(END,'1e-12')
+    dt_entry.insert(0,format(step,"3.2e"))
     dt3 =Label(framedouble,text='s',font = ("Modern",10))
     dt3.place(x=630,y=230)
 
@@ -1067,16 +1099,16 @@ def doublestg():
     LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(framedouble,text='CFD threshold fraction    =',font = ("Modern",10))
-    CFD1.place(x=362,y=320)
+    CFD1 =Label(framedouble,text='CFD threshold fraction  =',font = ("Modern",10))
+    CFD1.place(x=372,y=320)
     global CFD_entry
     CFD_entry = Entry(framedouble,font = ("Modern",10))
     CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(framedouble,text='ARC method delay        =',font = ("Modern",10))
-    ARC1.place(x=370,y=350)
+    ARC1 =Label(framedouble,text='ARC method delay  =',font = ("Modern",10))
+    ARC1.place(x=397,y=350)
     global ARC_entry
     ARC_entry = Entry(framedouble,font = ("Modern",10))
     ARC_entry.place(x=550,y=350,width=70)
@@ -1169,6 +1201,8 @@ def openTFgui():
 
     global my_logo4
     my_logo4 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/singlestage_eq.png"))
+    global my_logoCSA
+    my_logoCSA = ImageTk.PhotoImage(Image.open("TFB_guiFiles/csa_eq.png"))
     global logo4
     logo4 =Label(TF,image=my_logo4)
 
@@ -1207,7 +1241,10 @@ def plotcheck():
     x1 = data1[0]
     y1 = data1[1]
 
+    global step
     step = data1.at[11,0]-data1.at[10,0]
+
+    Nsamp = len(data1)
 
     fig, ax = plt.subplots()
 
@@ -1226,8 +1263,67 @@ def plotcheck():
     canvas.draw() # Draw the graph on the canvas?
 
     entrystep = Entry(CC,font=  ("Arial",12))
-    entrystep.place(x=370,y=400,width=90)    
+    entrystep.place(x=370,y=350,width=90)    
     entrystep.insert(END,format(step,"3.2e"))
+
+    entryNsamp = Entry(CC,font=  ("Arial",12))
+    entryNsamp.place(x=370,y=390,width=90)    
+    entryNsamp.insert(END,int(Nsamp))
+
+    dT=step
+
+    plt.close()
+
+def plotcheckTF():
+
+    path1 =FromFilePath
+    data1 = pd.read_csv(path1,sep='\s+',header=None)
+    data1 = pd.DataFrame(data1)
+
+    x1 = data1[0]
+    y1 = data1[1]
+
+    global stepTF
+    stepTF = data1.at[11,0]-data1.at[10,0]
+
+    Nsamp = len(data1)
+
+    fig, ax = plt.subplots()
+
+    fig.set_figheight(3)
+    fig.set_figwidth(6)
+
+    plt.plot(x1, y1, 'r-')
+    plt.title('Results')
+    plt.xlabel('time (s)')
+    plt.ylabel('Transfer Function [\u03A9]')
+    plt.tight_layout(pad=1.0)
+
+    global canvas
+    canvas = FigureCanvasTkAgg(fig, master=CTF) # Convert the Figure to a tkinter widget
+    canvas.get_tk_widget().place(x=100, y=40) # Show the widget on the screen
+    canvas.draw() # Draw the graph on the canvas?
+
+    entrystep = Entry(CTF,font=  ("Arial",12))
+    entrystep.place(x=370,y=350,width=90)    
+    entrystep.insert(END,format(stepTF,"3.2e"))
+
+    entryNsamp = Entry(CTF,font=  ("Arial",12))
+    entryNsamp.place(x=370,y=390,width=90)    
+    entryNsamp.insert(END,int(Nsamp))
+
+    if (stepTF!=step):
+        label9 = Label(frameFF, text='Warning: Transfer function dT does not match input files dT \n do a resampling of the transfer function or resample all the input files', font=  ("Arial",10),fg='red')
+        label9.place (x=180, y=130)
+        dt_entry.delete(0,END)
+        dt_entry.insert(END,format(step,"3.2e"))
+
+    if (stepTF==step):
+        label9 = Label(frameFF, text='                          TRANSFER FUNCTION TIME STEP OK!!                      \n                                                                                          ', font=  ("Arial",10),fg='green')
+        label9.place (x=180, y=130)
+        dt_entry.delete(0,END)
+        dt_entry.insert(0,format(step,"3.2e"))
+
 
     plt.close()
 
@@ -1249,10 +1345,13 @@ def check_current():
     
     plotcheck()
 
-    label0 = Label(CC, text='Time step of the current waveform =', font=  ("Arial",12))
-    label0.place (x=100, y=400)
+    label0 = Label(CC, text='dT =', font=  ("Arial",12))
+    label0.place (x=322, y=350)
     label01 = Label(CC, text='s', font=  ("Arial",12))
-    label01.place (x=470, y=400)
+    label01.place (x=470, y=350)
+
+    labelN = Label(CC, text='Nsamples =', font=  ("Arial",12))
+    labelN.place (x=270, y=390)
 
 
     labelWarning0 = Label(CC, text='*****************************************   WARNING   ***************************************** ', font=  ("Arial",12), fg='red')
@@ -1270,11 +1369,36 @@ def check_current():
 
     CC.mainloop()
 
+def check_TransferFunction():
+    global CTF
+    CTF = Toplevel(root)
+    CTF.geometry("800x450")
+    CTF.resizable(0, 0)
+    CTF.tk.call('wm', 'iconphoto', CTF._w, tk.PhotoImage(file='TFB_guiFiles/logoico.png'))
+
+    CTF.title("Check Transfer Function") 
+    TF_label = Label(CTF, text='CHECK TRANSFER FUNCTION TO USE',font = ("Modern",9))
+    TF_label.place(x=20,y=10)
+    my_canvas = Canvas(CTF,width=750,height=1,bg='black')
+    my_canvas.place(x=20,y=27)
+
+    plotcheckTF()
+
+    label0 = Label(CTF, text='dT =', font=  ("Arial",12))
+    label0.place (x=322, y=350)
+    label01 = Label(CTF, text='s', font=  ("Arial",12))
+    label01.place (x=470, y=350)
+
+    labelN = Label(CTF, text='Nsamples =', font=  ("Arial",12))
+    labelN.place (x=270, y=390)
+
+    CTF.mainloop()
+
 def callback(url):
     webbrowser.open_new(url)
 
 def resultON():
-    subprocess.Popen('python3 Results.py', shell=True)
+    subprocess.Popen('python3 Results.py ' + folder_selected1 + ' ' + folder_selected2, shell=True)
 
 def deconv():
     subprocess.Popen('python3 Deconvolution.py', shell=True)
