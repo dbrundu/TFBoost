@@ -42,6 +42,7 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import shutil
 
 root = tk.Tk();
 root.title('TFBoost GUI')
@@ -606,7 +607,7 @@ def FromFile():
     global dt_entry
     dt_entry = Entry(frameFF,font = ("Modern",10))
     dt_entry.place(x=550,y=230,width=70)
-    #dt_entry.insert(END,'1e-12')
+    dt_entry.insert(0,format(step,"3.2e"))
     dt3 =Label(frameFF,text='s',font = ("Modern",10))
     dt3.place(x=630,y=230)
 
@@ -671,7 +672,7 @@ def WaveAnalysis():
     
     frameWA.place(x=20,y=170)
 
-    btnRM4.place(x=50,y=300)
+    btnRM4b.place(x=50,y=300)
 
     # NSAMPLES show
     nsamples =Label(frameWA,text='N° Samples  =',font = ("Modern",10))
@@ -1184,6 +1185,9 @@ def openTFgui():
     global btnRM4
     btnRM4 = Button(frameWA, text="SET \nTransfer Function",command=rm,font = ("Arial",9))
 
+    global btnRM4b
+    btnRM4b = Button(frameWA, text="SET \nWaveform Analysis",command=rm,font = ("Arial",9))
+
     global btnFromFile
     btnFromFile = Button(frameFF, text="Choose Transfer Function file",command=FromFileopen,font = ("Arial",9))
 
@@ -1313,13 +1317,13 @@ def plotcheckTF():
     entryNsamp.insert(END,int(Nsamp))
 
     if (stepTF!=step):
-        label9 = Label(frameFF, text='Warning: Transfer function dT does not match input files dT \n do a resampling of the transfer function or resample all the input files', font=  ("Arial",10),fg='red')
+        label9 = Label(frameFF, text='Warning: Transfer function dT does not match input files dT \n do a resampling of the transfer function or resample all the input files', font=  ("Arial",11),fg='red')
         label9.place (x=180, y=130)
         dt_entry.delete(0,END)
         dt_entry.insert(END,format(step,"3.2e"))
 
     if (stepTF==step):
-        label9 = Label(frameFF, text='                          TRANSFER FUNCTION TIME STEP OK!!                      \n                                                                                          ', font=  ("Arial",10),fg='green')
+        label9 = Label(frameFF, text='                          TRANSFER FUNCTION TIME STEP OK!!                      \n                                                                                          ', font=  ("Arial",11),fg='green')
         label9.place (x=180, y=130)
         dt_entry.delete(0,END)
         dt_entry.insert(0,format(step,"3.2e"))
@@ -1721,6 +1725,11 @@ def writeCFG( ):
 
     text_file.close()
     
+    dir2 = directory + '/data'
+    if os.path.exists(dir2):
+        shutil.rmtree(directory + '/data')
+        os.makedirs(dir2)
+
     subprocess.run(["./../build/analysis_tbb", "ls -l"])
 
 
@@ -1796,6 +1805,7 @@ my_label7.place(x=20,y=267)
 my_label6 = Label(root, text='Time Digitization:',font = ("Arial",9))
 my_label6.place(x=20,y=287)
 var4 = IntVar()
+var4.set(1)
 Checkbutton(root, variable=var4,font = ("Arial",8)).place(x=115, y=286)
 
 my_label6 = Label(root, text='Random phase:',font = ("Arial",9))
@@ -1812,6 +1822,7 @@ dt_dgt.insert(END,'20e-12')
 my_label6 = Label(root, text='   Voltage Digitization:',font = ("Arial",9))
 my_label6.place(x=360,y=287)
 var5 = IntVar()
+var5.set(1)
 Checkbutton(root, variable=var5,font = ("Arial",8)).place(x=480, y=286)
 my_label6 = Label(root, text='ADC step (V):',font = ("Arial",9))
 my_label6.place(x=510,y=287)
@@ -1854,16 +1865,19 @@ my_label8.place(x=20,y=367)
 my_label6 = Label(root, text='Save output files:',font = ("Arial",9))
 my_label6.place(x=20,y=390)
 var6 = IntVar()
+var6.set(1)
 Checkbutton(root, variable=var6,font = ("Arial",8)).place(x=120, y=389)
 
 my_label6 = Label(root, text='   Linear Fit near Threshold:',font = ("Arial",9))
 my_label6.place(x=220,y=390)
 var7 = IntVar()
+var7.set(1)
 Checkbutton(root, variable=var7,font = ("Arial",8)).place(x=375, y=389)
 
 my_label6 = Label(root, text='   Gaussian Fit near Vmax:',font = ("Arial",9))
 my_label6.place(x=460,y=390)
 var8 = IntVar()
+var8.set(1)
 Checkbutton(root, variable=var8,font = ("Arial",8)).place(x=610, y=389)
 
 

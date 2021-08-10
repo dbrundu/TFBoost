@@ -54,6 +54,7 @@
         "streambuf": "cpp",
         "typeinfo": "cpp",
         "bit": "cpp",
-        "ROOTstyle.C": "cpp"
+        "ROOTstyle.C": "cpp",
+        "map": "cpp"
     }
 }

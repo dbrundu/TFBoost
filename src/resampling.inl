@@ -190,19 +190,6 @@ int main(int argv, char** argc)
   idx.reserve(Nsamples);
   current.reserve(Nsamples);
   
-  //final time array
-  hydra::device::vector<double> theTime;
-  theTime.reserve(Nsamples);
-
-  //create the final Time array 
-  for(int i=0; i<Nsamples; i++){
-   theTime.push_back(i*dT);
-  }
-
-  DEBUG(theTime[0])
-  DEBUG(theTime.back())
-  DEBUG(theTime.size())
-
   TString line;
 
   std::ifstream myFile( InputFile_current.Data() );
@@ -258,21 +245,13 @@ int main(int argv, char** argc)
    
   SAFE_EXIT( current.size() != Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
 
-  auto signal = hydra::make_spiline<double>(theTime, current);
-
   tfboost::TimeDigitizeSignal( current, time, dT, max, engine, false);
 
   DEBUG(time[0])
   DEBUG(time.back())
   DEBUG(time.size())
 
-  for (int i=0; i<Nsamples; i++){
-
-   std::cout<< theTime[i]<< " " << signal(i)<<std::endl;
-
-  }
-    
-  tfboost::SaveConvToFile(current, theTime, dT, OutputDirectory + OutputFileName + ".txt" );
+  tfboost::SaveConvToFile(current, time, dT, OutputDirectory + OutputFileName + ".txt" );
     
     
   return 0;

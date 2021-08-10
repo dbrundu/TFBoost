@@ -92,8 +92,21 @@ def tokenget(event) :
         token_entry.set(';')
     if (tokendrop.get()=='comma'):
         token_entry.set(',')
+    if (tokendrop.get()=='LTSpice'):
+        token_entry.set('\t')
+    if (tokendrop2.get()=='space'):
+        token_entry2.set(' ')
+    if (tokendrop2.get()=='tab'):
+        token_entry2.set('   ')
+    if (tokendrop2.get()=='semicolon'):
+        token_entry2.set(';')
+    if (tokendrop2.get()=='comma'):
+        token_entry2.set(',')
+    if (tokendrop2.get()=='LTSpice'):
+        token_entry2.set('\t')
 
-    print(token_entry)
+    print(token_entry2.get())
+    print(token_entry.get())
 
 def openFileOutput():
     global folder_selected3
@@ -111,13 +124,17 @@ def writeCFG( ):
     text_file.write('\nDeconvolution = true;\n') 
 
     text_file.write('\nInputFileConvorTF =' + '"' + os.path.split(filechosen1.name)[0] + '/' + os.path.split(filechosen1.name)[1] + '";\n')
-    text_file.write('Nlinestoskip       = ' + LTskip.get()  +';\n')
+
+    text_file.write('dT       = ' + dTdec.get()  +';\n')
+    text_file.write('Nlinestoskip1       = ' + LTskip.get()  +';\n')
+    text_file.write('Nlinestoskip2       = ' + LTskip2.get()  +';\n')
     a_float = float(scaleF.get())
     formatted_float = "{:.1f}".format(a_float)
     text_file.write('scale_factor      = ' + str(formatted_float)  +';\n')
 
     text_file.write('\nInputFileCurrent  = ' + '"' + os.path.split(filechosen.name)[0] + '/' + os.path.split(filechosen.name)[1] + '";\n')
-    text_file.write('token    =' + '"' + token_entry.get() + '";\n')
+    text_file.write('token1    =' + '"' + token_entry.get() + '";\n')
+    text_file.write('token2    =' + '"' + token_entry.get() + '";\n')
     text_file.write('columnT  = 0;\n')
     text_file.write('columnI  = 1;\n')
     text_file.write('Nsamples =' + nsamplesdrop.get() + ';\n')
@@ -144,11 +161,19 @@ def writeCFG( ):
 def run_results ():
 
     plt.clf()
+    
 
-    data1 = pd.read_csv(os.path.split(filechosen.name)[0] + '/' + os.path.split(filechosen.name)[1],sep='\s+',header=None)
-    data1 = pd.DataFrame(data1)
-    data2 = pd.read_csv(os.path.split(filechosen1.name)[0] + '/' + os.path.split(filechosen1.name)[1],sep='\s+',header=None)
-    data2 = pd.DataFrame(data2)
+    if (varlt.get()==0):
+        data1 = pd.read_csv(os.path.split(filechosen.name)[0] + '/' + os.path.split(filechosen.name)[1],sep='\s+',header=None)
+        data1 = pd.DataFrame(data1)
+        data2 = pd.read_csv(os.path.split(filechosen1.name)[0] + '/' + os.path.split(filechosen1.name)[1],sep='\s+',header=None)
+        data2 = pd.DataFrame(data2)
+
+    if (varlt.get()==1):
+        data1 = pd.read_csv(os.path.split(filechosen.name)[0] + '/' + os.path.split(filechosen.name)[1],sep='\s+',header=None, skiprows=1)
+        data1 = pd.DataFrame(data1)
+        data2 = pd.read_csv(os.path.split(filechosen1.name)[0] + '/' + os.path.split(filechosen1.name)[1],sep='\s+',header=None, skiprows=1)
+        data2 = pd.DataFrame(data2)
 
     x1 = data1[0]
     y1 = data1[1]
@@ -184,6 +209,28 @@ def run_results ():
     plt.tight_layout(pad=1.0)
     plt.show()
 
+def ltspiceDEC ():
+
+    if(varlt.get()==1):
+        tokendrop.current(4)
+        tokendrop2.current(4)
+        token_entry.set('\t')
+        token_entry2.set('\t')
+        LTskip .delete(0,END)
+        LTskip .insert(END,'1')
+        LTskip2.delete(0,END)
+        LTskip2 .insert(END,'1')
+
+    if(varlt.get()==0):
+        tokendrop.current(0)
+        tokendrop2.current(0)
+        token_entry.set(' ')
+        token_entry2.set(' ')
+        LTskip .delete(0,END)
+        LTskip .insert(END,'0')
+        LTskip2.delete(0,END)
+        LTskip2 .insert(END,'0')
+
 
 my_logo = ImageTk.PhotoImage(Image.open("TFB_guiFiles/logo.png"))
 logo =Label(image=my_logo)
@@ -213,6 +260,18 @@ LTskip = Entry(decW,font = ("Arial",11))
 LTskip .place(x=200,y=260,width=40)
 LTskip .insert(END,'0')
 
+lab3b = Label(decW,text='Lines to skip in output file:',font = ("Arial",11))
+lab3b.place(x=300,y=260)
+
+LTskip2 = Entry(decW,font = ("Arial",11))
+LTskip2 .place(x=470,y=260,width=40)
+LTskip2 .insert(END,'0')
+
+lab3c = Label(decW,text='LTSpice signals:',font = ("Arial",11))
+lab3c.place(x=535,y=260)
+varlt = IntVar()
+Checkbutton(decW, variable=varlt,command=ltspiceDEC,font = ("Arial",11)).place(x=645, y=258)
+
 lab4 = Label(decW,text='Scale factor:',font = ("Arial",11))
 lab4.place(x=30,y=290)
 
@@ -222,29 +281,48 @@ scaleF .insert(END,'1')
 
 
 #choose the token#################################
-lab5 = Label(decW,text='Token:',font = ("Arial",11))
+lab5 = Label(decW,text='Token1:',font = ("Arial",11))
 lab5.place(x=30,y=320)
 
-n = StringVar()
-tokendrop = ttk.Combobox(decW, width = 10,
-                            textvariable = n, font=("Arial",11))
+#choose the token of the output file #################################
+lab5b = Label(decW,text='Token2:',font = ("Arial",11))
+lab5b.place(x=350,y=320)
+
+tokendrop = ttk.Combobox(decW, width = 10, font=("Arial",11))
+
+tokendrop2 = ttk.Combobox(decW, width = 10, font=("Arial",11))
+  
   
 # Adding combobox drop down list
 tokendrop['values'] = ('space', 
                           'tab',
                           'semicolon',
-                          'comma'
+                          'comma',
+                          'LTSpice'
 )
 
-tokendrop.place(x=200,y=320)
-tokendrop.bind("<<ComboboxSelected>>", tokenget)
+# Adding combobox drop down list
+tokendrop2['values'] = ('space', 
+                          'tab',
+                          'semicolon',
+                          'comma',
+                          'LTSpice'
+)
 
-
-global token_entry
+global token_entry, token_entry2
 token_entry = StringVar()
+token_entry2 = StringVar()
 
 tokendrop.current(0)
+tokendrop2.current(0)
 token_entry.set(' ')
+token_entry2.set(' ')
+
+tokendrop.place(x=200,y=320)
+tokendrop2.place(x=415,y=320)
+tokendrop.bind("<<ComboboxSelected>>", tokenget)
+tokendrop2.bind("<<ComboboxSelected>>", tokenget)
+
 
 # set Nsamples #################################
 lab6 = Label(decW,text='Nsamples:',font = ("Arial",11))
@@ -266,6 +344,13 @@ nsamplesdrop['values'] = ('8192',
 nsamplesdrop.current(2)
 
 nsamplesdrop.place(x=200,y=350)
+
+lab6b = Label(decW,text='dT:',font = ("Arial",11))
+lab6b.place(x=380,y=350)
+
+dTdec = Entry(decW,font = ("Arial",11))
+dTdec .place(x=415,y=350,width=70)
+dTdec .insert(END,'1e-12')
 
 #POSTPROCESSING FILTER
 my_label6 = Label(decW, text='Filter transfer function:',font = ("Arial",11))

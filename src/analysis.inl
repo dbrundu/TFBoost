@@ -415,6 +415,13 @@ int main(int argv, char** argc)
       if(c.MakeVoltageDigitization && !c.DoMeasurementsWithNoise)
         tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
 
+      // Introduce a Low Pass Filter
+      if(c.LowPassFilter && !c.DoMeasurementsWithNoise){
+          auto flt       = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
+      }
+
       
 
     } // end MakeConvolution
