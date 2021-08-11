@@ -130,55 +130,35 @@ int main(int argv, char** argc)
   Cfg.readFile("../etc/resampling.cfg");
   const libconf::Setting& cfg_root  = Cfg.getRoot();
   
-  TString OutputDirectory          = (const char*) cfg_root["OutputDirectory"];
-  const TString conv_inputfile     = (const char*) cfg_root["InputFileConvorTF"]; 
-  const TString InputFile_current  = (const char*) cfg_root["InputFileCurrent"]; 
-  const TString OutputFileName     = (const char*) cfg_root["OutputFileName"]; 
-  const bool deconvolution         = (bool)        cfg_root["Deconvolution"];
 
+  const bool SingleFile            = (bool)        cfg_root["SingleFile"];
+  const TString InputDirectory     = (const char*) cfg_root["InputDirectory"]; 
+  const TString InputFile_current  = (const char*) cfg_root["InputFileCurrent"]; 
+  const double dT                  = (double)  cfg_root["dT"];
+  const TString file_ext           = (const char*) cfg_root["file_extension"]; 
   const char*  token         = (const char*) cfg_root["token"];
   const int    columnT       = (int)  cfg_root["columnT"];
   const int    columnI       = (int)  cfg_root["columnI"];
-  const size_t offset        = (int)  cfg_root["offset"];
   const size_t Nsamples      = (int)  cfg_root["Nsamples"];
+  const size_t Nfiles        = (int)  cfg_root["Nfiles"];
   const size_t Nlinestoskip  = (int)  cfg_root["Nlinestoskip"];
   const double scale         = (double) cfg_root["scale_factor"];
   
-  const bool filter       = (bool)   cfg_root["filter"];
-  const int order         = (int)    cfg_root["order"];
-  const double frequency  = (double) cfg_root["frequency"];
-
 
   /* ----------------------------------------------
    * Initialization of variables and RNGs
    * --------------------------------------------*/
-  if(!OutputDirectory.EndsWith("/")) OutputDirectory = OutputDirectory+"/";
-  
-  tfboost::CreateDirectories( OutputDirectory + "plots");
-  tfboost::CreateDirectories( OutputDirectory + "data");
 
-  const double dT      = 1e-12;
   const double min     = 0.0;
   const double max     = (Nsamples-1)*dT;
   const double min_kernel  = -0.5*(max-min);
   const double max_kernel  =  0.5*(max-min);
   
-  auto flt = tfboost::ButterworthFilter<double>( frequency, order, dT);
   
   hydra::SeedRNG S{};
   hydra::default_random_engine engine( S() ); 
   TRandom3 root_rng( S() );
 
-
-  /* ----------------------------------------------
-   * Initialization of histograms
-   * --------------------------------------------*/
-  TH1D *hist_convol     = new TH1D("hist_deconvol;Time[s];Vout [V]",deconvolution? "Deconvoluted kernel" : "Output signal", Nsamples+1, min, max/4 );
-  TH1D *hist_signal     = new TH1D("hist_signal;Time[s];Vout [V]","signal", Nsamples+1, min, max/4 );
-  TH1D *hist_kernel     = new TH1D("hist_kernel;Time[s];Vout [V]",deconvolution? "Output Signal" : "kernel", Nsamples+1, min, max/4);
-  
-  
-  
   /* ----------------------------------------------
    * Read Input currents
    * --------------------------------------------*/
@@ -187,73 +167,205 @@ int main(int argv, char** argc)
   hydra::device::vector<double> current;
     
   time.reserve(Nsamples);
-  idx.reserve(Nsamples);
   current.reserve(Nsamples);
   
   TString line;
 
+  if(SingleFile){
+  
   std::ifstream myFile( InputFile_current.Data() );
-  //line.ReadLine(myFile);
+  
+  //skip first lines
+  for (int i=0; i<Nlinestoskip; i++){line.ReadLine(myFile);}
     
-  // Actual loop on file lines
-  if (myFile.is_open()) 
-  {
-    for(size_t j = offset; j < Nsamples ; ++j)
-    {
-      line.ReadLine(myFile);
-      if (!myFile.good()) break;
+      // Actual loop on file lines
+      if (myFile.is_open()) 
+      {
+        for(size_t j = 0; j < Nsamples ; ++j)
+        {
+          line.ReadLine(myFile);
+          if (!myFile.good()) break;
+          
+          TObjArray *tokens = line.Tokenize( token );
+          
+          TString data_str  = ((TObjString*) tokens->At( columnI ) )->GetString();
+          TString time_str  = ((TObjString*) tokens->At( columnT ) )->GetString();
+            
+          const double data = atof(data_str);
+          const double tm   = atof(time_str);
+            
+          idx.push_back(j);
+          time.push_back(tm);
+          current.push_back(data);
+
+          //std::cout<<tm<<" "<<data<<std::endl;
+            
+          tokens->Delete();
+          delete tokens;
+        }
+      } else { SAFE_EXIT(true, "Input file cannot be open.") }
+      myFile.close();
+
+      // check timestep size
+      double dtIN;
+      dtIN = time[10]-time[9];
+      std::cout <<"sample size of input file is Dt="<<dtIN<<std::endl;
+
+      // add zeros when the signal is finished until Nsamples is reached
+      if(Nsamples - current.size() > 0)
+      {
+        double t0 = time.back();
+        size_t j = 1;
+        
+        for(size_t k=current.size(); k<Nsamples; ++k)
+        {
+          idx.push_back(k);
+          time.push_back(t0 + j*dtIN);
+          current.push_back(0.0);
+          ++j;
+        }
+      }
       
-      TObjArray *tokens = line.Tokenize( token );
+      SAFE_EXIT( current.size() != Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
+
+      tfboost::TimeDigitizeSignal( current, time, dT, max, engine, false);
+
+      DEBUG(time[0])
+      DEBUG(time.back())
+      DEBUG(time.size())
+
+      TString newInput;
+      newInput = InputFile_current;
+      newInput = newInput.ReplaceAll(file_ext,"_new"+file_ext);
+
+      tfboost::SaveConvToFile(current, time, dT, newInput.Data() );
+
+
+      std::cout <<""<<std::endl;
+      std::cout <<"======================================================================================="<<std::endl;
+      std::cout <<""<<std::endl;
+      std::cout << "processed file is saved in: " << newInput.Data() << std::endl;
+      std::cout <<""<<std::endl;
+      std::cout <<"======================================================================================="<<std::endl;
+      std::cout <<""<<std::endl;
+
+  } //if singlefile
+
+  if(!SingleFile){
+  
+    /* ----------------------------------------------
+    * Preparing the list of input files and
+    * related variables for the main loop
+    * --------------------------------------------*/
+    TList* listoffiles = tfboost::GetFileList(InputDirectory); 
+    //listoffiles->Sort();
+    TIter nextfile( listoffiles );
+    TSystemFile *currentfile;
+    TString currentfilename;
+    TString line;
+     
+    TString dir;
+    dir =  InputDirectory + "/Resampled";
+        mkdir( dir.Data() ,S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH);
+
+    size_t INDEX = 0;
+
+    while( (currentfile = (TSystemFile*) nextfile() ) && INDEX < Nfiles ){
+    
+        auto start = std::chrono::high_resolution_clock::now();
+
+        currentfilename = currentfile->GetName();
+
+        if ( currentfile->IsDirectory() || !currentfilename.EndsWith(file_ext) ) continue;
+        
+        RULE_LINE;
+        std::cout << "| "<< _START_INFO_ <<"FILE"<< _END_INFO_ << "  : "<<currentfilename<<" " << "\n";
+        std::cout << "| "<< _START_INFO_ <<"INDEX"<< _END_INFO_ << " : "<<INDEX<<" "           << "\n";
+        RULE_LINE_LIGHT;
+        
+        ++INDEX;
+        
+        //Declare and prepare the containers
+        HostSignal_t time;     time.reserve(Nsamples);
+        HostSignal_t current;  current.reserve(Nsamples);
+        
+        std::ifstream myFile( (InputDirectory+'/'+ currentfilename).Data() );
+        SAFE_EXIT( !myFile.is_open() , "In analysis.inl: input file cannot be open. ")
+        
+        //Read file N times to skip lines
+        for(size_t j=0; j < Nlinestoskip; ++j){line.ReadLine(myFile);}
       
-      TString data_str  = ((TObjString*) tokens->At( columnI ) )->GetString();
-      TString time_str  = ((TObjString*) tokens->At( columnT ) )->GetString();
+        // Actual loop on file lines
+          if (myFile.is_open()) 
+          {
+            for(size_t j = 0; j < Nsamples ; ++j)
+            {
+              line.ReadLine(myFile);
+              if (!myFile.good()) break;
+              
+              TObjArray *tokens = line.Tokenize( token );
+              
+              TString data_str  = ((TObjString*) tokens->At( columnI ) )->GetString();
+              TString time_str  = ((TObjString*) tokens->At( columnT ) )->GetString();
+                
+              const double data = atof(data_str);
+              const double tm   = atof(time_str);
+                
+              idx.push_back(j);
+              time.push_back(tm);
+              current.push_back(data);
+
+              //std::cout<<tm<<" "<<data<<std::endl;
+                
+              tokens->Delete();
+              delete tokens;
+            }
+          } else { SAFE_EXIT(true, "Input file cannot be open.") }
+          myFile.close();
+
+          // check timestep size
+          double dtIN;
+          dtIN = time[10]-time[9];
+          std::cout <<"sample size of input file is Dt="<<dtIN<<std::endl;
+
+          // add zeros when the signal is finished until Nsamples is reached
+          if(Nsamples - current.size() > 0)
+          {
+            double t0 = time.back();
+            size_t j = 1;
+            
+            for(size_t k=current.size(); k<Nsamples; ++k)
+            {
+              idx.push_back(k);
+              time.push_back(t0 + j*dtIN);
+              current.push_back(0.0);
+              ++j;
+            }
+          }
+          
+          SAFE_EXIT( current.size() != Nsamples , "In resampling.inl: size of container not equal to Nsamples. ")
+
+          tfboost::TimeDigitizeSignal( current, time, dT, max, engine, false);
+
+          DEBUG(time[0])
+          DEBUG(time.back())
+          DEBUG(time.size())
+
+          tfboost::SaveConvToFile(current, time, dT, InputDirectory + "/Resampled/" + currentfilename.Data() );
         
-      const double data = atof(data_str);
-      const double tm   = dT*offset + atof(time_str);
-        
-      idx.push_back(j);
-      time.push_back(tm);
-      current.push_back(data);
+    } 
 
-      //std::cout<<tm<<" "<<data<<std::endl;
-        
-      tokens->Delete();
-      delete tokens;
-    }
-  } else { SAFE_EXIT(true, "Input file cannot be open.") }
-  myFile.close();
+  std::cout <<""<<std::endl;
+  std::cout <<"======================================================================================="<<std::endl;
+  std::cout <<""<<std::endl;
+  std::cout << "processed files are saved in folder 'Resampled' inside the InputFolder directory" << std::endl;
+  std::cout <<""<<std::endl;
+  std::cout <<"======================================================================================="<<std::endl;
+  std::cout <<""<<std::endl;
 
-  // check timestep size
-  double dtIN;
-  dtIN = time[10]-time[9];
-  std::cout <<"sample size of input file is Dt="<<dtIN<<std::endl;
+  } //if files in folder
 
-  // add zeros when the signal is finished until Nsamples is reached
-  if(Nsamples - current.size() > 0)
-  {
-    double t0 = time.back();
-    size_t j = 1;
-    
-    for(size_t k=current.size(); k<Nsamples; ++k)
-    {
-      idx.push_back(k);
-      time.push_back(t0 + j*dtIN);
-      current.push_back(0.0);
-      ++j;
-    }
-  }
-   
-  SAFE_EXIT( current.size() != Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
-
-  tfboost::TimeDigitizeSignal( current, time, dT, max, engine, false);
-
-  DEBUG(time[0])
-  DEBUG(time.back())
-  DEBUG(time.size())
-
-  tfboost::SaveConvToFile(current, time, dT, OutputDirectory + OutputFileName + ".txt" );
-    
-    
+ 
   return 0;
 }
 

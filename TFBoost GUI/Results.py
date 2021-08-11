@@ -59,6 +59,8 @@ print ('Argument List:', str(sys.argv))
 
 print(sys.argv[1])
 
+rows = int(sys.argv[3])
+
 if (sys.argv[1]!=''):
     folder_selected1 = sys.argv[1]
     directory0 = os.path.split(folder_selected1)[0] + '/' + os.path.split(folder_selected1)[1]
@@ -96,7 +98,7 @@ def openFileOutput():
     folder_selected2 = filedialog.askdirectory()
     directory = os.path.split(folder_selected2)[0] + '/' + os.path.split(folder_selected2)[1]
     text1 = Text(resW, state='disabled', width=50, height=1)
-    text1.place (x=300,y=160)
+    text1.place (x=300,y=150)
     text1.configure(state="normal")
     text1.insert('end', directory)
     text1.configure(state="disabled")
@@ -126,7 +128,7 @@ def run_results ():
 
     plt.clf()
 
-    data1 = pd.read_csv(path1+'/'+files2[index2],sep='\s+',header=None)
+    data1 = pd.read_csv(path1+'/'+files2[index2],sep='\s+',header=None,skiprows=rows)
     data1 = pd.DataFrame(data1)
     data2 = pd.read_csv(path2+'/'+files2[index2],sep='\s+',header=None)
     data2 = pd.DataFrame(data2)
@@ -344,27 +346,8 @@ my_label7.place(x=20,y=85)
 my_button = Button(resW, text="Choose directory for the input currents:",command=openFileInput,font = ("Arial",9))
 my_button.place(x=20,y=110)
 
-my_label3 = Label(resW, text='Select file extention:',font = ("Arial",8))
-my_label3.place(x=20,y=141)
-
-def switchstate2():
-
-    if var2.get()==1:
-        var1.set(0)
-
-def switchstate1():
-
-    if var1.get()==1:
-        var2.set(0)
-
-var1 = IntVar()
-var1.set(1)
-selfcheck1 = Checkbutton(resW, text="txt", variable=var1,command=switchstate1, font = ("Arial",8)).place(x=120, y=140)
-var2 = IntVar()
-selfcheck2 = Checkbutton(resW, text="dat", variable=var2,command=switchstate2,font = ("Arial",8)).place(x=150, y=140)
-
 my_button2 = Button(resW, text="Choose directory for the output files and plots:",command=openFileOutput,font = ("Arial",9))
-my_button2.place(x=20,y=160)
+my_button2.place(x=20,y=150)
 
 res_btn = Button(resW, text="\nPRESS TO VISUALIZE RANDOM WAVEFORM\n",command=run_results,font = ("Arial",9))
 res_btn.place(x=270,y=200)

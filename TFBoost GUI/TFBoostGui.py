@@ -76,6 +76,11 @@ gm = DoubleVar()
 Gain = DoubleVar()
 tau2 = DoubleVar()
 
+global inputfile_selected
+inputfile_selected = IntVar()
+inputfile_selected.set(0)
+
+global ext_entry
 
 global Nsamples, dT, LE_thr, CFD_thr, RM_delay, Bound_fit
 Nsamples = DoubleVar()
@@ -96,8 +101,18 @@ def openFileInput():
     text1.configure(state="normal")
     text1.insert('end', directory0)
     text1.configure(state="disabled")
-    
+
+    inputfile_selected.set(1)
+    warn0 = Label(root, text='INPUT FOLDER SELECTED!               ',font = ("Modern",9), fg='green')
+    warn0.place(x=20,y=645)
+
+    fileslist = os.listdir(directory0)
+    index_files = random.randrange(0, len(fileslist))
+    global my_ext
+    my_ext = str(os.path.splitext(fileslist[index_files])[1])
+
     check_current()
+    
     #check_btn = Button(root, text="Check",command=check_current,font = ("Arial",9),bg='SkyBlue3')
     #check_btn.place(x=680,y=112)
     
@@ -108,7 +123,7 @@ def openFileOutput():
     global directory
     directory = os.path.split(folder_selected2)[0] + '/' + os.path.split(folder_selected2)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
-    text1.place (x=250,y=160)
+    text1.place (x=250,y=150)
     text1.configure(state="normal")
     text1.insert('end', directory)
     text1.configure(state="disabled")
@@ -120,6 +135,7 @@ def openFileOutput():
     print(dir2) 
     if not os.path.exists(dir2):
         os.makedirs(dir2)
+    
 
 def usesamecurve():
     global filechosen
@@ -138,7 +154,7 @@ def FromFileopen():
     #filelabel = Label(root, text=filechosen,font = ("Arial",8))
     directoryFile = os.path.split(FromFilePath.name)[0] + '/' +os.path.split(FromFilePath.name)[1]
     text1 = Text(frameFF, state='disabled', width=50, height=1)
-    text1.place (x=230,y=50,width=400)
+    text1.place (x=230,y=82,width=400)
     text1.configure(state="normal")
     text1.insert('end', os.path.split(FromFilePath.name)[0] + '/' +os.path.split(FromFilePath.name)[1])
     text1.configure(state="disabled")
@@ -586,12 +602,23 @@ def FromFile():
         frameWA.place_forget()
   
     
-    frameFF.place(x=20,y=170)
+    frameFF.place(x=0,y=170)
 
-    btnFromFile.place(x=20,y=50)
-    btnRM3.place(x=50,y=300)
+
+    lab2 = Label(frameFF, text='Perform convolution with TFBoost using a transfer function from an existing file.',font = ("Modern",9))
+    lab2.place(x=20,y=5)
+    lab2b = Label(frameFF, text='The transfer function can be calculated using the "Make Deconvolution" option.',font = ("Modern",9))
+    lab2b.place(x=20,y=25)
+    lab2c = Label(frameFF, text='If the timestep is different than the one of the input files, use the "Make Resampling" option.',font = ("Modern",9))
+    lab2c.place(x=20,y=45)
+
+
+    btnFromFile.place(x=20,y=80)
+    btnRM3.place(x=50,y=350)
 
     btn_dec.place(x=50,y=250)
+
+    btn_samp.place(x=50,y=300)
 
     # NSAMPLES show
     nsamples =Label(frameFF,text='N° Samples  =',font = ("Modern",10))
@@ -671,6 +698,11 @@ def WaveAnalysis():
   
     
     frameWA.place(x=20,y=170)
+
+    lab2 = Label(frameWA, text='Perform a waveform analysis with TFBoost. No convolution is done, only the measurements.',font = ("Modern",9))
+    lab2.place(x=20,y=5)
+    lab2c = Label(frameWA, text='make sure the time step is the same of the input files',font = ("Modern",9))
+    lab2c.place(x=20,y=25)
 
     btnRM4b.place(x=50,y=300)
 
@@ -882,6 +914,9 @@ def doublestg():
 
     if (btnFromFile.winfo_exists()):
         frameFF.place_forget()
+
+    if (btnRM4b.winfo_exists()):
+        frameWA.place_forget()
   
     framedouble.place(x=20,y=170)
 
@@ -1122,111 +1157,120 @@ def doublestg():
 
  #
 def openTFgui():
-    global TF
-    TF = Toplevel(root)
-    TF.geometry("800x750")
-    TF.resizable(0, 0)
-    TF.tk.call('wm', 'iconphoto', TF._w, tk.PhotoImage(file='TFB_guiFiles/logoico.png'))
 
-    TF.title("Configure Transfer Function") 
-    TF_label = Label(TF, text='SELECT TRANSFER FUNCTION',font = ("Modern",9))
-    TF_label.place(x=20,y=10)
-    my_canvas = Canvas(TF,width=750,height=1,bg='black')
-    my_canvas.place(x=20,y=27)
+    if(inputfile_selected.get()==1):
 
-    btn1 = Button(TF, text="Single stage TIA",command=singlestg,font = ("Arial",12))
-    btn1.place(x=100,y=50)
+        global TF
+        TF = Toplevel(root)
+        TF.geometry("800x750")
+        TF.resizable(0, 0)
+        TF.tk.call('wm', 'iconphoto', TF._w, tk.PhotoImage(file='TFB_guiFiles/logoico.png'))
 
-    btn2 = Button(TF, text="Dual stage TIA        ",command=doublestg,font = ("Arial",12))
-    btn2.place(x=260,y=50)
+        TF.title("Configure Transfer Function") 
+        TF_label = Label(TF, text='SELECT TRANSFER FUNCTION',font = ("Modern",9))
+        TF_label.place(x=20,y=10)
+        my_canvas = Canvas(TF,width=750,height=1,bg='black')
+        my_canvas.place(x=20,y=27)
+        
+        btn1 = Button(TF, text="Single stage TIA",command=singlestg,font = ("Arial",12))
+        btn1.place(x=100,y=50)
 
-    btn3 = Button(TF, text="Charge Sensitive Amplifier",command=csastg,font = ("Arial",12))
-    btn3.place(x=435,y=50)
+        btn2 = Button(TF, text="Dual stage TIA        ",command=doublestg,font = ("Arial",12))
+        btn2.place(x=260,y=50)
 
-    btn4 = Button(TF, text="From File             ",command=FromFile, font = ("Arial",12))
-    btn4.place(x=100,y=100)
+        btn3 = Button(TF, text="Charge Sensitive Amplifier",command=csastg,font = ("Arial",12))
+        btn3.place(x=435,y=50)
 
-    btn5 = Button(TF, text="Waveform Analysis", command=WaveAnalysis, font = ("Arial",12))
-    btn5.place(x=260,y=100)
+        btn4 = Button(TF, text="From File             ",command=FromFile, font = ("Arial",12))
+        btn4.place(x=100,y=100)
 
-    my_canvas1 = Canvas(TF,width=750,height=1,bg='black')
-    my_canvas1.place(x=20,y=150)
+        btn5 = Button(TF, text="Waveform Analysis", command=WaveAnalysis, font = ("Arial",12))
+        btn5.place(x=260,y=100)
 
+        my_canvas1 = Canvas(TF,width=750,height=1,bg='black')
+        my_canvas1.place(x=20,y=150)
+
+        
+        global framesingle
+        framesingle = Frame(TF,height=630,width=780)
+
+        global framedouble
+        framedouble = Frame(TF,height=630,width=780)
+
+        global framecsa
+        framecsa = Frame(TF,height=630,width=780)
+
+        global frameFF
+        frameFF = Frame(TF,height=630,width=780)
+
+        global frameWA
+        frameWA = Frame(TF,height=630,width=780)
+
+        global logo2, logo3, link1, TF_label2, TF_label3
+
+        global btnRM2
+        btnRM2 = Button(TF, text="Get CSA Values\n and \n SET Transfer Function",command=rmcsa,font = ("Arial",9))
+
+        global FF_label
+        FF_label = Label(frameFF, text='',font = ("Modern",9))
+
+        global btnRM3
+        btnRM3 = Button(frameFF, text="SET \nTransfer Function",command=rm,font = ("Arial",9), width=15)
     
-    global framesingle
-    framesingle = Frame(TF,height=630,width=780)
+        global btn_dec
+        btn_dec = Button(frameFF, text="Make \n   Deconvolution",command=deconv,font = ("Arial",9), width=15)
 
-    global framedouble
-    framedouble = Frame(TF,height=630,width=780)
+        global btn_samp
+        btn_samp = Button(frameFF, text="Make \n   Resampling",command=resamp,font = ("Arial",9), width=15)
 
-    global framecsa
-    framecsa = Frame(TF,height=630,width=780)
+        global btnRM4
+        btnRM4 = Button(frameWA, text="SET \nTransfer Function",command=rm,font = ("Arial",9))
 
-    global frameFF
-    frameFF = Frame(TF,height=630,width=780)
+        global btnRM4b
+        btnRM4b = Button(frameWA, text="SET \nWaveform Analysis",command=rm,font = ("Arial",9))
 
-    global frameWA
-    frameWA = Frame(TF,height=630,width=780)
+        global btnFromFile
+        btnFromFile = Button(frameFF, text="Choose Transfer Function file",command=FromFileopen,font = ("Arial",9))
 
-    global logo2, logo3, link1, TF_label2, TF_label3
+        global my_logo2
+        my_logo2 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/singlestage.png"))
+        global logo2
+        logo2 =Label(TF,image=my_logo2)
+        #logo2.place(x=20,y=170)
 
-    global btnRM2
-    btnRM2 = Button(TF, text="Get CSA Values\n and \n SET Transfer Function",command=rmcsa,font = ("Arial",9))
+        global my_logo3
+        my_logo3 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/doublestage_eq.png"))
+        global logo3
+        logo3 =Label(TF,image=my_logo3)
+        #logo3.place(x=450,y=230)
 
-    global FF_label
-    FF_label = Label(frameFF, text='',font = ("Modern",9))
+        global my_logo4
+        my_logo4 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/singlestage_eq.png"))
+        global my_logoCSA
+        my_logoCSA = ImageTk.PhotoImage(Image.open("TFB_guiFiles/csa_eq.png"))
+        global logo4
+        logo4 =Label(TF,image=my_logo4)
 
-    global btnRM3
-    btnRM3 = Button(frameFF, text="SET \nTransfer Function",command=rm,font = ("Arial",9))
- 
-    global btn_dec
-    btn_dec = Button(frameFF, text="Make \n   Deconvolution  ",command=deconv,font = ("Arial",9))
+        global my_logo5
+        my_logo5 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/eq_background.png"))
+        global logo5
+        logo5 =Label(TF,image=my_logo5)
 
-    global btnRM4
-    btnRM4 = Button(frameWA, text="SET \nTransfer Function",command=rm,font = ("Arial",9))
+        global my_logo7
+        my_logo7 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/eq_background.png"))
+        global logo7
+        logo7 =Label(TF,image=my_logo7) #un altro sfondo
 
-    global btnRM4b
-    btnRM4b = Button(frameWA, text="SET \nWaveform Analysis",command=rm,font = ("Arial",9))
+        global my_logo6
+        my_logo6 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/csastage.png"))
+        global logo6
+        logo6 =Label(TF,image=my_logo6) 
 
-    global btnFromFile
-    btnFromFile = Button(frameFF, text="Choose Transfer Function file",command=FromFileopen,font = ("Arial",9))
+        doublestg()
 
-    global my_logo2
-    my_logo2 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/singlestage.png"))
-    global logo2
-    logo2 =Label(TF,image=my_logo2)
-    #logo2.place(x=20,y=170)
-
-    global my_logo3
-    my_logo3 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/doublestage_eq.png"))
-    global logo3
-    logo3 =Label(TF,image=my_logo3)
-    #logo3.place(x=450,y=230)
-
-    global my_logo4
-    my_logo4 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/singlestage_eq.png"))
-    global my_logoCSA
-    my_logoCSA = ImageTk.PhotoImage(Image.open("TFB_guiFiles/csa_eq.png"))
-    global logo4
-    logo4 =Label(TF,image=my_logo4)
-
-    global my_logo5
-    my_logo5 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/eq_background.png"))
-    global logo5
-    logo5 =Label(TF,image=my_logo5)
-
-    global my_logo7
-    my_logo7 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/eq_background.png"))
-    global logo7
-    logo7 =Label(TF,image=my_logo7) #un altro sfondo
-
-    global my_logo6
-    my_logo6 = ImageTk.PhotoImage(Image.open("TFB_guiFiles/csastage.png"))
-    global logo6
-    logo6 =Label(TF,image=my_logo6) 
-
-    doublestg()
-
+    if(inputfile_selected.get()==0):
+        warn = Label(root, text='PLEASE SELECT AN INPUT FOLDER',font = ("Modern",9), fg='red')
+        warn.place(x=20,y=645)
     TF.mainloop()
 
 
@@ -1234,12 +1278,16 @@ def plotcheck():
 
     plt.clf()
 
+    global Lines2Skip_entry
+    global line2skip
+    line2skip = Lines2Skip_entry.get()
+
     path1 =folder_selected1
     files1 = os.listdir(path1)
     index1 = random.randrange(0, len(files1))
     print(files1[index1])
 
-    data1 = pd.read_csv(path1+'/'+files1[index1],sep='\s+',header=None)
+    data1 = pd.read_csv(path1+'/'+files1[index1],sep='\s+',header=None,skiprows=int(line2skip))
     data1 = pd.DataFrame(data1)
 
     x1 = data1[0]
@@ -1275,6 +1323,11 @@ def plotcheck():
     entryNsamp.insert(END,int(Nsamp))
 
     dT=step
+
+    ext_entry = Entry(CC,font=  ("Arial",12))
+    ext_entry.place(x=370,y=430,width=90)    
+    ext_entry .delete(0,END)
+    ext_entry .insert(END,my_ext)
 
     plt.close()
 
@@ -1346,6 +1399,11 @@ def check_current():
 
     nextPlotBtn = Button (CC, text=" Next \nInput File  ",command=plotcheck,font = ("Arial",10))
     nextPlotBtn.place(x=705,y=295)
+
+    global Lines2Skip_entry
+    Lines2Skip_entry = Entry (CC,font= ("Arial",12))
+    Lines2Skip_entry.place(x=370,y=470,width=90) 
+    Lines2Skip_entry.insert(END,'0')
     
     plotcheck()
 
@@ -1357,19 +1415,27 @@ def check_current():
     labelN = Label(CC, text='Nsamples =', font=  ("Arial",12))
     labelN.place (x=270, y=390)
 
+    labelN = Label(CC, text='File extension =', font=  ("Arial",12))
+    labelN.place (x=243, y=430)
+
+    labelNlines = Label(CC, text='N° of lines to skip =', font=  ("Arial",12))
+    labelNlines.place (x=218, y=470)
+
+  
+
 
     labelWarning0 = Label(CC, text='*****************************************   WARNING   ***************************************** ', font=  ("Arial",12), fg='red')
-    labelWarning0.place(x=100,y=450)
+    labelWarning0.place(x=100,y=530)
     labelWarning = Label(CC, text='Please make sure  to set the correct timestep in the "dT" entry in the transfer function', font=  ("Arial",12), fg='red')
-    labelWarning.place(x=100,y=480)
+    labelWarning.place(x=100,y=560)
     labelWarning1 = Label(CC, text='section, and the number of samples in "N° Samples" for the duration of the signal.', font=  ("Arial",12), fg='red')
-    labelWarning1.place(x=100,y=510)
+    labelWarning1.place(x=100,y=590)
     labelWarning1b = Label(CC, text='If the Transfer Function "From File" is chosen make sure the timestep is the same.', font=  ("Arial",12), fg='red')
-    labelWarning1b.place(x=100,y=540)
+    labelWarning1b.place(x=100,y=620)
     labelWarning2b = Label(CC, text='If the waveforms are negative please use the scale factor to invert them.', font=  ("Arial",12), fg='red')
-    labelWarning2b.place(x=100,y=570)
+    labelWarning2b.place(x=100,y=650)
     labelWarning2 = Label(CC, text='*************************************************************************************************** ', font=  ("Arial",12), fg='red')
-    labelWarning2.place(x=100,y=600)
+    labelWarning2.place(x=100,y=680)
 
     CC.mainloop()
 
@@ -1402,10 +1468,13 @@ def callback(url):
     webbrowser.open_new(url)
 
 def resultON():
-    subprocess.Popen('python3 Results.py ' + folder_selected1 + ' ' + folder_selected2, shell=True)
+    subprocess.Popen('python3 Results.py ' + folder_selected1 + ' ' + folder_selected2 + ' ' + line2skip, shell=True)
 
 def deconv():
     subprocess.Popen('python3 Deconvolution.py', shell=True)
+
+def resamp():
+    subprocess.Popen('python3 Resampling.py', shell=True)
 
 
 def writeCFG( ):
@@ -1427,7 +1496,7 @@ def writeCFG( ):
 
     elif (var1.get()==var2.get()):
         text_file.write('\nInputFileExtension = ".txt";\n')
-        text_file.write('NlinesToSkip       = 0;\n')
+        text_file.write('NlinesToSkip       = ' + int(Lines2Skip_entry.get()) + ';\n')
         text_file.write('token              = " ";\n')
         text_file.write('column             = 1;\n')
     
@@ -1743,27 +1812,8 @@ my_label7.place(x=20,y=85)
 my_button = Button(root, text="Choose directory for the input files:  ",command=openFileInput,font = ("Arial",9))
 my_button.place(x=20,y=110)
 
-my_label3 = Label(root, text='Select file extention:',font = ("Arial",8))
-my_label3.place(x=20,y=141)
-
-def switchstate2():
-
-    if var2.get()==1:
-        var1.set(0)
-
-def switchstate1():
-
-    if var1.get()==1:
-        var2.set(0)
-
-var1 = IntVar()
-var1.set(1)
-selfcheck1 = Checkbutton(root, text="txt", variable=var1,command=switchstate1, font = ("Arial",8)).place(x=120, y=140)
-var2 = IntVar()
-selfcheck2 = Checkbutton(root, text="dat", variable=var2,command=switchstate2,font = ("Arial",8)).place(x=150, y=140)
-
 my_button2 = Button(root, text="Choose directory for the output files:",command=openFileOutput,font = ("Arial",9))
-my_button2.place(x=20,y=160)
+my_button2.place(x=20,y=150)
 
 #---------------input file to process entry-----------------------------
 my_label4 = Label(root, text='Maximum input files to process:',font = ("Arial",9))

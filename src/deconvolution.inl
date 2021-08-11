@@ -233,7 +233,7 @@ int main(int argv, char** argc)
     }
   }
    
-  SAFE_EXIT( current.size() != Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
+  SAFE_EXIT( current.size() != Nsamples , "In deconvolution.inl: size of container not equal to Nsamples. ")
 
   // time digitization to fix variable time step (LTSPice)
   tfboost::TimeDigitizeSignal( current, time, dT, max, engine, false);
@@ -310,7 +310,7 @@ int main(int argv, char** argc)
     }
   }
    
-  SAFE_EXIT( voltage2.size() != Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
+  SAFE_EXIT( voltage2.size() != Nsamples , "In deconvolution.inl: size of container not equal to Nsamples. ")
   
   // time digitization to fix variable time step (LTSPice)
   tfboost::TimeDigitizeSignal( voltage2, time2, dT, max, engine, false);  
