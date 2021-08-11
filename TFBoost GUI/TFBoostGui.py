@@ -80,8 +80,6 @@ global inputfile_selected
 inputfile_selected = IntVar()
 inputfile_selected.set(0)
 
-global ext_entry
-
 global Nsamples, dT, LE_thr, CFD_thr, RM_delay, Bound_fit
 Nsamples = DoubleVar()
 dT = DoubleVar()
@@ -108,9 +106,9 @@ def openFileInput():
 
     fileslist = os.listdir(directory0)
     index_files = random.randrange(0, len(fileslist))
-    global my_ext
+    global my_ext, line2skip
     my_ext = str(os.path.splitext(fileslist[index_files])[1])
-
+    line2skip = StringVar()
     check_current()
     
     #check_btn = Button(root, text="Check",command=check_current,font = ("Arial",9),bg='SkyBlue3')
@@ -1324,6 +1322,8 @@ def plotcheck():
 
     dT=step
 
+    global ext_entry 
+
     ext_entry = Entry(CC,font=  ("Arial",12))
     ext_entry.place(x=370,y=430,width=90)    
     ext_entry .delete(0,END)
@@ -1420,10 +1420,7 @@ def check_current():
 
     labelNlines = Label(CC, text='N° of lines to skip =', font=  ("Arial",12))
     labelNlines.place (x=218, y=470)
-
   
-
-
     labelWarning0 = Label(CC, text='*****************************************   WARNING   ***************************************** ', font=  ("Arial",12), fg='red')
     labelWarning0.place(x=100,y=530)
     labelWarning = Label(CC, text='Please make sure  to set the correct timestep in the "dT" entry in the transfer function', font=  ("Arial",12), fg='red')
@@ -1478,27 +1475,15 @@ def resamp():
 
 
 def writeCFG( ):
+
     text_file = open("../etc/configuration.cfg", 'w+')
     text_file.write('\nInputDirectory     =' + '"' + folder_selected1 + '";\n')
     text_file.write('\nOutputDirectory     =' + '"' + folder_selected2 + '";\n')
-    
-    if (var1.get() == 1 and var2.get() == 0):
-        text_file.write('\nInputFileExtension = ".txt";\n')
-        text_file.write('NlinesToSkip       = 0;\n')
-        text_file.write('token              = " ";\n')
-        text_file.write('column             = 1;\n')
 
-    elif (var1.get() == 0 and var2.get() == 1):
-        text_file.write('\nInputFileExtension = ".dat";\n')
-        text_file.write('NlinesToSkip       = 0;\n')
-        text_file.write('token              = " ";\n')
-        text_file.write('column             = 1;\n')
-
-    elif (var1.get()==var2.get()):
-        text_file.write('\nInputFileExtension = ".txt";\n')
-        text_file.write('NlinesToSkip       = ' + int(Lines2Skip_entry.get()) + ';\n')
-        text_file.write('token              = " ";\n')
-        text_file.write('column             = 1;\n')
+    text_file.write('\nInputFileExtension = "' + my_ext  +'";\n') 
+    text_file.write('NlinesToSkip       = ' + line2skip + ';\n')
+    text_file.write('token              = " ";\n')
+    text_file.write('column             = 1;\n')
     
     if len(maxfile_entry.get()) == 0:
         text_file.write('\nMaxInputFiles      ="10000";\n') 

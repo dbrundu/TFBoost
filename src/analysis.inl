@@ -208,22 +208,36 @@ int main(int argv, char** argc)
      
      tfboost::ReadTF( tf_infile, Nskip, time_tf, current_tf, /*scaling*/1.0, /*double range?*/true);
   }
-   
+  
+  /* ----------------------------------------------
+   * Count number of files in input directory
+   * --------------------------------------------*/
+  TList* listoffiles2 = tfboost::GetFileList(c.InputDirectory); 
+  TIter nextfile2( listoffiles2 );
+  TSystemFile *currentfile2;
+  int Nf=0; 
+  while( currentfile2 = (TSystemFile*) nextfile2()){Nf++;}
+  std::cout <<"    number of files in folder ="<<Nf <<std::endl;
+  
+  if(c.UseSameCurve) Nf = c.Nfiles;
 
-
+  if(!(c.UseSameCurve) && Nf>=c.Nfiles) Nf=c.Nfiles;
 
   /* ----------------------------------------------
    * Main loop on input files
    * --------------------------------------------*/
-  while( (currentfile = (TSystemFile*) nextfile() ) && INDEX < c.Nfiles )
+  while( INDEX < Nf )
   {
-    
     auto start = std::chrono::high_resolution_clock::now();
 
-    currentfilename = currentfile->GetName();
-    if(c.UseSameCurve) currentfilename = c.SingleFile;
+    if(!(c.UseSameCurve)) {
+      currentfile = (TSystemFile*) nextfile() ;
+      currentfilename = currentfile->GetName(); 
+    }
+ 
+    if(c.UseSameCurve) currentfilename = c.SingleFile;    
 
-    if ( currentfile->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension) ) continue;
+    if ( !(c.UseSameCurve) && (currentfile->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension) ) ) continue;
     
     RULE_LINE;
     std::cout << "| "<< _START_INFO_ <<"FILE"<< _END_INFO_ << "  : "<<currentfilename<<" " << "\n";
