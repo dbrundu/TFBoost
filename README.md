@@ -70,11 +70,6 @@ to run TFBoost using the GUI, open a terminal in the folder 'TFBoost GUI' and ty
 ```bash
 python3 TFBoostGui.py
 ```
-to run the Results GUI open a terminal in the folder 'TFBoost GUI' and type:
-
-```bash
-python3 Results.py
-```
 
 
 ## Build and Run the examples
