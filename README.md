@@ -66,6 +66,10 @@ At this point you can run the examples: please read at the examples section for 
 make analysis_tbb
 ./analysis_tbb 
 ```
+to build all the application needed for the GUI:
+```bash
+make analysis_tbb deconvolution_tbb resampling_tbb
+```
 to run TFBoost using the GUI, open a terminal in the folder 'TFBoost GUI' and type:
 ```bash
 python3 TFBoostGui.py
