@@ -216,12 +216,21 @@ int main(int argv, char** argc)
   TIter nextfile2( listoffiles2 );
   TSystemFile *currentfile2;
   int Nf=0; 
-  while( currentfile2 = (TSystemFile*) nextfile2()){Nf++;}
+  while( (currentfile2 = (TSystemFile*) nextfile2()) ){ 
+    currentfilename = currentfile2->GetName();
+    if(currentfile2->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension)) continue;
+    Nf++;
+    
+    }
   std::cout <<"    number of files in folder ="<<Nf <<std::endl;
   
   if(c.UseSameCurve) Nf = c.Nfiles;
 
   if(!(c.UseSameCurve) && Nf>=c.Nfiles) Nf=c.Nfiles;
+
+
+
+  
 
   /* ----------------------------------------------
    * Main loop on input files

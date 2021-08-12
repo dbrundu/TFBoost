@@ -58,12 +58,13 @@ def quit_me():
 root.protocol("WM_DELETE_WINDOW", quit_me)
 
 
-global stat1,stat2,stat3,stat4,stat5
+global stat1,stat2,stat3,stat4,stat5,stat6
 stat1 =IntVar()
 stat2 =IntVar()
 stat3 =IntVar()
 stat4 =IntVar()
 stat5 =IntVar()
+stat6 =IntVar()
 
 global CIN, CF, CL, Rp, Rf, Rc, gm, Gain, tau2
 CIN = DoubleVar()
@@ -75,6 +76,12 @@ Rc = DoubleVar()
 gm = DoubleVar()
 Gain = DoubleVar()
 tau2 = DoubleVar()
+
+global Rn, RP, Cd, Ndz
+RP = DoubleVar()
+Rn = DoubleVar()
+Cd = DoubleVar()
+Ndz = DoubleVar()
 
 global inputfile_selected
 inputfile_selected = IntVar()
@@ -180,6 +187,7 @@ def singlestg():
     stat3.set(0)
     stat4.set(0)
     stat5.set(0)
+    stat6.set(0)
 
     if (logo3.winfo_exists() ):
         framedouble.place_forget()
@@ -190,8 +198,11 @@ def singlestg():
     if (btnFromFile.winfo_exists()):
         frameFF.place_forget()
 
-    if (btnRM4.winfo_exists()):
+    if (btnRM4b.winfo_exists()):
         frameWA.place_forget()   
+
+    if (btnRM3d.winfo_exists()):
+        frame3D.place_forget()
 
     framesingle.place(x=20,y=170)
 
@@ -382,6 +393,7 @@ def csastg():
     stat3.set(1)
     stat4.set(0)
     stat5.set(0)
+    stat6.set(0)
         
     if (logo2.winfo_exists()):
         framesingle.place_forget()
@@ -392,8 +404,11 @@ def csastg():
     if (btnFromFile.winfo_exists()):
         frameFF.place_forget()
 
-    if (btnRM4.winfo_exists()):
+    if (btnRM4b.winfo_exists()):
         frameWA.place_forget()
+
+    if (btnRM3d.winfo_exists()):
+        frame3D.place_forget()
 
     framecsa.place(x=20,y=170)
 
@@ -586,6 +601,7 @@ def FromFile():
     stat3.set(0)
     stat4.set(1)
     stat5.set(0)
+    stat6.set(0)
 
     if (logo2.winfo_exists()):
         framesingle.place_forget()
@@ -596,8 +612,11 @@ def FromFile():
     if (logo6.winfo_exists()):
         framecsa.place_forget()
 
-    if (btnRM4.winfo_exists()):
+    if (btnRM4b.winfo_exists()):
         frameWA.place_forget()
+
+    if (btnRM3d.winfo_exists()):
+        frame3D.place_forget()
   
     
     frameFF.place(x=0,y=170)
@@ -680,6 +699,7 @@ def WaveAnalysis():
     stat3.set(0)
     stat4.set(0)
     stat5.set(1)
+    stat6.set(0)
 
 
     if (logo2.winfo_exists()):
@@ -693,6 +713,9 @@ def WaveAnalysis():
 
     if (btnRM3.winfo_exists()):
         frameFF.place_forget()
+
+    if (btnRM3d.winfo_exists()):
+        frame3D.place_forget()
   
     
     frameWA.place(x=20,y=170)
@@ -722,7 +745,7 @@ def WaveAnalysis():
     dt3 =Label(frameWA,text='s',font = ("Modern",10))
     dt3.place(x=630,y=230)
 
-    # Bound show
+        # Bound show
     bound1 =Label(frameWA,text='Bound Fit integer  =',font = ("Modern",10))
     bound1.place(x=405,y=260)
     global bound_entry
@@ -740,7 +763,7 @@ def WaveAnalysis():
     LE3 =Label(frameWA,text='V',font = ("Modern",10))
     LE3.place(x=630,y=290)
 
-     # CFD show
+    # CFD show
     CFD1 =Label(frameWA,text='CFD threshold fraction  =',font = ("Modern",10))
     CFD1.place(x=372,y=320)
     global CFD_entry
@@ -757,9 +780,127 @@ def WaveAnalysis():
     ARC_entry.insert(END,'200e-12')
     ARC1 =Label(frameWA,text='s',font = ("Modern",10))
     ARC1.place(x=630,y=350)
+  
     
 
 
+def diamond():
+
+    stat1.set(0)
+    stat2.set(0)
+    stat3.set(0)
+    stat4.set(0)
+    stat5.set(0)
+    stat6.set(1)
+
+
+    if (logo2.winfo_exists()):
+        framesingle.place_forget()
+
+    if (logo3.winfo_exists()):
+        framedouble.place_forget()
+
+    if (logo6.winfo_exists()):
+        framecsa.place_forget()
+
+    if (btnRM3.winfo_exists()):
+        frameFF.place_forget()
+
+    if (btnRM4b.winfo_exists()):
+        frameWA.place_forget()
+  
+    
+    frame3D.place(x=20,y=170)
+
+    lab2 = Label(frame3D, text='Perform the convolution of a set of currents of an ideal 3D Diamond Detector ',font = ("Modern",9))
+    lab2.place(x=20,y=5)
+    lab2c = Label(frame3D, text='with a transfer function that consider highly resistive columns electrodes.',font = ("Modern",9))
+    lab2c.place(x=20,y=25)
+    link1 = Label(frame3D, text='click here for a description of the model.', fg="blue", cursor="hand2",font = ("Modern",9))
+    link1.place(x=20,y=45)
+    link1.bind("<Button-1>", lambda e: callback("https://arxiv.org/abs/2008.09867"))
+
+    btnRM3d.place(x=500,y=340)
+    
+
+    labRn = Label(frame3D, text='Reading column total resistance: ',font = ("Modern",9))
+    labRn.place(x=20,y=110)
+
+    # R_n show
+    Rn1 =Label(frame3D,text='R    =',font = ("Modern",10))
+    Rn2 =Label(frame3D,text=' n',font = ("Modern",6))
+    Rn1.place(x=27,y=130)
+    Rn2.place(x=40,y=140)
+    global Rn_entry
+    Rn_entry = Entry(frame3D,font = ("Modern",10))
+    Rn_entry.place(x=70,y=130,width=60)
+    Rn_entry.insert(END,'100e3')
+    Rn3 =Label(frame3D,text='\u03A9',font = ("Modern",10))
+    Rn3.place(x=130,y=130)
+
+    
+    labRp = Label(frame3D, text='Bias column total resistance: ',font = ("Modern",9))
+    labRp.place(x=20,y=190)
+
+    # R_p show
+    Rp1 =Label(frame3D,text='R    =',font = ("Modern",10))
+    Rp2 =Label(frame3D,text=' p',font = ("Modern",6))
+    Rp1.place(x=27,y=210)
+    Rp2.place(x=40,y=220)
+    global Rp_entry
+    Rp_entry = Entry(frame3D,font = ("Modern",10))
+    Rp_entry.place(x=70,y=210,width=60)
+    Rp_entry.insert(END,'100e3')
+    Rp3 =Label(frame3D,text='\u03A9',font = ("Modern",10))
+    Rp3.place(x=130,y=210)
+
+
+    labCd = Label(frame3D, text='Capacitance of the detector:',font = ("Modern",9))
+    labCd.place(x=20,y=270)
+
+    # Cd show
+    Cd1 =Label(frame3D,text='C    =',font = ("Modern",10))
+    Cd2 =Label(frame3D,text=' D',font = ("Modern",6))
+    Cd1.place(x=27,y=290)
+    Cd2.place(x=40,y=300)
+    global Cd_entry
+    Cd_entry = Entry(frame3D,font = ("Modern",10))
+    Cd_entry.place(x=70,y=290,width=60)
+    Cd_entry.insert(END,'100e-15')
+    Cd3 =Label(frame3D,text='F',font = ("Modern",10))
+    Cd3.place(x=130,y=290)
+
+    labNdz = Label(frame3D, text='Number of slices:',font = ("Modern",9))
+    labNdz.place(x=20,y=350)
+
+    # Ndz show
+    ndz1 =Label(frame3D,text='   N =',font = ("Modern",10))
+    ndz1.place(x=27,y=370)
+    global ndz_entry
+    ndz_entry = Entry(frame3D,font = ("Modern",10))
+    ndz_entry.place(x=70,y=370,width=60)
+    ndz_entry.insert(END,'150')
+
+
+
+
+    # NSAMPLES show
+    nsamples =Label(frame3D,text='N° Samples  =',font = ("Modern",10))
+    nsamples.place(x=440,y=200)
+    global nsamples_entry 
+    nsamples_entry = Entry(frame3D,font = ("Modern",10))
+    nsamples_entry.place(x=550,y=200,width=70)
+    nsamples_entry.insert(END,'16384')
+
+    # dT show
+    dt1 =Label(frame3D,text='dT  =',font = ("Modern",10))
+    dt1.place(x=500,y=230)
+    global dt_entry
+    dt_entry = Entry(frame3D,font = ("Modern",10))
+    dt_entry.place(x=550,y=230,width=70)
+    dt_entry.insert(0,format(step,"3.2e"))
+    dt3 =Label(frame3D,text='s',font = ("Modern",10))
+    dt3.place(x=630,y=230)
 
 
 #      rpi,Rf,Rc,gm
@@ -893,6 +1034,35 @@ def rmcsa() :
     RM_delay.set(ARC_entry.get())
 
 
+#      rpi,Rf,Rc,gm
+def write3D() :
+
+
+    
+    # SAVE ALL VARIABLES
+    Rn.set(Rn_entry.get())
+    RP.set(Rp_entry.get())
+    Cd.set(Cd_entry.get())
+
+    Nsamples.set(nsamples_entry.get())
+    dT.set(dt_entry.get())
+    Ndz.set(ndz_entry.get())
+
+    text_file = open("../etc/3Ddiamond.cfg", 'w+')
+    text_file.write('\nOutputDirectory     ="/home/osboxes/Desktop/TFBoost/examples/conv_input_files";\n')
+
+    text_file.write('\ndT =' + str(dT.get())  +';\n') 
+    text_file.write('Nsamples       = ' + str(int(Nsamples.get())) + ';\n')
+    
+    text_file.write('Rn              =' + str(Rn.get()) + ';\n')
+    text_file.write('Rp              =' + str(RP.get()) + ';\n')
+    text_file.write('Cd              =' + str(Cd.get()) + ';\n')
+    text_file.write('Ndz              =' + str(int(Ndz.get())) + ';\n')
+
+    text_file.close()
+
+    subprocess.run(["./../build/3Ddiamond_tbb", "ls -l"])
+
 
 def doublestg():
 
@@ -902,6 +1072,7 @@ def doublestg():
     stat3.set(0)
     stat4.set(0)
     stat5.set(0) 
+    stat6.set(0)
 
 
     if (logo4.winfo_exists()):
@@ -915,6 +1086,9 @@ def doublestg():
 
     if (btnRM4b.winfo_exists()):
         frameWA.place_forget()
+
+    if (btnRM3d.winfo_exists()):
+        frame3D.place_forget()
   
     framedouble.place(x=20,y=170)
 
@@ -1176,7 +1350,7 @@ def openTFgui():
         btn2 = Button(TF, text="Dual stage TIA        ",command=doublestg,font = ("Arial",12))
         btn2.place(x=260,y=50)
 
-        btn3 = Button(TF, text="Charge Sensitive Amplifier",command=csastg,font = ("Arial",12))
+        btn3 = Button(TF, text="Charge Sensitive Amplifier",command=csastg,font = ("Arial",12), width=20)
         btn3.place(x=435,y=50)
 
         btn4 = Button(TF, text="From File             ",command=FromFile, font = ("Arial",12))
@@ -1184,6 +1358,9 @@ def openTFgui():
 
         btn5 = Button(TF, text="Waveform Analysis", command=WaveAnalysis, font = ("Arial",12))
         btn5.place(x=260,y=100)
+
+        btn6 = Button(TF, text="3D Diamond model",command=diamond,font = ("Arial",12), width=20)
+        btn6.place(x=435,y=100)
 
         my_canvas1 = Canvas(TF,width=750,height=1,bg='black')
         my_canvas1.place(x=20,y=150)
@@ -1204,6 +1381,9 @@ def openTFgui():
         global frameWA
         frameWA = Frame(TF,height=630,width=780)
 
+        global frame3D
+        frame3D = Frame(TF,height=630,width=780)
+
         global logo2, logo3, link1, TF_label2, TF_label3
 
         global btnRM2
@@ -1221,11 +1401,11 @@ def openTFgui():
         global btn_samp
         btn_samp = Button(frameFF, text="Make \n   Resampling",command=resamp,font = ("Arial",9), width=15)
 
-        global btnRM4
-        btnRM4 = Button(frameWA, text="SET \nTransfer Function",command=rm,font = ("Arial",9))
-
         global btnRM4b
         btnRM4b = Button(frameWA, text="SET \nWaveform Analysis",command=rm,font = ("Arial",9))
+
+        global btnRM3d
+        btnRM3d = Button(frame3D, text="Calculate and SET \ntransfer function",command=write3D,font = ("Arial",9))
 
         global btnFromFile
         btnFromFile = Button(frameFF, text="Choose Transfer Function file",command=FromFileopen,font = ("Arial",9))
@@ -1776,6 +1956,36 @@ def writeCFG( ):
         text_file.write(readstat1)   
 
         #text_file.write('FileName           = "' + os.path.split(FromFilePath.name)[0] + '/' +os.path.split(FromFilePath.name)[1] +  '";\n')
+    
+    if stat6.get() == 1:
+
+        text_file.write('\nMakeConvolution        = true;\n')
+        text_file.write('\nTransferFunction = "FromFile";\n')
+        text_file.write('TFFile = "dummy";\n')
+        text_file.write('\n')
+
+        text_file.write('\nFromFile :{\n')
+        text_file.write('ID        = 5;\n')
+        text_file.write('TFFile      = "../examples/conv_input_files/3Ddiamond.txt";\n')
+        text_file.write('NlinesToSkip= 0;\n') 
+        text_file.write('Nsamples        = ' + str(int(Nsamples.get())) +';\n') 
+        text_file.write('Nbins       = 50;\n')
+        text_file.write('minplot     = 0.0;\n')
+        text_file.write('maxplot     = 10e-9;\n')
+        text_file.write('dT              = ' + str(dT.get()) +';\n')
+        text_file.write('LEthr           = ' + str(LE_thr.get()) +';\n')   
+        text_file.write('CFD_fr          = ' + str(CFD_thr.get()) +';\n') 
+        text_file.write('sigma_noise     = ' + str(noise_entry.get()) +';\n')
+        text_file.write('r_rednoise      = ' + str(noiseR_entry.get()) +';\n')
+        text_file.write('sampling_dT     = ' + str(dt_dgt.get()) +';\n')
+        text_file.write('bound_fit = ' + str(int(Bound_fit.get())) +';\n')
+        text_file.write('RM_delay        = ' + str(RM_delay.get()) +';\n') 
+        text_file.write('};\n') 
+        text_file.write('\n')
+
+        stat4cfg = open("TFB_guiFiles/stat4.cfg", "r")
+        readstat4 = stat4cfg.read()
+        text_file.write(readstat4) 
 
     text_file.close()
     

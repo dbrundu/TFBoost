@@ -55,6 +55,7 @@
         "typeinfo": "cpp",
         "bit": "cpp",
         "ROOTstyle.C": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "*.h++": "cpp"
     }
 }
