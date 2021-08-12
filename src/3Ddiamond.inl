@@ -180,8 +180,10 @@ int main(int argv, char** argc)
     
     RM[i]   = (Rm_n[i] + Rm_p[i])*dT;
     Time[i] = i*dT;
-    
-    outdata << Time[i] << " " << RM[i]/Ndz <<  std::endl;
+
+    if (i<10){outdata << Time[i] << " " << 0 <<  std::endl;}
+
+    else outdata << Time[i] << " " << RM[i-10]/Ndz <<  std::endl;
 
   }
 
