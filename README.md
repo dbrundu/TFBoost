@@ -68,7 +68,7 @@ make analysis_tbb
 ```
 to build all the application needed for the GUI:
 ```bash
-make analysis_tbb deconvolution_tbb resampling_tbb
+make analysis_tbb deconvolution_tbb resampling_tbb 3Ddiamond_tbb
 ```
 to run TFBoost using the GUI, open a terminal in the folder 'TFBoost GUI' and type:
 ```bash
