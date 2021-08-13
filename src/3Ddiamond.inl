@@ -183,7 +183,7 @@ int main(int argv, char** argc)
 
     if (i<10){outdata << Time[i] << " " << 0 <<  std::endl;}
 
-    else outdata << Time[i] << " " << RM[i-10]/Ndz <<  std::endl;
+    else outdata << Time[i] << " " << 0.5*RM[i-10]/Ndz <<  std::endl;
 
   }
 

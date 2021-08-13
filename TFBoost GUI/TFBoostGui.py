@@ -890,7 +890,7 @@ def diamond():
     global nsamples_entry 
     nsamples_entry = Entry(frame3D,font = ("Modern",10))
     nsamples_entry.place(x=550,y=200,width=70)
-    nsamples_entry.insert(END,'16384')
+    nsamples_entry.insert(END,'65536')
 
     # dT show
     dt1 =Label(frame3D,text='dT  =',font = ("Modern",10))
@@ -2092,13 +2092,13 @@ my_label6 = Label(root, text='   Leading Edge noise-off (V):',font = ("Arial",9)
 my_label6.place(x=200,y=337)
 LE_noff = Entry(root,font = ("Arial",10))
 LE_noff.place(x=370,y=337,width=40)
-LE_noff.insert(END,'0.001')
+LE_noff.insert(END,'0.0')
 
 my_label6 = Label(root, text='   Leading Edge noise-on (V):',font = ("Arial",9))
 my_label6.place(x=460,y=337)
 LE_non = Entry(root,font = ("Arial",10))
 LE_non.place(x=630,y=337,width=40)
-LE_non.insert(END,'0.001')
+LE_non.insert(END,'0.0')
 
 #---------------MEASUREMENTS AND SAVING OPTION-----------------------------
 my_canvas1 = Canvas(root,width=750,height=1,bg='black')
