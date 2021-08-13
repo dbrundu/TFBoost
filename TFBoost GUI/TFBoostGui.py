@@ -818,7 +818,7 @@ def diamond():
     lab2c.place(x=20,y=25)
     link1 = Label(frame3D, text='click here for a description of the model.', fg="blue", cursor="hand2",font = ("Modern",9))
     link1.place(x=20,y=45)
-    link1.bind("<Button-1>", lambda e: callback("https://github.com/gianmatteocossu/TFBoost/blob/master/3dDiamondModel.pdf"))
+    link1.bind("<Button-1>", lambda e: callback("https://raw.githubusercontent.com/gianmatteocossu/TFBoost/master/3dDiamondModel.pdf"))
 
     btnRM3d.place(x=500,y=340)
     
