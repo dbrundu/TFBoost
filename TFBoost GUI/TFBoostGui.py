@@ -866,7 +866,7 @@ def diamond():
     global Cd_entry
     Cd_entry = Entry(frame3D,font = ("Modern",10))
     Cd_entry.place(x=70,y=290,width=60)
-    Cd_entry.insert(END,'100e-15')
+    Cd_entry.insert(END,'30e-15')
     Cd3 =Label(frame3D,text='F',font = ("Modern",10))
     Cd3.place(x=130,y=290)
 
