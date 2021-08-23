@@ -56,6 +56,9 @@
         "bit": "cpp",
         "ROOTstyle.C": "cpp",
         "map": "cpp",
-        "*.h++": "cpp"
+        "*.h++": "cpp",
+        "complex": "cpp",
+        "cstring": "cpp",
+        "stdlib.h": "c"
     }
 }

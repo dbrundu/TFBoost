@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """ /*----------------------------------------------------------------------------
  *
  *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
@@ -388,25 +389,6 @@ btnRun.place(x=490,y=380)
 btnRes = Button(decW, text="Plot \n results", command= run_results, font = ("Arial",13))
 btnRes.place(x=650,y=380)
 
-
-########## INTERPOLATION SECTION ###########################
-
-""" labspline = Label(decW, text='UTILITY',font = ("Modern",9))
-labspline.place(x=20,y=580)
-
-my_canvas0 = Canvas(decW,width=750,height=1,bg='black')
-my_canvas0.place(x=20,y=595)
-
-lab12 = Label(decW, text='Perform an interpolation with 1ps timestep on a existing waveform. This is useful for signals with variable timestep',font = ("Modern",9))
-lab12.place(x=30,y=610)
-lab12b = Label(decW, text='obtained with LTSpice. A file "filename1ps.txt" is saved in the same folder.',font = ("Modern",9))
-lab12b.place(x=30,y=630)
-
-btnSpline = Button(decW,text='Choose Input file:',command = selectinputspline,font = ("Arial",11), width=15)
-btnSpline.place(x=30,y=660)
-
-btnSaveSpline = Button(decW,text='Save Spline',font = ("Arial",11), width=15)
-btnSaveSpline.place(x=400,y=660)  """
 
 
 decW.mainloop()

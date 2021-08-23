@@ -162,7 +162,9 @@ int main(int argv, char** argc)
 
   TH1D hist_rms_noise("hist_rms_noise;RMS[V];Counts","hist_rms_noise", 100, 0, -1 );
 
-
+  TH1D hist_JitterCFD("hist_JitterCFD","hist_JitterCFD", 2000, 0, -1 );
+  TH1D hist_JitterLE("hist_JitterLE","hist_JitterLE", 2000, 0, -1 );
+  TH1D hist_JitterRM("hist_JitterRM","hist_JitterRM", 2000, 0, -1 );
 
 #if TCODE_ENABLE==true
   //TH2D *TOAmaps   = new TH2D("TOAmaps","TOAmaps",   100, 0, TCODE_PIXEL_YMAX, 100, 0, TCODE_PIXEL_XMAX);
@@ -672,6 +674,10 @@ int main(int argv, char** argc)
           measures_noise[_toa_rm]    = std::get<0>(rm) ;
           measures_noise[_vonth_rm]  = std::get<1>(rm);
           measures_noise[_dvdt_rm]   =  1e-6 * std::get<2>(rm);
+
+          hist_JitterCFD.Fill(measures_noise[_toa_cfd]-measures[_toa_cfd]);
+          hist_JitterLE.Fill(measures_noise[_toa_le]-measures[_toa_le]);
+          hist_JitterRM.Fill(measures_noise[_toa_rm]-measures[_toa_rm]);
           
         }
       }
@@ -751,7 +757,9 @@ int main(int argv, char** argc)
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOT_2d",    "Time [s]", "TOA [s]",  hist_TOTvsTOA,  "colz"); 
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsVmax", "TOT [s]",  "Vmax [V]", hist_TOTvsVmax, "colz");
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "rms_noise", "RMS [V]",  "Counts",   hist_rms_noise);
-
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "JitterCFD", "Time[s]",  "Counts",   hist_JitterCFD);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "JitterLE", "Time[s]",  "Counts",   hist_JitterLE);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "JitterRM", "Time[s]",  "Counts",   hist_JitterRM);
   
   TProfile* prof =  hist_TOTvsVmax.ProfileX();
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsVmax_profile",   "TOT [s]",    "Vmax [V]", *prof);
@@ -762,7 +770,6 @@ int main(int argv, char** argc)
 
   if(c.DoMeasurementsWithNoise) 
     histograms.SaveHistograms_noise( c.OutputDirectory + "plots/" );
-
 
 
 

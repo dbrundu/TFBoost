@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """ /*----------------------------------------------------------------------------
  *
  *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
@@ -28,7 +30,6 @@
 
 
 
-
 from tkinter import *
 from tkinter import filedialog, constants
 from tkinter import font
@@ -43,6 +44,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import shutil
+import re
 
 root = tk.Tk();
 root.title('TFBoost GUI')
@@ -95,6 +97,8 @@ CFD_thr = DoubleVar()
 RM_delay = DoubleVar()
 Bound_fit = DoubleVar()
 
+global Radice
+Radice = StringVar()
 
 def openFileInput():
     global folder_selected1
@@ -167,6 +171,11 @@ def FromFileopen():
     check_TransferFunction()
     #check_btn = Button(frameFF, text="Check",command=check_TransferFunction,font = ("Arial",9),bg='SkyBlue3')
     #check_btn.place(x=230,y=80)
+
+def Diamondopen():
+    global DiamondPath
+    DiamondPath = filedialog.askopenfile(initialdir="", title="Select a File")
+    #filelabel = Label(root, text=filechosen,font = ("Arial",8)
 
 def noisefromfiles():
     global folder_selected3
@@ -812,6 +821,7 @@ def diamond():
     
     frame3D.place(x=20,y=170)
 
+
     lab2 = Label(frame3D, text='Perform the convolution of a set of currents of an ideal 3D Diamond Detector ',font = ("Modern",9))
     lab2.place(x=20,y=5)
     lab2c = Label(frame3D, text='with a transfer function that consider highly resistive columns electrodes.',font = ("Modern",9))
@@ -820,69 +830,84 @@ def diamond():
     link1.place(x=20,y=45)
     link1.bind("<Button-1>", lambda e: callback("https://raw.githubusercontent.com/gianmatteocossu/TFBoost/master/3dDiamondModel.pdf"))
 
-    btnRM3d.place(x=500,y=340)
+    btnRM3d.place(x=440,y=300)
     
-
-    labRn = Label(frame3D, text='Reading column total resistance: ',font = ("Modern",9))
-    labRn.place(x=20,y=110)
 
     # R_n show
     Rn1 =Label(frame3D,text='R    =',font = ("Modern",10))
     Rn2 =Label(frame3D,text=' n',font = ("Modern",6))
-    Rn1.place(x=27,y=130)
-    Rn2.place(x=40,y=140)
+    Rn1.place(x=27,y=110)
+    Rn2.place(x=40,y=120)
     global Rn_entry
     Rn_entry = Entry(frame3D,font = ("Modern",10))
-    Rn_entry.place(x=70,y=130,width=60)
+    Rn_entry.place(x=70,y=110,width=60)
     Rn_entry.insert(END,'100e3')
     Rn3 =Label(frame3D,text='\u03A9',font = ("Modern",10))
-    Rn3.place(x=130,y=130)
+    Rn3.place(x=130,y=110)
 
-    
-    labRp = Label(frame3D, text='Bias column total resistance: ',font = ("Modern",9))
-    labRp.place(x=20,y=190)
 
     # R_p show
     Rp1 =Label(frame3D,text='R    =',font = ("Modern",10))
     Rp2 =Label(frame3D,text=' p',font = ("Modern",6))
-    Rp1.place(x=27,y=210)
-    Rp2.place(x=40,y=220)
+    Rp1.place(x=27,y=140)
+    Rp2.place(x=40,y=150)
     global Rp_entry
     Rp_entry = Entry(frame3D,font = ("Modern",10))
-    Rp_entry.place(x=70,y=210,width=60)
+    Rp_entry.place(x=70,y=140,width=60)
     Rp_entry.insert(END,'100e3')
     Rp3 =Label(frame3D,text='\u03A9',font = ("Modern",10))
-    Rp3.place(x=130,y=210)
+    Rp3.place(x=130,y=140)
 
-
-    labCd = Label(frame3D, text='Capacitance of the detector:',font = ("Modern",9))
-    labCd.place(x=20,y=270)
 
     # Cd show
     Cd1 =Label(frame3D,text='C    =',font = ("Modern",10))
     Cd2 =Label(frame3D,text=' D',font = ("Modern",6))
-    Cd1.place(x=27,y=290)
-    Cd2.place(x=40,y=300)
+    Cd1.place(x=27,y=170)
+    Cd2.place(x=40,y=180)
     global Cd_entry
     Cd_entry = Entry(frame3D,font = ("Modern",10))
-    Cd_entry.place(x=70,y=290,width=60)
+    Cd_entry.place(x=70,y=170,width=60)
     Cd_entry.insert(END,'30e-15')
     Cd3 =Label(frame3D,text='F',font = ("Modern",10))
-    Cd3.place(x=130,y=290)
-
-    labNdz = Label(frame3D, text='Number of slices:',font = ("Modern",9))
-    labNdz.place(x=20,y=350)
+    Cd3.place(x=130,y=170)
 
     # Ndz show
-    ndz1 =Label(frame3D,text='   N =',font = ("Modern",10))
-    ndz1.place(x=27,y=370)
+    ndz1 =Label(frame3D,text=' Ndz =',font = ("Modern",10))
+    ndz1.place(x=27,y=200)
     global ndz_entry
     ndz_entry = Entry(frame3D,font = ("Modern",10))
-    ndz_entry.place(x=70,y=370,width=60)
-    ndz_entry.insert(END,'150')
+    ndz_entry.place(x=70,y=200,width=60)
+    ndz_entry.insert(END,'20')
+    
+    # Zin
+    zin1 =Label(frame3D,text='Zin:',font = ("Modern",10))
+    zin1.place(x=27,y=250)
+    global varzin
+    varzin =IntVar()
+    varzin.set(0)
+    zinb =Checkbutton(frame3D,variable=varzin,font = ("Modern",10))
+    zinb.place(x=150,y=250)
 
+    # Zin button input file
+    btnZin = Button(frame3D, text="Zin pulse response file",command=Diamondopen,font = ("Arial",9))
+    btnZin.place(x=27,y=275)
 
+    # Arbitrary tracks
+    arb1 =Label(frame3D,text='Arbitrary Tracks:',font = ("Modern",10))
+    arb1.place(x=27,y=310)
+    global varArb
+    varArb =IntVar()
+    varArb.set(1)
+    arbb =Checkbutton(frame3D,variable=varArb,font = ("Modern",10))
+    arbb.place(x=150,y=310)
 
+    # Number of Tracks
+    tra1 =Label(frame3D,text='Number of Tracks:',font = ("Modern",10))
+    tra1.place(x=27,y=330)
+    global trab
+    trab =Entry(frame3D,font = ("Modern",10))
+    trab.place(x=158,y=330,width=40)
+    trab.insert(END,'1000')
 
     # NSAMPLES show
     nsamples =Label(frame3D,text='N° Samples  =',font = ("Modern",10))
@@ -890,7 +915,7 @@ def diamond():
     global nsamples_entry 
     nsamples_entry = Entry(frame3D,font = ("Modern",10))
     nsamples_entry.place(x=550,y=200,width=70)
-    nsamples_entry.insert(END,'65536')
+    nsamples_entry.insert(END,'16384')
 
     # dT show
     dt1 =Label(frame3D,text='dT  =',font = ("Modern",10))
@@ -1037,8 +1062,8 @@ def rmcsa() :
 #      rpi,Rf,Rc,gm
 def write3D() :
 
+    global Radice
 
-    
     # SAVE ALL VARIABLES
     Rn.set(Rn_entry.get())
     RP.set(Rp_entry.get())
@@ -1049,15 +1074,41 @@ def write3D() :
     Ndz.set(ndz_entry.get())
 
     text_file = open("../etc/3Ddiamond.cfg", 'w+')
-    text_file.write('\nOutputDirectory     ="/home/osboxes/Desktop/TFBoost/examples/conv_input_files";\n')
+
+    text_file.write('\nConvolution        =true;\n')
+    text_file.write('\nInputDirectory     =' + '"' + folder_selected1 + '";\n')
+    text_file.write('\nOutputDirectory    ="/home/osboxes/Desktop/TFBoost/build/3Ddiamond";\n')
 
     text_file.write('\ndT =' + str(dT.get())  +';\n') 
-    text_file.write('Nsamples       = ' + str(int(Nsamples.get())) + ';\n')
+    text_file.write('Nsamples             = ' + str(int(Nsamples.get())) + ';\n')
     
-    text_file.write('Rn              =' + str(Rn.get()) + ';\n')
-    text_file.write('Rp              =' + str(RP.get()) + ';\n')
-    text_file.write('Cd              =' + str(Cd.get()) + ';\n')
-    text_file.write('Ndz              =' + str(int(Ndz.get())) + ';\n')
+    text_file.write('Rn                   =' + str(Rn.get()) + ';\n')
+    text_file.write('Rp                   =' + str(RP.get()) + ';\n')
+    text_file.write('Cd                   =' + str(Cd.get()) + ';\n')
+    text_file.write('Ndz                  =' + str(int(Ndz.get())) + ';\n')
+    
+    if varzin.get() == 0:
+        text_file.write('\nZin            = false;\n') 
+        text_file.write('ZinFile         = "/home/osboxes/Desktop/TFBoost/build/Zin_files/zin_kansas.txt";\n')
+    if varzin.get() == 1:
+        text_file.write('\nZin            = true;\n') 
+        text_file.write('ZinFile          = "' + os.path.split(DiamondPath.name)[0] + '/' +os.path.split(DiamondPath.name)[1] + '";\n') 
+
+    if varArb.get() == 0:
+        text_file.write('\nArbTracks      = false;\n') 
+    if varArb.get() == 1:
+        text_file.write('\nArbTracks      = true;\n')  
+
+    text_file.write('NTracks              =' + str(int(trab.get())) + ';\n')
+    text_file.write('Radice               ="' + Radice + '";\n')
+
+    text_file.write('\nSumDirectory       = "/home/osboxes/Desktop/TFBoost/build/3Ddiamond/H3D_Currents/data_arbitrary";  \n')
+    text_file.write('\ntoken              =" ";  \n')
+    text_file.write('columnT              =0;  \n')
+    text_file.write('columnI              =1;  \n')
+    text_file.write('columnIe             =2;  \n')
+    text_file.write('columnIh             =3;  \n')
+    text_file.write('\nNlinestoskip       = 0;  \n')
 
     text_file.close()
 
@@ -1405,7 +1456,7 @@ def openTFgui():
         btnRM4b = Button(frameWA, text="SET \nWaveform Analysis",command=rm,font = ("Arial",9))
 
         global btnRM3d
-        btnRM3d = Button(frame3D, text="Calculate and SET \ntransfer function",command=write3D,font = ("Arial",9))
+        btnRM3d = Button(frame3D, text="Calculate Transfer Functions \n and Make Analysis \n or Make Currents Sum",command=write3D,font = ("Arial",9))
 
         global btnFromFile
         btnFromFile = Button(frameFF, text="Choose Transfer Function file",command=FromFileopen,font = ("Arial",9))
@@ -1465,8 +1516,18 @@ def plotcheck():
     index1 = random.randrange(0, len(files1))
     print(files1[index1])
 
+    global Radice
+
+    first_digit = re.search('\d', files1[index1])
+    Radice=str(files1[index1][0 : first_digit.start()])
+
+    print(Radice)
+
     data1 = pd.read_csv(path1+'/'+files1[index1],sep='\s+',header=None,skiprows=int(line2skip))
     data1 = pd.DataFrame(data1)
+   
+    numcol = len(data1.columns)
+    print(numcol)
 
     x1 = data1[0]
     y1 = data1[1]

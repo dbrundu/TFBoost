@@ -281,7 +281,7 @@ void TFBoostHeader()
 {
     std::cout << "=====================================================" << "\n";
     std::cout << " TFBOOST, fast signals convolution and analyzer      " << "\n";
-    std::cout << "  Developed by D.Brundu and G.M. Cossu               " << "\n";
+    std::cout << "  Developed by D.Brundu and G.M.Cossu               " << "\n";
     std::cout << "  https://github.com/dbrundu/TFBoost                 " << "\n";
     std::cout << "-----------------------------------------------------" << "\n";
     std::cout << "  Powered by HYDRA, developed by A.A.A Junior,       " << "\n";

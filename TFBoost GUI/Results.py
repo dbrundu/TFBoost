@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """ /*----------------------------------------------------------------------------
  *
  *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
@@ -331,6 +332,30 @@ def openHistVonThARCnoise ():
         a = subprocess.Popen(shellCommand)
         return a
 
+def openHistJitterCFD ():
+    if OutputDone.get()==1:
+        shellCommand = ['root']
+        shellCommand.append(" " + folder_selected2 + "/plots/JitterCFD.C")
+        print("Run Macro", shellCommand)
+        a = subprocess.Popen(shellCommand)
+        return a
+
+def openHistJitterLE ():
+    if OutputDone.get()==1:
+        shellCommand = ['root']
+        shellCommand.append(" " + folder_selected2 + "/plots/JitterLE.C")
+        print("Run Macro", shellCommand)
+        a = subprocess.Popen(shellCommand)
+        return a
+
+def openHistJitterRM ():
+    if OutputDone.get()==1:
+        shellCommand = ['root']
+        shellCommand.append(" " + folder_selected2 + "/plots/JitterRM.C")
+        print("Run Macro", shellCommand)
+        a = subprocess.Popen(shellCommand)
+        return a
+
 
 
 my_logo = ImageTk.PhotoImage(Image.open("TFB_guiFiles/logo.png"))
@@ -392,7 +417,6 @@ VonThLEbtn.place(x=395,y=360)
 VonThRMbtn = Button(resW, text="\n V on Th (RM) \n",command=openHistVonThARC,font = ("Arial",9))
 VonThRMbtn.place(x=510,y=360)
 
-
 my_canvas = Canvas(resW,width=750,height=1,bg='black')
 my_canvas.place(x=20,y=460)
 
@@ -431,6 +455,15 @@ VonThLE_noisebtn.place(x=395,y=560)
 
 VonThRM_noisebtn = Button(resW, text="\n V on Th (RM) \n",command=openHistVonThARCnoise,font = ("Arial",9))
 VonThRM_noisebtn.place(x=510,y=560)
+
+JitterCFD = Button(resW, text=" Jitter with CFD ",command=openHistJitterCFD,font = ("Arial",9))
+JitterCFD.place(x=618,y=560)
+
+JitterLE = Button(resW, text="   Jitter with LE  ",command=openHistJitterLE,font = ("Arial",9))
+JitterLE.place(x=618,y=590)
+
+JitterRM = Button(resW, text=" Jitter with ARC ",command=openHistJitterRM,font = ("Arial",9))
+JitterRM.place(x=618,y=620)
 
 
 

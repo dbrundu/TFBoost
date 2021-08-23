@@ -45,7 +45,7 @@ namespace tfboost {
  */
 struct MeasuresInitializer {
     
-    static constexpr Measures_t  _values_init  = { 0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0. };
+    static constexpr Measures_t  _values_init  = { 0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
     
     static constexpr MeasuresKeys_t  _keys     = { _toa_le, 
                                                    _toa_cfd, 
@@ -58,7 +58,8 @@ struct MeasuresInitializer {
                                                    _vonth_le, 
                                                    _vonth_cfd, 
                                                    _vonth_rm, 
-                                                   _tot};
+                                                   _tot,
+                                                   };
     
     static const MeasuresKeys_t  get_keys()    { return _keys; } 
 
@@ -80,7 +81,8 @@ struct MeasuresInitializer {
                                                    "VonThLE", 
                                                    "VonThCFD", 
                                                    "VonThRM", 
-                                                   "TOT"};
+                                                   "TOT",
+                                                   };
         return _names; 
     } 
   
