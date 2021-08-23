@@ -15,7 +15,7 @@ The available transfer functions are:
 - Ideal integrator, described as the input impedance of a CSA, 
 - Order-n Butterworth filter. 
 
-The input signals are read from files as a set of sampling points. The application performs also a set of measurements on the convoluted output signals such as: arrival time, with leading edge and constant fraction discrimination, maximum value and its corresponding time, slope and voltange on discrimination thresholds, etc. Morover a simulated noise, white or red, can be added to the output signal. The computation of the convolution can be turned off, and the set of measurements can thus be applied to real signals.
+The input signals are read from files as a set of sampling points. The application performs also a set of measurements on the convoluted output signals such as: arrival time, with leading edge and constant fraction discrimination, maximum value and its corresponding time, slope and voltage on discrimination thresholds, etc. Morover a simulated noise, white or red, can be added to the output signal. The computation of the convolution can be turned off, and the set of measurements can thus be applied to real signals.
 
 TFBoost has also a Graphical User Interface written in Python3:
 
@@ -66,7 +66,7 @@ At this point you can run the examples: please read at the examples section for 
 make analysis_tbb
 ./analysis_tbb 
 ```
-to build all the application needed for the GUI:
+to build all the applications needed for the GUI:
 ```bash
 make analysis_tbb deconvolution_tbb resampling_tbb 3Ddiamond_tbb
 ```
