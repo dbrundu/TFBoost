@@ -4,7 +4,9 @@
 # the script automatically add a 'source .../thisroot.sh' line to the .bashrc file
 # so that ROOT can be runned typing 'root' in a terminal
 # may cause conflict if ROOT CERN is already present
-# use the NEW_installer in that case and make sure to know where ROOT is located
+# use the installer in ther 'NEW_installer' folder instead 
+# and make sure to know where ROOT is located
+
 
 1) OPEN A TERMINAL AND RUN:
    $ bash installRoot

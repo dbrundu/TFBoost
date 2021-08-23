@@ -4,5 +4,5 @@
 # and with a known path (es. /opt/root/6.xxx_install)
 # also dependencies are checked
 
-1) INSTALL TFBOOST
+1) OPEN A TERMINAL AND RUN:
    $ bash TFBoost_installer
