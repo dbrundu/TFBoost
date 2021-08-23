@@ -1,9 +1,10 @@
 # TO INSTALL TFBOOST:
 
-# a local version of ROOT CERN is saved in the TFBoost folder
-# the script automatically add a source .../thisroot.sh to the .bashrc file
-# so that ROOT can be run typing $root in the terminal
-
+# a local version of ROOT CERN is installed in the current folder
+# the script automatically add a 'source .../thisroot.sh' line to the .bashrc file
+# so that ROOT can be runned typing 'root' in a terminal
+# may cause conflict if ROOT CERN is already present
+# use the NEW_installer in that case and make sure to know where ROOT is located
 
 1) OPEN A TERMINAL AND RUN:
    $ bash installRoot

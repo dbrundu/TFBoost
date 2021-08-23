@@ -34,9 +34,9 @@ then
   echo "#Setting enveironment variables..";
   sleep 1
 
-  export CC=/usr/bin/gcc-9
+  export CC=/usr/bin/gcc-8
   echo "export CC=/usr/bin/gcc-8"
-  export CXX=/usr/bin/g++-9
+  export CXX=/usr/bin/g++-8
   echo "export CXX=/usr/bin/g++-8"
   export ROOTSYS=$PWD/root
   echo "export ROOTSYS=/root"

@@ -50,9 +50,9 @@ then
   sleep 1
 
   export CC=/usr/bin/gcc-8
-  echo "export CC=/usr/bin/gcc-10"
+  echo "export CC=/usr/bin/gcc-8"
   export CXX=/usr/bin/g++-8
-  echo "export CXX=/usr/bin/g++-10"
+  echo "export CXX=/usr/bin/g++-8"
   export ROOTSYS=$ans3
   echo "export ROOTSYS=$ans3"
   export HYDRA_INCLUDE_DIR=$PWD/Hydra
