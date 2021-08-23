@@ -17,7 +17,7 @@ SET(CMAKE_VERBOSE_MAKEFILE  ON)
 
 #check if compiler is C++17 compliant
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("--std=C++17" COMPILER_SUPPORTS_CXX17)
+CHECK_CXX_COMPILER_FLAG("--std=c++17" COMPILER_SUPPORTS_CXX17)
 if(NOT COMPILER_SUPPORTS_CXX17)
   message(FATAL "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
 endif()
@@ -26,17 +26,17 @@ endif()
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
  MESSAGE(STATUS "Setting Clang flags")
- set(CMAKE_CXX_FLAGS " --std=C++17 -W -march=native -fPIC -O3 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
+ set(CMAKE_CXX_FLAGS " --std=c++17 -W -march=native -fPIC -O3 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
   
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
  MESSAGE(STATUS "Setting GCC flags")
- set(CMAKE_CXX_FLAGS " --std=C++17 -W -march=native -fPIC -O3 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
+ set(CMAKE_CXX_FLAGS " --std=c++17 -W -march=native -fPIC -O3 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
  
  MESSAGE(STATUS "Setting ICC flags")
- set(CMAKE_CXX_FLAGS " --std=C++17 -W -march=native -fPIC -O3 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
+ set(CMAKE_CXX_FLAGS " --std=c++17 -W -march=native -fPIC -O3 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
   
 #elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
  #MESSAGE(STATUS "===> Compiling with MSVC")
