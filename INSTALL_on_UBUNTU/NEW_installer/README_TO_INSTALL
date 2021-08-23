@@ -1,0 +1,8 @@
+# TO INSTALL TFBOOST:
+
+# Version of the installer with ROOT already installed
+# and with a known path (es. /opt/root/6.xxx_install)
+# also all the others dependencies installed
+
+3) INSTALL TFBOOST
+   $ bash TFBoost_installer
