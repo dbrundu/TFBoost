@@ -61,7 +61,7 @@ then
   echo "#Configuration DONE!";
   sleep 1
   echo "80"
-  echo "#Build all Sources: \nmake analysis_tbb \ndeconvolution_tbb \nresampling_tbb \n3Ddiamond_tbb\n\n\n "
+  echo "#Build all Sources: \n\n\n- make analysis_tbb \n\n-deconvolution_tbb \n\n-resampling_tbb \n\n-3Ddiamond_tbb\n\n\n "
   make analysis_tbb deconvolution_tbb resampling_tbb 3Ddiamond_tbb
 
   echo "100"
