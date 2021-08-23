@@ -27,10 +27,8 @@
 
 #include <fstream>
 #include <iostream>
-
 #include <string.h>
 #include <stdlib.h>
-
 #include "TROOT.h"
 #include "TSystem.h"
 #include "TRandom3.h"
@@ -38,7 +36,7 @@
 
 /* 
 THIS IS A ROOT MACRO
-root -l current.c (to run)
+root -l currents.c (to run)
 
 TOY MODEL FOR AN IDEAL 3D DETECTOR WITH 2 ELECTRODES AT DISTANCE d
 ASSUMING DRIFT VELOCITY AT SATURATION FOR BOTH CARRIERS:
@@ -105,10 +103,6 @@ double vh_sat=0.10; // um/ps
 // DEPOSITED CHARGE: 3.8*1e-3= 3.8 fC							
 float qi=3.8*1e-3/Ndz;	
 
-
-
-
-
 	for(int k=1; k<=NTracks; k++){
 
     // CASUAL POSITION AT Z=0 AND Z=h (RANDOM DIRETION FOR EVERY TRACK)
@@ -129,7 +123,7 @@ float qi=3.8*1e-3/Ndz;
 			//cout<<" te =" << te << endl;
 			//cout<<" th =" << th << endl;
 
-            // SAVE A FILE FOR EVERY THE CURRENT AT DIFFERENT Z FOR EVERY TRACK
+            // SAVE A FILE FOR EVERY CURRENT AT DIFFERENT Z FOR EVERY TRACK
 			ofstream out;
 			string file;
 			if(j<10){
@@ -183,7 +177,7 @@ float qi=3.8*1e-3/Ndz;
 	int plotTot=1;
 	
 
-	//SAVE ALSO THE TRACK FILE AS A SUM OF ALL Z POSITIONS
+	//SAVE ALSO THE TRACK FILE AS A SUM OF THE CURRENTS AT ALL Z POSITIONS
 	if(plotTot){
 	ofstream out1;
 	string file1;
