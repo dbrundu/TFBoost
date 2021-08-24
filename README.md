@@ -1,5 +1,3 @@
-<meta name="google-site-verification" content="zuVcqj4eKpY55BTPE0AkRaowzbqMS2C2taRYGuVqz0M" />
-
 ## TFBoost
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 ![Version](https://img.shields.io/badge/version-v0.2--alpha-yellowgreen)
@@ -43,7 +41,7 @@ The first step is checkout [HYDRA v.3](https://github.com/MultithreadCorner/Hydr
 mkdir <TFBoostDev>
 cd <TFBoostDev>
 git clone https://github.com/MultithreadCorner/Hydra.git Hydra
-git clone https://github.com/dbrundu/TFBoost.git TFBoost
+git clone https://github.com/gianmatteocossu/TFBoost.git TFBoost
 ```
 
 Then you have to setup the proper enveironment variables:
@@ -86,7 +84,7 @@ make simple_analysis_tbb
 ```
 
 ## Authors
-TFBoost was created by [Davide Brundu](https://github.com/dbrundu) and [Gian Matteo Cossu](https://github.com/gianmatteocossu), within the TIMESPOT collaboration.
+TFBoost was created by [Davide Brundu](https://github.com/dbrundu) and [Gian Matteo Cossu](https://github.com/gianmatteocossu/TFBoost), within the TIMESPOT collaboration.
 
 
 ## Reporting and Contributing
