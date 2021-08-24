@@ -75,6 +75,10 @@ to run TFBoost using the GUI, open a terminal in the folder 'TFBoost GUI' and ty
 python3 TFBoostGui.py
 ```
 
+## Installation under Ubuntu Linux
+to install TFBoost on Ubuntu use the following scripts:
+[TFBoost install](https://downgit.github.io/#/home?url=https://github.com/gianmatteocossu/TFBoost/tree/master/INSTALL_on_UBUNTU)
+
 
 ## Build and Run the examples
 An example of a simple analysis is available. The input files are obtained from an ideal silicon sensor and the files are in the `examples/input_files` directory. The configuration file named `config.cfg` is inside the `examples/` directory, while the rusults will be saved inside `<build>/results/`.  After the `cmake` command the example and can be run simply as:
