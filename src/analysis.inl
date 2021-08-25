@@ -162,9 +162,9 @@ int main(int argv, char** argc)
 
   TH1D hist_rms_noise("hist_rms_noise;RMS[V];Counts","hist_rms_noise", 100, 0, -1 );
 
-  TH1D hist_JitterCFD("hist_JitterCFD","hist_JitterCFD", 2000, 0, -1 );
-  TH1D hist_JitterLE("hist_JitterLE","hist_JitterLE", 2000, 0, -1 );
-  TH1D hist_JitterRM("hist_JitterRM","hist_JitterRM", 2000, 0, -1 );
+  TH1D hist_JitterCFD("hist_JitterCFD","hist_JitterCFD", 2000, -1e-9, 1e-9 );
+  TH1D hist_JitterLE("hist_JitterLE","hist_JitterLE", 2000, -1e-9, 1e-9 );
+  TH1D hist_JitterRM("hist_JitterRM","hist_JitterRM", 2000, -1e-9, 1e-9 );
 
 #if TCODE_ENABLE==true
   //TH2D *TOAmaps   = new TH2D("TOAmaps","TOAmaps",   100, 0, TCODE_PIXEL_YMAX, 100, 0, TCODE_PIXEL_XMAX);
