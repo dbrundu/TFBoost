@@ -368,14 +368,14 @@ my_canvas.place(x=20,y=105)
 my_label7 = Label(resW, text='TFBOOST RESULTS GUI',font = ("Modern",9))
 my_label7.place(x=20,y=85)
 
-my_button = Button(resW, text="Choose directory for the input currents:",command=openFileInput,font = ("Arial",9))
+my_button = Button(resW, text="Directory for the input currents",command=openFileInput,font = ("Arial",9))
 my_button.place(x=20,y=110)
 
-my_button2 = Button(resW, text="Choose directory for the output files and plots:",command=openFileOutput,font = ("Arial",9))
-my_button2.place(x=20,y=150)
+my_button2 = Button(resW, text="Directory for the output files     ",command=openFileOutput,font = ("Arial",9))
+my_button2.place(x=20,y=160)
 
 res_btn = Button(resW, text="\nPRESS TO VISUALIZE RANDOM WAVEFORM\n",command=run_results,font = ("Arial",9))
-res_btn.place(x=270,y=200)
+res_btn.place(x=270,y=195)
 
 
 my_canvas = Canvas(resW,width=750,height=1,bg='black')
@@ -384,37 +384,37 @@ my_canvas.place(x=20,y=260)
 my_label7 = Label(resW, text='HISTOGRAMS WITHOUT NOISE',font = ("Modern",9))
 my_label7.place(x=20,y=270)
 
-ToaCFDbtn = Button(resW, text="\n TOA with CFD \n",command=openHistTOACFD,font = ("Arial",9))
+ToaCFDbtn = Button(resW, text="\n TOA with CFD \n",command=openHistTOACFD,font = ("Arial",8))
 ToaCFDbtn.place(x=60,y=300)
 
-ToaLEbtn = Button(resW, text="\n TOA with LE \n",command=openHistTOALE,font = ("Arial",9))
+ToaLEbtn = Button(resW, text="\n TOA with LE \n",command=openHistTOALE,font = ("Arial",8))
 ToaLEbtn.place(x=175,y=300)
 
-ToaARCbtn = Button(resW, text="\n TOA with ARC \n",command=openHistTOAARC,font = ("Arial",9))
+ToaARCbtn = Button(resW, text="\n TOA with ARC \n",command=openHistTOAARC,font = ("Arial",8))
 ToaARCbtn.place(x=280,y=300)
 
-dvdtCFDbtn = Button(resW, text="\n dVdt with CFD \n",command=openHistdVdtCFD,font = ("Arial",9))
+dvdtCFDbtn = Button(resW, text="\n dVdt with CFD \n",command=openHistdVdtCFD,font = ("Arial",8))
 dvdtCFDbtn.place(x=395,y=300)
 
-dvdtLEbtn = Button(resW, text="\n dVdt with LE  \n",command=openHistdVdtLE,font = ("Arial",9))
+dvdtLEbtn = Button(resW, text="\n dVdt with LE  \n",command=openHistdVdtLE,font = ("Arial",8))
 dvdtLEbtn.place(x=510,y=300)
 
-dvdtARCbtn = Button(resW, text="\n dVdt with ARC \n",command=openHistdVdtARC,font = ("Arial",9))
+dvdtARCbtn = Button(resW, text="\n dVdt with ARC \n",command=openHistdVdtARC,font = ("Arial",8))
 dvdtARCbtn.place(x=618,y=300)
 
-Tpeakbtn = Button(resW, text="\n  Time at peak  \n",command=openHistTpeak,font = ("Arial",9))
+Tpeakbtn = Button(resW, text="\n  Time at peak  \n",command=openHistTpeak,font = ("Arial",8))
 Tpeakbtn.place(x=60,y=360)
 
-Vpeakbtn = Button(resW, text="\n Volt. at peak \n",command=openHistVpeak,font = ("Arial",9))
+Vpeakbtn = Button(resW, text="\n Volt. at peak \n",command=openHistVpeak,font = ("Arial",8))
 Vpeakbtn .place(x=175,y=360)
 
-VonThCFDbtn = Button(resW, text="\n V on Th (CFD) \n",command=openHistVonThCFD,font = ("Arial",9))
+VonThCFDbtn = Button(resW, text="\n V on Th (CFD) \n",command=openHistVonThCFD,font = ("Arial",8))
 VonThCFDbtn.place(x=280,y=360)
 
-VonThLEbtn = Button(resW, text="\n   V on Th (LE)  \n",command=openHistVonThLE,font = ("Arial",9))
+VonThLEbtn = Button(resW, text="\n   V on Th (LE)  \n",command=openHistVonThLE,font = ("Arial",8))
 VonThLEbtn.place(x=395,y=360)
 
-VonThRMbtn = Button(resW, text="\n V on Th (RM) \n",command=openHistVonThARC,font = ("Arial",9))
+VonThRMbtn = Button(resW, text="\n V on Th (RM) \n",command=openHistVonThARC,font = ("Arial",8))
 VonThRMbtn.place(x=510,y=360)
 
 my_canvas = Canvas(resW,width=750,height=1,bg='black')
@@ -423,46 +423,46 @@ my_canvas.place(x=20,y=460)
 my_label7 = Label(resW, text='HISTOGRAMS WITH NOISE',font = ("Modern",9))
 my_label7.place(x=20,y=470)
 
-ToaCFD_noisebtn = Button(resW, text="\n TOA with CFD \n",command=openHistTOACFDnoise,font = ("Arial",9))
+ToaCFD_noisebtn = Button(resW, text="\n TOA with CFD \n",command=openHistTOACFDnoise,font = ("Arial",8))
 ToaCFD_noisebtn.place(x=60,y=500)
 
-ToaLE_noisebtn = Button(resW, text="\n TOA with LE \n",command=openHistTOALEnoise,font = ("Arial",9))
+ToaLE_noisebtn = Button(resW, text="\n TOA with LE \n",command=openHistTOALEnoise,font = ("Arial",8))
 ToaLE_noisebtn.place(x=175,y=500)
 
-ToaARC_noisebtn = Button(resW, text="\n TOA with ARC \n",command=openHistTOAARCnoise,font = ("Arial",9))
+ToaARC_noisebtn = Button(resW, text="\n TOA with ARC \n",command=openHistTOAARCnoise,font = ("Arial",8))
 ToaARC_noisebtn.place(x=280,y=500)
 
-dvdtCFD_noisebtn = Button(resW, text="\n dVdt with CFD \n",command=openHistdVdtCFDnoise,font = ("Arial",9))
+dvdtCFD_noisebtn = Button(resW, text="\n dVdt with CFD \n",command=openHistdVdtCFDnoise,font = ("Arial",8))
 dvdtCFD_noisebtn.place(x=395,y=500)
 
-dvdtLE_noisebtn = Button(resW, text="\n dVdt with LE  \n",command=openHistdVdtLEnoise,font = ("Arial",9))
+dvdtLE_noisebtn = Button(resW, text="\n dVdt with LE  \n",command=openHistdVdtLEnoise,font = ("Arial",8))
 dvdtLE_noisebtn.place(x=510,y=500)
 
-dvdtARCbtn = Button(resW, text="\n dVdt with ARC \n",command=openHistdVdtARCnoise,font = ("Arial",9))
+dvdtARCbtn = Button(resW, text="\n dVdt with ARC \n",command=openHistdVdtARCnoise,font = ("Arial",8))
 dvdtARCbtn.place(x=618,y=500)
 
-Tpeak_noisebtn = Button(resW, text="\n  Time at peak  \n",command=openHistTpeaknoise,font = ("Arial",9))
+Tpeak_noisebtn = Button(resW, text="\n  Time at peak  \n",command=openHistTpeaknoise,font = ("Arial",8))
 Tpeak_noisebtn.place(x=60,y=560)
 
-Vpeak_noisebtn = Button(resW, text="\n Volt. at peak \n",command=openHistVpeaknoise,font = ("Arial",9))
+Vpeak_noisebtn = Button(resW, text="\n Volt. at peak \n",command=openHistVpeaknoise,font = ("Arial",8))
 Vpeak_noisebtn .place(x=175,y=560)
 
-VonThCFD_noisebtn = Button(resW, text="\n V on Th (CFD) \n",command=openHistVonThCFDnoise,font = ("Arial",9))
+VonThCFD_noisebtn = Button(resW, text="\n V on Th (CFD) \n",command=openHistVonThCFDnoise,font = ("Arial",8))
 VonThCFD_noisebtn.place(x=280,y=560)
 
-VonThLE_noisebtn = Button(resW, text="\n   V on Th (LE)  \n",command=openHistVonThLEnoise,font = ("Arial",9))
+VonThLE_noisebtn = Button(resW, text="\n   V on Th (LE)  \n",command=openHistVonThLEnoise,font = ("Arial",8))
 VonThLE_noisebtn.place(x=395,y=560)
 
-VonThRM_noisebtn = Button(resW, text="\n V on Th (RM) \n",command=openHistVonThARCnoise,font = ("Arial",9))
+VonThRM_noisebtn = Button(resW, text="\n V on Th (RM) \n",command=openHistVonThARCnoise,font = ("Arial",8))
 VonThRM_noisebtn.place(x=510,y=560)
 
-JitterCFD = Button(resW, text=" Jitter with CFD ",command=openHistJitterCFD,font = ("Arial",9))
+JitterCFD = Button(resW, text=" Jitter with CFD ",command=openHistJitterCFD,font = ("Arial",8))
 JitterCFD.place(x=618,y=560)
 
-JitterLE = Button(resW, text="   Jitter with LE  ",command=openHistJitterLE,font = ("Arial",9))
+JitterLE = Button(resW, text="   Jitter with LE  ",command=openHistJitterLE,font = ("Arial",8))
 JitterLE.place(x=618,y=590)
 
-JitterRM = Button(resW, text=" Jitter with ARC ",command=openHistJitterRM,font = ("Arial",9))
+JitterRM = Button(resW, text=" Jitter with ARC ",command=openHistJitterRM,font = ("Arial",8))
 JitterRM.place(x=618,y=620)
 
 

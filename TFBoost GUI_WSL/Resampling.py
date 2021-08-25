@@ -57,7 +57,7 @@ def selectinput():
     filechosen = filedialog.askopenfile(initialdir="", title="Select a File")
     #filelabel = Label(root, text=filechosen,font = ("Arial",))
     #directory = os.path.split(filechosen)[0] + '/' + os.path.split(filechosen)[1]
-    text1 = Text(samW, state='disabled',font = ("Arial",11), width=50, height=1)
+    text1 = Text(samW, state='disabled',font = ("Arial",10), width=50, height=1)
     text1.place (x=185,y=173,width=200)
     text1.configure(state="normal")
     text1.insert('end', os.path.split(filechosen.name)[1])
@@ -72,7 +72,7 @@ def selectinputs():
     folder_selectedx = filedialog.askdirectory()
     global directory
     directory = os.path.split(folder_selectedx)[0] + '/' + os.path.split(folder_selectedx)[1]
-    text1 = Text(samW, state='disabled',font = ("Arial",11), width=150, height=1)
+    text1 = Text(samW, state='disabled',font = ("Arial",10), width=150, height=1)
     text1.place (x=185,y=213,width=450)
     text1.configure(state="normal")
     text1.insert('end', directory)
@@ -85,7 +85,7 @@ def selectinputspline():
     filechosen2 = filedialog.askopenfile(initialdir="", title="Select a File")
     #filelabel = Label(root, text=filechosen,font = ("Arial",))
     #directory = os.path.split(filechosen)[0] + '/' + os.path.split(filechosen)[1]
-    text1 = Text(samW, state='disabled',font = ("Arial",11), width=50, height=1)
+    text1 = Text(samW, state='disabled',font = ("Arial",10), width=50, height=1)
     text1.place (x=185,y=663,width=200)
     text1.configure(state="normal")
     text1.insert('end', os.path.split(filechosen2.name)[1])
@@ -109,7 +109,7 @@ def openFileOutput():
     global folder_selected3
     folder_selected3 = filedialog.askdirectory()
     directory = os.path.split(folder_selected3)[0] + '/' + os.path.split(folder_selected3)[1]
-    text1 = Text(samW, state='disabled', width=50, height=1, font = ("Arial",11))
+    text1 = Text(samW, state='disabled', width=50, height=1, font = ("Arial",10))
     text1.place (x=200,y=493)
     text1.configure(state="normal")
     text1.insert('end', directory)
@@ -262,37 +262,37 @@ lab2.place(x=30,y=120)
 lab2b = Label(samW, text='Resampling can be done on a single waveform "Choose Input file" or on set of files "Choose Input folder":',font = ("Modern",9))
 lab2b.place(x=30,y=140)
 
-btnIN = Button(samW,text='Choose Input file:',command = selectinput,font = ("Arial",11), width=15)
+btnIN = Button(samW,text='Choose Input file:',command = selectinput,font = ("Arial",10), width=15)
 btnIN.place(x=30,y=170)
 
-btnOUT = Button(samW,text='Choose Input folder:',command = selectinputs,font = ("Arial",11), width=15)
+btnOUT = Button(samW,text='Choose Input folder:',command = selectinputs,font = ("Arial",10), width=15)
 btnOUT.place(x=30,y=210)
 
-lab3 = Label(samW,text='Lines to skip in input file:',font = ("Arial",11))
+lab3 = Label(samW,text='Lines to skip in input file:',font = ("Arial",10))
 lab3.place(x=30,y=260)
 
-LTskip = Entry(samW,font = ("Arial",11))
+LTskip = Entry(samW,font = ("Arial",10))
 LTskip .place(x=200,y=260,width=40)
 LTskip .insert(END,'0')
 
-lab3c = Label(samW,text='LTSpice signals:',font = ("Arial",11))
+lab3c = Label(samW,text='LTSpice signals:',font = ("Arial",10))
 lab3c.place(x=335,y=260)
 varlt = IntVar()
-Checkbutton(samW, variable=varlt,command=ltspiceDEC,font = ("Arial",11)).place(x=445, y=258)
+Checkbutton(samW, variable=varlt,command=ltspiceDEC,font = ("Arial",10)).place(x=445, y=258)
 
-lab4 = Label(samW,text='Scale factor:',font = ("Arial",11))
+lab4 = Label(samW,text='Scale factor:',font = ("Arial",10))
 lab4.place(x=30,y=290)
 
-scaleF = Entry(samW,font = ("Arial",11))
+scaleF = Entry(samW,font = ("Arial",10))
 scaleF .place(x=200,y=290,width=40)
 scaleF .insert(END,'1')
 
 
 #choose the token#################################
-lab5 = Label(samW,text='Token:',font = ("Arial",11))
+lab5 = Label(samW,text='Token:',font = ("Arial",10))
 lab5.place(x=30,y=320)
 
-tokendrop = ttk.Combobox(samW, width = 10, font=("Arial",11))
+tokendrop = ttk.Combobox(samW, width = 10, font=("Arial",10))
 
 # Adding combobox drop down list
 tokendrop['values'] = ('space', 
@@ -313,12 +313,12 @@ tokendrop.bind("<<ComboboxSelected>>", tokenget)
 
 
 # set Nsamples #################################
-lab6 = Label(samW,text='Nsamples:',font = ("Arial",11))
+lab6 = Label(samW,text='Nsamples:',font = ("Arial",10))
 lab6.place(x=30,y=350)
 
 n1 = StringVar()
 nsamplesdrop = ttk.Combobox(samW, width = 10,
-                            textvariable = n1, font=("Arial",11))
+                            textvariable = n1, font=("Arial",10))
   
 # Adding combobox drop down list
 nsamplesdrop['values'] = ('8192', 
@@ -333,49 +333,49 @@ nsamplesdrop.current(2)
 
 nsamplesdrop.place(x=200,y=350)
 
-lab6b = Label(samW,text='dT:',font = ("Arial",11))
+lab6b = Label(samW,text='dT:',font = ("Arial",10))
 lab6b.place(x=380,y=350)
 
-dTdec = Entry(samW,font = ("Arial",11))
+dTdec = Entry(samW,font = ("Arial",10))
 dTdec .place(x=415,y=350,width=70)
 dTdec .insert(END,'1e-12')
 
 
-lab6e = Label(samW,text='File extension:',font = ("Arial",11))
+lab6e = Label(samW,text='File extension:',font = ("Arial",10))
 lab6e.place(x=30,y=380)
 
-ext_entry = Entry(samW,font = ("Arial",11))
+ext_entry = Entry(samW,font = ("Arial",10))
 ext_entry .place(x=200,y=380,width=40)
 ext_entry .insert(END,'.txt')
 
 """ #POSTPROCESSING FILTER
-my_label6 = Label(samW, text='Filter transfer function:',font = ("Arial",11))
+my_label6 = Label(samW, text='Filter transfer function:',font = ("Arial",10))
 my_label6.place(x=30,y=380)
 var13 = IntVar()
-Checkbutton(samW, variable=var13,font = ("Arial",11)).place(x=192, y=380)
+Checkbutton(samW, variable=var13,font = ("Arial",10)).place(x=192, y=380)
 var13.set(1)
 
-my_label7 = Label(samW, text='Filter Order n°:',font = ("Arial",11))
+my_label7 = Label(samW, text='Filter Order n°:',font = ("Arial",10))
 my_label7.place(x=30,y=410)
-filterN_entry = Entry(samW,font = ("Arial",11))
+filterN_entry = Entry(samW,font = ("Arial",10))
 filterN_entry.place(x=200,y=410,width=40)
 filterN_entry.insert(END,'10')
 
-my_label8 = Label(samW, text='Filter cut-off Frequency:',font = ("Arial",11))
+my_label8 = Label(samW, text='Filter cut-off Frequency:',font = ("Arial",10))
 my_label8.place(x=30,y=440)
-filterF_entry = Entry(samW,font = ("Arial",11))
+filterF_entry = Entry(samW,font = ("Arial",10))
 filterF_entry.place(x=200,y=440,width=40)
 filterF_entry.insert(END,'10e9')
 
 
 # SET OUTPUT FOLDER
-my_button2 = Button(samW, text="Set output folder:",command=openFileOutput,font = ("Arial",11), width=15)
+my_button2 = Button(samW, text="Set output folder:",command=openFileOutput,font = ("Arial",10), width=15)
 my_button2.place(x=30,y=490)
 
-nameLab = Label(samW, text='Set output Filename:',font = ("Arial",11))
+nameLab = Label(samW, text='Set output Filename:',font = ("Arial",10))
 nameLab.place(x=30,y=530)
 
-nameentry = Entry(samW,font = ("Arial",11))
+nameentry = Entry(samW,font = ("Arial",10))
 nameentry.place(x=200,y=530)
 nameentry.insert(END,'filename.txt') """
 
