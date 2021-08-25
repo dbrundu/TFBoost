@@ -2235,7 +2235,7 @@ Checkbutton(root, variable=var12,font = ("Arial",8)).place(x=180, y=526)
 my_label6 = Label(root, text='sigma :',font = ("Arial",9))
 my_label6.place(x=20,y=547)
 TR_entry = Entry(root,font = ("Arial",10))
-TR_entry.place(x=75,y=547,width=50)
+TR_entry.place(x=75,y=547,width=60)
 TR_entry.insert(END,'15e-12')
 
 my_label6 = Label(root, text='|  Low Pass Filter:',font = ("Arial",9))
