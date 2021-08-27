@@ -2,7 +2,10 @@
 
 # Version of the installer when ROOT CERN is already installed
 # and with a known path (es. /opt/root/6.xxx_install)
-# also dependencies are checked
+# also dependencies are checked, otherwise use script name 'packages'
 
 1) OPEN A TERMINAL AND RUN:
    $ bash TFBoost_installer
+   
+after TFBoost is configured and built, it can be runned 
+with the GUI typing in a terminal: TFB

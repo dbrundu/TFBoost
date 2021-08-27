@@ -18,3 +18,6 @@
    
 3) INSTALL TFBOOST
    $ bash TFBoost_installer
+   
+after TFBoost is configured and built, it can be runned 
+with the GUI typing in a terminal: TFB

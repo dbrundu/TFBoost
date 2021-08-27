@@ -78,4 +78,11 @@ fi
 rc=0
 done
 
+echo '' >> ~/.bashrc
+echo 'TFB () {   
+   cd ' ${PWD%/*}'/TFBoost_GUI
+   ./TFBoostGui.py
+}
+' >> ~/.bashrc
+
 
