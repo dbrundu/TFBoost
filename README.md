@@ -28,8 +28,6 @@ Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, deve
 ## Dependencies
 TFBoost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/). For the best performances at least TBB or OMP backends are needed. Optionally  [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. [GCC >= v.8](https://gcc.gnu.org/) is needed. 
 
-The graphical user interface require Python3 and the packages: tkinter, filedialog, PIL, ImageTk, subprocess, os, math, pandas, webbrowser, random, matplotlib
-
 
 ## Disclaimer
 TFBoost is currently an `alpha` version and is under development. Please report any problems throught GitHub Issues if necessary. The current design is in a preliminary stage, the final design will be composed of semi-independent modules and algorithms that can be instantiated and chained in run time, depending on the configuration provided by the user.
@@ -76,8 +74,15 @@ python3 TFBoostGui.py
 ```
 
 ## Installation under Ubuntu Linux
-to install TFBoost on Ubuntu use the following scripts:
+To install TFBoost on Ubuntu the following scripts can be used:
 [TFBoost install](https://downgit.github.io/#/home?url=https://github.com/gianmatteocossu/TFBoost/tree/master/INSTALL_on_UBUNTU)
+
+Follow the instruction in file 'README_TO_INSTALL'. 
+After everything is set, the GUI will open simply typing:
+```bash
+TFB
+```
+
 
 
 ## Build and Run the examples
