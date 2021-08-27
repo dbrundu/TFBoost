@@ -6,6 +6,11 @@
 
 1) OPEN A TERMINAL AND RUN:
    $ bash TFBoost_installer
+   or
+   $ bash TFBoost_installer_WSL
+   if you are using Ubuntu with Windows Linux Subsystem
+   
+
    
 after TFBoost is configured and built, it can be runned 
 with the GUI typing in a terminal: TFB
