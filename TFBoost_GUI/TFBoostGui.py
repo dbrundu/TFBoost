@@ -1077,7 +1077,7 @@ def write3D() :
 
     text_file.write('\nConvolution        =true;\n')
     text_file.write('\nInputDirectory     =' + '"' + folder_selected1 + '";\n')
-    text_file.write('\nOutputDirectory    ="../build/3Ddiamond";\n')
+    text_file.write('\nOutputDirectory    ="3Ddiamond";\n')
 
     text_file.write('\ndT =' + str(dT.get())  +';\n') 
     text_file.write('Nsamples             = ' + str(int(Nsamples.get())) + ';\n')
@@ -1089,7 +1089,7 @@ def write3D() :
     
     if varzin.get() == 0:
         text_file.write('\nZin            = false;\n') 
-        text_file.write('ZinFile         = "../build/Zin_files/zin_kansas.txt";\n')
+        text_file.write('ZinFile         = "";\n')
     if varzin.get() == 1:
         text_file.write('\nZin            = true;\n') 
         text_file.write('ZinFile          = "' + os.path.split(DiamondPath.name)[0] + '/' +os.path.split(DiamondPath.name)[1] + '";\n') 
@@ -1102,7 +1102,7 @@ def write3D() :
     text_file.write('NTracks              =' + str(int(trab.get())) + ';\n')
     text_file.write('Radice               ="' + Radice + '";\n')
 
-    text_file.write('\nSumDirectory       = "../build/3Ddiamond/H3D_Currents/data_arbitrary";  \n')
+    text_file.write('\nSumDirectory       = "3Ddiamond/H3D_Currents/data_arbitrary";  \n')
     text_file.write('\ntoken              =" ";  \n')
     text_file.write('columnT              =0;  \n')
     text_file.write('columnI              =1;  \n')
