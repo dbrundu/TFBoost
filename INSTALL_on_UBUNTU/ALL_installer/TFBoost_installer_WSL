@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Dummy script to demonstrate the zenity progress widget!
+# install TFBoost
 
 
 rc=1
