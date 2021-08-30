@@ -4,6 +4,7 @@
 *.o
 *.obj
 build/*
+Currents/*
 docs/*
 others/*
 dev/*
