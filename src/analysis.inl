@@ -61,6 +61,7 @@
 #include <tfboost/functions/TIA_IdealInt.h>
 #include <tfboost/functions/TIA_MOS.h>
 #include <tfboost/functions/ExpModifiedGaussian.h>
+#include <tfboost/functions/RCFilter.h>
 #include <tfboost/functions/ButterworthFilter.h>
 #include <tfboost/DoConvolution.h>
 #include <tfboost/Noise.h>
@@ -375,6 +376,12 @@ int main(int argv, char** argc)
       // so skip the convolution and copy the input signals
       // in conv_data_h
       hydra::copy(current, conv_data_h);
+
+      if(c.LowPassFilter && !c.DoMeasurementsWithNoise){
+          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
+      }
       
     } else {
 
@@ -442,7 +449,7 @@ int main(int argv, char** argc)
 
       // Introduce a Low Pass Filter
       if(c.LowPassFilter && !c.DoMeasurementsWithNoise){
-          auto flt       = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
           auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
           tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
       }
@@ -582,7 +589,7 @@ int main(int argv, char** argc)
       // Introduce a Low Pass Filter
       // simulating an oscilloscope
       if(c.LowPassFilter && !c.FilterOnlyNoise){
-          auto flt       = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
           auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
           tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
       }
