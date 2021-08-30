@@ -5,6 +5,8 @@
 *.obj
 build/*
 Currents/*
+ToyDetector/Currents/*
+ToyDetector/Summed/*
 docs/*
 others/*
 dev/*
