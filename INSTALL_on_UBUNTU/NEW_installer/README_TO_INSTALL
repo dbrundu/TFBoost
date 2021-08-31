@@ -4,6 +4,8 @@
 # and with a known path (es. /opt/root/6.xxx_install)
 # also dependencies are checked, otherwise use script name 'packages'
 
+0) FIRST COPY ALL THE SCRIPTS IN THE FOLDER WHERE YOU WANT TO INSTALL
+
 1) OPEN A TERMINAL AND RUN:
    $ bash TFBoost_installer
    or
