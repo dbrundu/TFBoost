@@ -81,7 +81,7 @@ done
 echo '' >> ~/.bashrc
 echo 'TFB () {   
    cd ' ${PWD%/*}'/TFBoost_GUI_WSL
-   ./TFBoostGui.py
+   python3 TFBoostGui.py
 }
 ' >> ~/.bashrc
 

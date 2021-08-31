@@ -22,7 +22,7 @@
  * 
  *
  *  Created on: 01/06/2020
- *      Author: Davide Brundu, Gianmatteo Cossu
+ *      Author: Davide Brundu, Gian Matteo Cossu
  */
 
 

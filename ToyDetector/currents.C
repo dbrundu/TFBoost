@@ -67,7 +67,7 @@ cout << "folder 'Currents' created"<< endl;
 cout << "folder 'Summed' created"<< endl;
 	
 // NUMBER OF SAMPLES (1 ps STEP SIZE)
-int N=2000;
+int N=1000;
 
 //NUMBER OF TRACKS
 int NTracks=1000;

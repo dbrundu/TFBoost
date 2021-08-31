@@ -22,7 +22,7 @@
  * 
  *
  *  Created on: 20/10/2020
- *      Author: Davide Brundu, Gianmatteo Cossu
+ *      Author: Davide Brundu, Gian Matteo Cossu
  *  
  *  Re-implemented using the LRDPRDX implementation:
  *      https://github.com/LRDPRDX/ButterworthRooFit

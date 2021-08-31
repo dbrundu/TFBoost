@@ -104,7 +104,9 @@
 #include <tfboost/functions/TIA_BJT_2stages_GM.h>
 #include <tfboost/functions/TIA_IdealInt.h>
 #include <tfboost/functions/TIA_MOS.h>
+#include <tfboost/functions/RCFilter.h>
 #include <tfboost/functions/ButterworthFilter.h>
+#include <tfboost/functions/RCFilter.h>
 #include <tfboost/DoConvolution.h>
 #include <tfboost/Noise.h>
 #include <tfboost/InputOutput.h>
@@ -164,7 +166,7 @@ int main(int argv, char** argc)
   const double min_kernel  = -0.5*(max-min);
   const double max_kernel  =  0.5*(max-min);
   
-  auto flt = tfboost::ButterworthFilter<double>( frequency, order, dT);
+  auto flt = tfboost::RCFilter<double>( frequency, order, dT);
   
   hydra::SeedRNG S{};
   hydra::default_random_engine engine( S() ); 
