@@ -267,19 +267,18 @@ int main(int argv, char** argc)
 
   hydra::device::vector<double> freq( Nsamples);
   hydra::device::vector<hydra::complex<double>> Hn(Nsamples/2+1);
-  hydra::device::vector<hydra::complex<double>> Hp(Nsamples/2+1);
+  hydra::device::vector<hydra::complex<double>> Hp(Nsamples/2+1);  
   
+  double RN= Rn*(dz-0.5)/Ndz;  
 
+  double RP= Rp*(Ndz+0.5-dz)/Ndz;    
+  
     for(int i=0; i<Nsamples/2+1; i++){   
     freq[i]=i/(Nsamples*dT);
 
     hydra::complex<double> C1;
     
     C1 = r2c_out.first[i]; 
-
-    double RN= Rn*(dz-0.5)/Ndz;  
-
-    double RP= Rp*(Ndz+0.5-dz)/Ndz;    
     
     double ren=0,imn=0,detn=0,rep=0,imp=0,detp=0;
 
@@ -377,10 +376,49 @@ int main(int argv, char** argc)
     Hp3[2*i+1]=0.5*(Hp2[i+1]+ Hp2[i]);   
     }
 
+    double Hn_max=0,Hn_min=0;
+    double Hp_max=0,Hp_min=0;
+
+    for (int i=0; i<Nsamples; i++){
+       if(Hn_max<Hn3[i]){ Hn_max=Hn3[i]; }
+       if(Hp_max<Hp3[i]){ Hp_max=Hp3[i]; }       
+       if(Hn_min>Hn3[i]){ Hn_min=Hn3[i]; }
+       if(Hp_min>Hp3[i]){ Hp_min=Hp3[i]; }
+    }
+
+    std::cout<<"hn_max="<<Hn_max<<std::endl;
+    std::cout<<"hn_min="<<Hn_min<<std::endl;
+
+    if (abs(Hn_max) >abs(Hn_min)){
     for(int i=0; i<Nsamples; i++){ 
-     zin_n<<ztime[i]<<" "<< Hn3[i] <<std::endl;
-     zin_p<<ztime[i]<<" "<< Hp3[i] <<std::endl;   
-    }    
+     zin_n<<ztime[i]<<" "<< Hn3[i] <<std::endl;  
+    }   
+
+    } 
+
+    if (abs(Hn_max) < abs(Hn_min)){
+    for(int i=0; i<Nsamples; i++){ 
+     zin_n<<ztime[i]<<" "<< -Hn3[i] <<std::endl;
+    }   
+    } 
+
+    if (abs(Hp_max) > abs(Hp_min)){
+    for(int i=0; i<Nsamples; i++){ 
+     zin_p<<ztime[i]<<" "<< Hp3[i] <<std::endl;  
+    }   
+
+    } 
+
+    if (abs(Hp_max) < abs(Hp_min)){
+    for(int i=0; i<Nsamples; i++){ 
+    zin_p<<ztime[i]<<" "<< -Hp3[i] <<std::endl;   
+    }   
+    } 
+
+    std::cout<< " " <<std::endl;
+    std::cout<< " The resistance seen by the electron is Rn(z=" << dz <<") =" << RN << " ohm" <<std::endl;
+    std::cout<< " The resistance seen by the electron is Rp(z=" << dz <<") =" << RP << " ohm" <<std::endl;
+    std::cout<< " " <<std::endl;
 
     std::cout<<" "<<std:: endl;
     std::cout<<"-------------------------------------------"<<std:: endl;
@@ -635,12 +673,15 @@ int main(int argv, char** argc)
 
     SAFE_EXIT( current.size() != Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
 
-        #if HYDRA_DEVICE_SYSTEM!=CUDA
+    #if HYDRA_DEVICE_SYSTEM!=CUDA
     auto fft_backend = hydra::fft::fftw_f64;
     #endif
     
     #if HYDRA_DEVICE_SYSTEM==CUDA
     auto fft_backend = hydra::fft::cufft_f64;
+    std::cout <<"----------------CUDA ENABLED--------------"<< std::endl;
+    std::cout <<"----------------CUDA ENABLED--------------"<< std::endl;
+    std::cout <<"----------------CUDA ENABLED--------------"<< std::endl;
     #endif
 
     std::cout<< "CONVOLUTION WITH H(Z="<< nz <<")"<< std::endl;
@@ -650,7 +691,6 @@ int main(int argv, char** argc)
 
      auto signal_e = hydra::make_spiline<double>(time, current_e );
      auto signal_h = hydra::make_spiline<double>(time, current_h ); 
-     
    
     //convolution
      tfboost::Do_Convolution(fft_backend, kernel1, signal_e, conv_data_n, min, max, Nsamples);

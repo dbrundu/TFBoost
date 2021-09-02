@@ -85,8 +85,8 @@ double IeT[N];
 double IhT[N];
 
 for(int i=0; i<N; i++){
-IeT[i]=0;
-IhT[i]=0;
+IeT[i]=1*1e-23;
+IhT[i]=1*1e-23;
 }
 
 // CHARGE COLLECTION TIME FOR THE CARRIERS
@@ -107,7 +107,8 @@ float qi=3.8*1e-3/Ndz;
 
     // CASUAL POSITION AT Z=0 AND Z=h (RANDOM DIRETION FOR EVERY TRACK)
 	double x1 = gRandom->Rndm() * d;
-	double x2 = gRandom->Rndm() * d;
+	//double x2 = gRandom->Rndm() * d;
+	double x2 = x1;
 
 		for (int j=1; j<=Ndz; j++){
  
@@ -139,19 +140,19 @@ float qi=3.8*1e-3/Ndz;
 			for (int i=0; i<N; i++){
 
 				if(i<te) {
-				Ie[i][j]= ( qi* ve_sat/d );
+				Ie[i][j] = ( qi* ve_sat/d );
 				IeT[i]+=( qi* ve_sat/d );
 				}
 				else if (i>=te){
-				Ie[i][j]= 0;
+				Ie[i][j]= 1e-23;
 				}
 
 				if(i<th){
-				Ih[i][j]= ( qi* vh_sat/d );
+				Ih[i][j] = ( qi* vh_sat/d );
 				IhT[i]+=( qi* vh_sat/d );
 				}
 				else if (i>=th){
-				Ih[i][j]= 0;
+				Ih[i][j]= 1e-23;
 				}
 
 			if(i==0)

@@ -114,7 +114,7 @@ public:
 
         double tau= 1/(M_PI*2*fc);        
 
-        return fdT * exp(-t/tau)*pow((t/tau),n-1)*n / (tau * tgamma(n+1)) ;
+        return fdT * exp(-t/tau)*exp((n-1)*log((t/tau))) / (tau * tgamma(n)) ;
     }
 
     private:
