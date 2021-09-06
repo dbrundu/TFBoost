@@ -507,9 +507,9 @@ int main(int argv, char** argc)
     
     measures[_vonth_cfd]  = conv_data_h[TOA_CFD];
     
-    measures[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
+/*     measures[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
     
-    measures[_toa_le]     = c.TOTcorrection? tfboost::algo::CorrectTOA(measures[_toa_le], measures[_tot], c.TOT_a, c.TOT_b) : measures[_toa_le];
+    measures[_toa_le]     = c.TOTcorrection? tfboost::algo::CorrectTOA(measures[_toa_le], measures[_tot], c.TOT_a, c.TOT_b) : measures[_toa_le]; */
 
     // adding time tagger resolution
     if(c.TimeReferenceResolution)
@@ -642,9 +642,22 @@ int main(int argv, char** argc)
       measures_noise[_tpeak]     = time[timeatmax_idx] ;
       measures_noise[_toa_le]    = time[TOA_LE_noise_idx]  ;
       measures_noise[_vonth_le]  = conv_data_h[TOA_LE_noise_idx];
-      measures_noise[_tot]       = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
-      
-      
+      measures_noise[_vpeak]     = tfboost::algo::GetVAtPeak(conv_data_h);  
+
+      size_t TOA_CFD             = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures_noise[_vpeak]);
+      measures_noise[_toa_cfd]   = time[TOA_CFD] ;  
+
+      auto rm_noise              = tfboost::algo::TimeRefMethod( conv_data_h, time, measures_noise[_vpeak], c.RM_delay, c.bound_fit,/*noise?*/false, /*plot?*/false );
+      measures_noise[_toa_rm]    = std::get<0>( rm_noise ) ;  
+
+      measures_noise[_dvdt_rm]    = 1e-6 * std::get<2>( rm_noise ) ;
+      measures_noise[_vonth_rm]   =  std::get<1>( rm_noise ) ;
+      measures_noise[_dvdt_le]    = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(conv_data_h, TOA_LE_noise_idx);    
+      measures_noise[_dvdt_cfd]   = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
+      measures_noise[_vonth_le]   = conv_data_h[TOA_LE_noise_idx];    
+      measures_noise[_vonth_cfd]  = conv_data_h[TOA_CFD];    
+      measures_noise[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
+
       
       if(c.MakeLinearFitNearThreshold && TOA_LE>1)
       {

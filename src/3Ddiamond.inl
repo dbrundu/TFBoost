@@ -337,7 +337,6 @@ int main(int argv, char** argc)
     Hn2[i]=-C1.imag()/Nsamples;
     Hp2[i]=-C2.imag()/Nsamples;
     ztime2[i]=2*ztime[i]; // because of FFT timestep is doubled
-
     }
 
     if(i>=Nsamples/4+1){
@@ -379,6 +378,8 @@ int main(int argv, char** argc)
     double Hn_max=0,Hn_min=0;
     double Hp_max=0,Hp_min=0;
 
+    // sometimes the transfer function is inverted
+    // find absolute extremum and make sure is positive
     for (int i=0; i<Nsamples; i++){
        if(Hn_max<Hn3[i]){ Hn_max=Hn3[i]; }
        if(Hp_max<Hp3[i]){ Hp_max=Hp3[i]; }       
@@ -415,6 +416,7 @@ int main(int argv, char** argc)
     }   
     } 
 
+    //plot infotmations
     std::cout<< " " <<std::endl;
     std::cout<< " The resistance seen by the electron is Rn(z=" << dz <<") =" << RN << " ohm" <<std::endl;
     std::cout<< " The resistance seen by the electron is Rp(z=" << dz <<") =" << RP << " ohm" <<std::endl;
@@ -560,6 +562,9 @@ int main(int argv, char** argc)
   HostSignal_t time_tfp;
   HostSignal_t current_tfp;
 
+  HostSignal_t delta_time;
+  HostSignal_t delta_val;
+
   auto kernel1 = hydra::make_spiline<double>(time_tfn, current_tfn );
   auto kernel2 = hydra::make_spiline<double>(time_tfn, current_tfn );
 
@@ -570,6 +575,7 @@ int main(int argv, char** argc)
 
     for(int nz=1; nz<=Ndz; nz++){
 
+    TString tf_delta = "../examples/conv_input_files/delta.txt";
     TString tf_infile1 = OutputDirectory + "/H3D_TF/Hnz";
     TString tf_infile2 = OutputDirectory + "/H3D_TF/Hpz";
 
@@ -577,6 +583,14 @@ int main(int argv, char** argc)
     tf_infile2 += std::to_string(nz) + ".txt";
 
     int Nskip = 0;
+
+    // get resistences at step dz
+    double RN= Rn*(nz-0.5)/Ndz;  
+    double RP= Rp*(Ndz+0.5-nz)/Ndz; 
+
+    std::cout<<"read Delta Function path="<< tf_delta.Data() << std::endl;     
+    tfboost::ReadTF( tf_delta, Nskip, delta_time, delta_val, /*scaling*/1.0, /*double range?*/true);
+    auto kernelD = hydra::make_spiline<double>(delta_time, delta_val );
 
     std::cout<<"read Trasfer functions Hnz path="<< tf_infile1.Data() << std::endl;     
     tfboost::ReadTF( tf_infile1, Nskip, time_tfn, current_tfn, /*scaling*/1.0, /*double range?*/true);
@@ -679,9 +693,6 @@ int main(int argv, char** argc)
     
     #if HYDRA_DEVICE_SYSTEM==CUDA
     auto fft_backend = hydra::fft::cufft_f64;
-    std::cout <<"----------------CUDA ENABLED--------------"<< std::endl;
-    std::cout <<"----------------CUDA ENABLED--------------"<< std::endl;
-    std::cout <<"----------------CUDA ENABLED--------------"<< std::endl;
     #endif
 
     std::cout<< "CONVOLUTION WITH H(Z="<< nz <<")"<< std::endl;
@@ -689,12 +700,38 @@ int main(int argv, char** argc)
      HostSignal_t conv_data_n(Nsamples);
      HostSignal_t conv_data_p(Nsamples);
 
+ /*     HostSignal_t conv_delta_n(Nsamples);
+     HostSignal_t conv_delta_p(Nsamples); */
+
      auto signal_e = hydra::make_spiline<double>(time, current_e );
      auto signal_h = hydra::make_spiline<double>(time, current_h ); 
+
+  /*   //convolution with delta to round corners
+     tfboost::Do_Convolution(fft_backend, kernelD, signal_e, conv_delta_n, min, max, Nsamples);
+     tfboost::Do_Convolution(fft_backend, kernelD, signal_h, conv_delta_p, min, max, Nsamples);
    
-    //convolution
-     tfboost::Do_Convolution(fft_backend, kernel1, signal_e, conv_data_n, min, max, Nsamples);
-     tfboost::Do_Convolution(fft_backend, kernel2, signal_h, conv_data_p, min, max, Nsamples);
+    auto delta_e = hydra::make_spiline<double>(time, conv_delta_n );
+    auto delta_h = hydra::make_spiline<double>(time, conv_delta_p );
+
+    //convolution after delta
+    tfboost::Do_Convolution(fft_backend, kernel1, delta_e, conv_data_n, min, max, Nsamples);
+    tfboost::Do_Convolution(fft_backend, kernel2, delta_h, conv_data_p, min, max, Nsamples); */
+
+    if (RN >500.){
+    tfboost::Do_Convolution(fft_backend, kernel1, signal_e, conv_data_n, min, max, Nsamples);
+    }
+
+    else if (RN<=500.){
+    tfboost::Do_Convolution(fft_backend, kernelD, signal_e, conv_data_n, min, max, Nsamples);
+    }
+
+    if (RP >500.){
+    tfboost::Do_Convolution(fft_backend, kernel2, signal_h, conv_data_p, min, max, Nsamples); 
+    }
+
+    else if (RP<=500.){
+    tfboost::Do_Convolution(fft_backend, kernelD, signal_h, conv_data_p, min, max, Nsamples);
+    }
 
      //check scale factor
      
@@ -977,9 +1014,7 @@ int main(int argv, char** argc)
 }
 
 double Rmz (double x, double tau_np){
-
   return exp(-x/tau_np)/tau_np ;
-
 }
 
 #endif

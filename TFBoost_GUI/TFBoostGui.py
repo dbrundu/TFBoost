@@ -200,20 +200,22 @@ def singlestg():
 
     if (logo3.winfo_exists() ):
         framedouble.place_forget()
-
+        btn2.configure(bg="#f0f0f0")
     if (logo6.winfo_exists()):
         framecsa.place_forget()
-
+        btn3.configure(bg="#f0f0f0")
     if (btnFromFile.winfo_exists()):
         frameFF.place_forget()
-
+        btn4.configure(bg="#f0f0f0")
     if (btnRM4b.winfo_exists()):
         frameWA.place_forget()   
-
+        btn5.configure(bg="#f0f0f0")
     if (btnRM3d.winfo_exists()):
         frame3D.place_forget()
+        btn6.configure(bg="#f0f0f0")
 
     framesingle.place(x=20,y=170)
+    btn1.configure(bg="light blue")
 
     # png circuit
     logo2 =Label(framesingle,image=my_logo2)
@@ -406,20 +408,26 @@ def csastg():
         
     if (logo2.winfo_exists()):
         framesingle.place_forget()
+        btn1.configure(bg="#f0f0f0")
 
     if (logo3.winfo_exists()):
         framedouble.place_forget()
+        btn2.configure(bg="#f0f0f0")
   
     if (btnFromFile.winfo_exists()):
         frameFF.place_forget()
+        btn4.configure(bg="#f0f0f0")
 
     if (btnRM4b.winfo_exists()):
         frameWA.place_forget()
+        btn5.configure(bg="#f0f0f0")
 
     if (btnRM3d.winfo_exists()):
         frame3D.place_forget()
+        btn6.configure(bg="#f0f0f0")
 
     framecsa.place(x=20,y=170)
+    btn3.configure(bg="light blue")
 
 
     # png circuit
@@ -614,21 +622,26 @@ def FromFile():
 
     if (logo2.winfo_exists()):
         framesingle.place_forget()
+        btn1.configure(bg="#f0f0f0")
 
     if (logo3.winfo_exists()):
         framedouble.place_forget()
+        btn2.configure(bg="#f0f0f0")
 
     if (logo6.winfo_exists()):
         framecsa.place_forget()
-
+        btn3.configure(bg="#f0f0f0")
     if (btnRM4b.winfo_exists()):
         frameWA.place_forget()
+        btn5.configure(bg="#f0f0f0")
 
     if (btnRM3d.winfo_exists()):
         frame3D.place_forget()
+        btn6.configure(bg="#f0f0f0")
   
     
     frameFF.place(x=0,y=170)
+    btn4.configure(bg="light blue")
 
 
     lab2 = Label(frameFF, text='Perform convolution with TFBoost using a transfer function from an existing file.',font = ("Modern",9))
@@ -713,21 +726,26 @@ def WaveAnalysis():
 
     if (logo2.winfo_exists()):
         framesingle.place_forget()
+        btn1.configure(bg="#f0f0f0")
 
     if (logo3.winfo_exists()):
         framedouble.place_forget()
+        btn2.configure(bg="#f0f0f0")
 
     if (logo6.winfo_exists()):
         framecsa.place_forget()
+        btn3.configure(bg="#f0f0f0")
 
     if (btnRM3.winfo_exists()):
         frameFF.place_forget()
+        btn4.configure(bg="#f0f0f0")
 
     if (btnRM3d.winfo_exists()):
         frame3D.place_forget()
-  
+        btn6.configure(bg="#f0f0f0")
     
     frameWA.place(x=20,y=170)
+    btn5.configure(bg="light blue")
 
     lab2 = Label(frameWA, text='Perform a waveform analysis with TFBoost. No convolution is done, only the measurements.',font = ("Modern",9))
     lab2.place(x=20,y=5)
@@ -805,21 +823,27 @@ def diamond():
 
     if (logo2.winfo_exists()):
         framesingle.place_forget()
+        btn1.configure(bg="#f0f0f0")
 
     if (logo3.winfo_exists()):
         framedouble.place_forget()
+        btn2.configure(bg="#f0f0f0")
 
     if (logo6.winfo_exists()):
         framecsa.place_forget()
+        btn3.configure(bg="#f0f0f0")
 
     if (btnRM3.winfo_exists()):
         frameFF.place_forget()
+        btn4.configure(bg="#f0f0f0")
 
     if (btnRM4b.winfo_exists()):
         frameWA.place_forget()
+        btn5.configure(bg="#f0f0f0")
   
     
     frame3D.place(x=20,y=170)
+    btn6.configure(bg="light blue")
 
 
     lab2 = Label(frame3D, text='Perform the convolution of a set of currents of an ideal 3D Diamond Detector ',font = ("Modern",9))
@@ -1128,20 +1152,26 @@ def doublestg():
 
     if (logo4.winfo_exists()):
         framesingle.place_forget()
+        btn1.configure(bg="#f0f0f0")
 
     if (logo6.winfo_exists()):
         framecsa.place_forget()
+        btn3.configure(bg="#f0f0f0")
 
     if (btnFromFile.winfo_exists()):
         frameFF.place_forget()
+        btn4.configure(bg="#f0f0f0")
 
     if (btnRM4b.winfo_exists()):
         frameWA.place_forget()
+        btn5.configure(bg="#f0f0f0")
 
     if (btnRM3d.winfo_exists()):
         frame3D.place_forget()
+        btn6.configure(bg="#f0f0f0")
   
     framedouble.place(x=20,y=170)
+    btn2.configure(bg="light blue")
 
 
 
@@ -1395,6 +1425,7 @@ def openTFgui():
         my_canvas = Canvas(TF,width=750,height=1,bg='black')
         my_canvas.place(x=20,y=27)
         
+        global btn1,btn2,btn3,btn4,btn5,btn6
         btn1 = Button(TF, text="Single stage TIA",command=singlestg,font = ("Arial",12))
         btn1.place(x=100,y=50)
 
@@ -1456,7 +1487,7 @@ def openTFgui():
         btnRM4b = Button(frameWA, text="SET \nWaveform Analysis",command=rm,font = ("Arial",9))
 
         global btnRM3d
-        btnRM3d = Button(frame3D, text="Calculate Transfer Functions \n and Make Analysis \n or Make Currents Sum",command=write3D,font = ("Arial",9))
+        btnRM3d = Button(frame3D, text="Calculate all Transfer Functions \n Make Convolutions \n and currents sum",command=write3D,font = ("Arial",9))
 
         global btnFromFile
         btnFromFile = Button(frameFF, text="Choose Transfer Function file",command=FromFileopen,font = ("Arial",9))

@@ -398,8 +398,6 @@ int main(int argv, char** argc)
   canvas.SaveAs(OutputDirectory + "plots/" + OutputFileName + ".pdf");
   
   tfboost::SaveConvToFile(conv_data_h, time, dT, OutputDirectory + OutputFileName + ".txt" );
-  tfboost::SaveConvToFile(current, time, dT, OutputDirectory + "curr.txt" );
-  tfboost::SaveConvToFile(voltage2, time, dT, OutputDirectory + "volt2.txt" );
   
   return 0;
 }
