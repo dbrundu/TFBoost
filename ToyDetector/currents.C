@@ -80,23 +80,25 @@ double Ie[N][Ndz];
 double Ih[N][Ndz];
 
 
-//CONTAINERS FOR TATAL CURRENTS
+//CONTAINERS FOR TOTAL CURRENTS
 double IeT[N];
 double IhT[N];
 
 for(int i=0; i<N; i++){
-IeT[i]=1*1e-23;
-IhT[i]=1*1e-23;
+IeT[i]=0.0;
+IhT[i]=0.0;
 }
 
 // CHARGE COLLECTION TIME FOR THE CARRIERS
 double te, th;
 
-// DISTANCE BETWEEN ELECTRODES
+// DISTANCE BETWEEN ELECTRODES (~39um ATLAS geometry)
 double d=39; 
+
+// POSITION VARIABLE
 double x=0;
 
-// SATURATION VELOCITIES
+// SATURATION VELOCITIES (diamond)
 double ve_sat=0.27; // um/ps
 double vh_sat=0.10; // um/ps
 
@@ -108,6 +110,8 @@ float qi=3.8*1e-3/Ndz;
     // CASUAL POSITION AT Z=0 AND Z=h (RANDOM DIRETION FOR EVERY TRACK)
 	double x1 = gRandom->Rndm() * d;
 	//double x2 = gRandom->Rndm() * d;
+
+	// if x1=x2 tracks parallel to columns
 	double x2 = x1;
 
 		for (int j=1; j<=Ndz; j++){
@@ -144,7 +148,7 @@ float qi=3.8*1e-3/Ndz;
 				IeT[i]+=( qi* ve_sat/d );
 				}
 				else if (i>=te){
-				Ie[i][j]= 1e-23;
+				Ie[i][j]= 0.0;
 				}
 
 				if(i<th){
@@ -152,7 +156,7 @@ float qi=3.8*1e-3/Ndz;
 				IhT[i]+=( qi* vh_sat/d );
 				}
 				else if (i>=th){
-				Ih[i][j]= 1e-23;
+				Ih[i][j]= 0.0;
 				}
 
 			if(i==0)
