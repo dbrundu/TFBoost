@@ -117,7 +117,7 @@ def openFileOutput():
 
 
 def writeCFG( ):
-    text_file = open("../etc/resampling.cfg", 'w+')
+    text_file = open("../../etc/resampling.cfg", 'w+')
     if(single.get()==1):
         text_file.write('\nSingleFile = true;\n') 
         text_file.write('\nInputFileCurrent  = ' + '"' + os.path.split(filechosen.name)[0] + '/' + os.path.split(filechosen.name)[1] + '";')
@@ -143,7 +143,7 @@ def writeCFG( ):
 
     text_file.close()
 
-    subprocess.run(["./../build/resampling_tbb", "ls -l"])
+    subprocess.run(["./../../build/resampling_tbb", "ls -l"])
 
 
 def run_results ():

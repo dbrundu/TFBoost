@@ -1097,7 +1097,7 @@ def write3D() :
     dT.set(dt_entry.get())
     Ndz.set(ndz_entry.get())
 
-    text_file = open("../etc/3Ddiamond.cfg", 'w+')
+    text_file = open("../../etc/3Ddiamond.cfg", 'w+')
 
     text_file.write('\nConvolution        =true;\n')
     text_file.write('\nInputDirectory     =' + '"' + folder_selected1 + '";\n')
@@ -1136,7 +1136,7 @@ def write3D() :
 
     text_file.close()
 
-    subprocess.run(["./../build/3Ddiamond_tbb", "ls -l"])
+    subprocess.run(["./../../build/3Ddiamond_tbb", "ls -l"])
 
 
 def doublestg():
@@ -1748,7 +1748,7 @@ def resamp():
 
 def writeCFG( ):
 
-    text_file = open("../etc/configuration.cfg", 'w+')
+    text_file = open("../../etc/configuration.cfg", 'w+')
     text_file.write('\nInputDirectory     =' + '"' + folder_selected1 + '";\n')
     text_file.write('\nOutputDirectory     =' + '"' + folder_selected2 + '";\n')
 
@@ -2058,7 +2058,7 @@ def writeCFG( ):
 
         text_file.write('\nFromFile :{\n')
         text_file.write('ID        = 5;\n')
-        text_file.write('TFFile      = "../examples/conv_input_files/3Ddiamond.txt";\n')
+        text_file.write('TFFile      = "../../examples/conv_input_files/3Ddiamond.txt";\n')
         text_file.write('NlinesToSkip= 0;\n') 
         text_file.write('Nsamples        = ' + str(int(Nsamples.get())) +';\n') 
         text_file.write('Nbins       = 50;\n')
@@ -2086,7 +2086,7 @@ def writeCFG( ):
         shutil.rmtree(directory + '/data')
         os.makedirs(dir2)
 
-    subprocess.run(["./../build/analysis_tbb", "ls -l"])
+    subprocess.run(["./../../build/analysis_tbb", "ls -l"])
 
 
 my_logo = ImageTk.PhotoImage(Image.open("TFB_guiFiles/logo.png"))

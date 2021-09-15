@@ -1,6 +1,6 @@
 ## TFBoost
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-![Version](https://img.shields.io/badge/version-v0.2--alpha-yellowgreen)
+![Version](https://img.shields.io/badge/version-v0.3--alpha-yellowgreen)
 ![Issues](https://img.shields.io/github/issues/dbrundu/TFBoost)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4265385.svg)](https://doi.org/10.5281/zenodo.4265385)
 
@@ -13,14 +13,15 @@ The available transfer functions are:
 - Two Transimpedance, with 1 and 2 stages, 
 - CSA, 
 - Ideal integrator, described as the input impedance of a CSA, 
-- Order-n Butterworth filter. 
+- Order-n Butterworth filter,
+- RC filter.
 
 The input signals are read from files as a set of sampling points. The application performs also a set of measurements on the convoluted output signals such as: arrival time, with leading edge and constant fraction discrimination, maximum value and its corresponding time, slope and voltage on discrimination thresholds, etc. Morover a simulated noise, white or red, can be added to the output signal. The computation of the convolution can be turned off, and the set of measurements can thus be applied to real signals.
 
 TFBoost has also a Graphical User Interface written in Python3:
 
-<img src="gui.png" width="800">
-<img src="gui2.png" width="800">
+<img src="gui.png" width="600">
+<img src="gui2.png" width="675">
 
 Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, developed within the TIMESPOT collaboration to simulate the response of solid state sensors, TFBoost will be part of a complete software for simulation of signals in solid state detectors, from the generation in the sensor to the output of the readout electronics.
 
@@ -75,9 +76,9 @@ python3 TFBoostGui.py
 
 ## Installation under Ubuntu Linux
 To install TFBoost on Ubuntu the following scripts can be used:
-[TFBoost install](https://downgit.github.io/#/home?url=https://github.com/gianmatteocossu/TFBoost/tree/master/INSTALL_on_UBUNTU)
+[TFBoost install](https://downgit.github.io/#/home?url=https://github.com/dbrundu/TFBoost/tree/master/install)
 
-Follow the instruction in file README_TO_INSTALL.<br />
+Follow the instruction in file README.md.<br />
 After everything is set, the GUI will open simply typing in a terminal:
 ```bash
 TFB
