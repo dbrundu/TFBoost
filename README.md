@@ -75,9 +75,9 @@ python3 TFBoostGui.py
 
 ## Installation under Ubuntu Linux
 To install TFBoost on Ubuntu the following scripts can be used:
-[TFBoost install](https://downgit.github.io/#/home?url=https://github.com/gianmatteocossu/TFBoost/tree/master/INSTALL_on_UBUNTU)
+[TFBoost install](https://downgit.github.io/#/home?url=https://github.com/dbrundu/TFBoost/tree/master/install)
 
-Follow the instruction in file README_TO_INSTALL.<br />
+Follow the instruction in file README.md.<br />
 After everything is set, the GUI will open simply typing in a terminal:
 ```bash
 TFB
