@@ -17,11 +17,11 @@ bash packages
 
 4. Finally to install Hydra and TFBoost run the following commands:
 ```bash
-bash bash TFBoost_installer
+bash TFBoost_installer
 ```
 or, if you are using Ubuntu with Windows Linux Subsystem, the following one:
 ```bash
-bash bash TFBoost_installer_WSL
+bash TFBoost_installer_WSL
 ```
 After TFBoost is configured and built, you can run it 
 with the GUI typing in a terminal: 
