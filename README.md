@@ -1,6 +1,6 @@
 ## TFBoost
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-![Version](https://img.shields.io/badge/version-v0.2--alpha-yellowgreen)
+![Version](https://img.shields.io/badge/version-v0.3--alpha-yellowgreen)
 ![Issues](https://img.shields.io/github/issues/dbrundu/TFBoost)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4265385.svg)](https://doi.org/10.5281/zenodo.4265385)
 
