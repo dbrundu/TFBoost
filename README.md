@@ -13,7 +13,8 @@ The available transfer functions are:
 - Two Transimpedance, with 1 and 2 stages, 
 - CSA, 
 - Ideal integrator, described as the input impedance of a CSA, 
-- Order-n Butterworth filter. 
+- Order-n Butterworth filter,
+- RC filter.
 
 The input signals are read from files as a set of sampling points. The application performs also a set of measurements on the convoluted output signals such as: arrival time, with leading edge and constant fraction discrimination, maximum value and its corresponding time, slope and voltage on discrimination thresholds, etc. Morover a simulated noise, white or red, can be added to the output signal. The computation of the convolution can be turned off, and the set of measurements can thus be applied to real signals.
 
