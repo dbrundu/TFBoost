@@ -156,7 +156,9 @@ def writeCFG( ):
  
     text_file.close()
 
-    subprocess.run(["./../../build/deconvolution_tbb", "ls -l"])
+    os.chdir('../../build')    
+    subprocess.run(["./deconvolution_tbb", "ls -l"])
+    os.chdir('../gui/linux')  
 
 
 def run_results ():

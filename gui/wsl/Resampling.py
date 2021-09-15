@@ -143,7 +143,9 @@ def writeCFG( ):
 
     text_file.close()
 
-    subprocess.run(["./../../build/resampling_tbb", "ls -l"])
+    os.chdir('../../build')    
+    subprocess.run(["./resampling_tbb", "ls -l"])
+    os.chdir('../gui/wsl') 
 
 
 def run_results ():

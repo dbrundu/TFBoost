@@ -1136,7 +1136,11 @@ def write3D() :
 
     text_file.close()
 
-    subprocess.run(["./../../build/3Ddiamond_tbb", "ls -l"])
+    os.chdir('../../build')    
+    subprocess.run(["./3Ddiamond_tbb", "ls -l"])
+    print("Previous working directory: {0}".format(os.getcwd()))
+    os.chdir('../gui/linux') 
+    print("Current working directory: {0}".format(os.getcwd()))
 
 
 def doublestg():
@@ -2085,8 +2089,10 @@ def writeCFG( ):
     if os.path.exists(dir2):
         shutil.rmtree(directory + '/data')
         os.makedirs(dir2)
-
-    subprocess.run(["./../../build/analysis_tbb", "ls -l"])
+    
+    os.chdir('../../build')    
+    subprocess.run(["./analysis_tbb", "ls -l"])
+    os.chdir('../gui/linux') 
 
 
 my_logo = ImageTk.PhotoImage(Image.open("TFB_guiFiles/logo.png"))

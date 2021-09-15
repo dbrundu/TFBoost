@@ -38,7 +38,7 @@ then
   echo $ans1
   if [[ $ans1 = "PATH TO ROOT FOLDER" ]]
   then
-	ans3=$(zenity --file-selection --directory --filename '/')
+	ans3=$(zenity --file-selection --directory --filename '$PWD')
   sleep 1
   echo $ans3
   (
@@ -101,7 +101,7 @@ done
 
 echo '' >> ~/.bashrc
 echo 'TFB () {   
-   cd ' ${PWD}'/TFBoost/TFBoost_GUI
+   cd ' ${PWD}'/TFBoost/gui/linux
    python3 TFBoostGui.py
 }
 ' >> ~/.bashrc
