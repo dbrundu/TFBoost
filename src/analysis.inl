@@ -429,6 +429,14 @@ int main(int argv, char** argc)
       }//end switch
 
 
+      // Introduce a Low Pass Filter
+      if(c.LowPassFilter && !c.DoMeasurementsWithNoise){
+          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
+      }
+
+
       // Time Digitization of the signal
       // This step is done only if we are not requesting noise
       if(c.MakeTimeDigitization && !c.DoMeasurementsWithNoise)
@@ -446,13 +454,6 @@ int main(int argv, char** argc)
       // This step is done only if we are not requesting noise
       if(c.MakeVoltageDigitization && !c.DoMeasurementsWithNoise)
         tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
-
-      // Introduce a Low Pass Filter
-      if(c.LowPassFilter && !c.DoMeasurementsWithNoise){
-          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
-          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
-          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
-      }
 
       
 
@@ -511,13 +512,13 @@ int main(int argv, char** argc)
     
     measures[_toa_le]     = c.TOTcorrection? tfboost::algo::CorrectTOA(measures[_toa_le], measures[_tot], c.TOT_a, c.TOT_b) : measures[_toa_le]; */
 
+
+
     // adding time tagger resolution
     if(c.TimeReferenceResolution)
       for(auto key : {_toa_le, _tpeak, _toa_cfd, _toa_rm, _tot} )
         measures[key] += TR_res;
-    
-
- 
+     
     
     if(c.MakeTheoreticalTOA){
       auto prob_curve = tfboost::ComputeTOAcurve( TOA_CFD, TOA_CFD-100, TOA_CFD+100, 
@@ -571,6 +572,14 @@ int main(int argv, char** argc)
           auto noise = tfboost::Noise(c.sigma_noise, c.UseRedNoise, c.r_rednoise);
           noise.AddNoiseToSignal( conv_data_h, S(), c );
       }
+
+     // Introduce a Low Pass Filter
+      // simulating an oscilloscope
+      if(c.LowPassFilter && !c.FilterOnlyNoise){
+          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
+      }
       
       
      // Digitization of the signal
@@ -583,19 +592,9 @@ int main(int argv, char** argc)
         c.dT        = c.sampling_dT;
         c.Nsamples  = conv_data_h.size();
         hist_convol.SetBins(c.Nsamples, min, maxplot);
-      }
+      }  
       
-      
-      // Introduce a Low Pass Filter
-      // simulating an oscilloscope
-      if(c.LowPassFilter && !c.FilterOnlyNoise){
-          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
-          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
-          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
-      }
-      
-
-      // Voltage Digitization of the signal
+       // Voltage Digitization of the signal
       // This step is done only if we are requesting noise
       if(c.MakeVoltageDigitization)
         tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
@@ -613,14 +612,11 @@ int main(int argv, char** argc)
       }
       
 
-
-      
-
       // Condition to avoid to process empty signal
       if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_noise) == conv_data_h.size() ) 
         { WARNING_LINE("Skipping empty event...") continue; }
       
-      
+ 
 
      /*-------------------------------------------------
       * Start measurmenets with noise
@@ -630,7 +626,7 @@ int main(int argv, char** argc)
       size_t new_offset = c.offset*1e-12 / c.sampling_dT;
 
       double rms_noise = 0.0;
-	  for (size_t i=0; i<new_offset; i++) rms_noise += conv_data_h[i] * conv_data_h[i];
+	    for (size_t i=0; i<new_offset; i++) rms_noise += conv_data_h[i] * conv_data_h[i];
       rms_noise = ::sqrt(rms_noise/new_offset);
 
       // initialize indices
@@ -657,6 +653,11 @@ int main(int argv, char** argc)
       measures_noise[_vonth_le]   = conv_data_h[TOA_LE_noise_idx];    
       measures_noise[_vonth_cfd]  = conv_data_h[TOA_CFD];    
       measures_noise[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
+
+      //fill electronic jitter histograms
+      hist_JitterCFD.Fill(measures_noise[_toa_cfd]-measures[_toa_cfd]);
+      hist_JitterLE.Fill(measures_noise[_toa_le]-measures[_toa_le]);
+      hist_JitterRM.Fill(measures_noise[_toa_rm]-measures[_toa_rm]);
 
       
       if(c.MakeLinearFitNearThreshold && TOA_LE>1)

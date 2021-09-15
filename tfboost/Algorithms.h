@@ -47,7 +47,7 @@ namespace algo {
 template<typename Iterable>
 inline size_t LeadingEdge(Iterable const& vout, double const& Vthr)
 {
-    auto trigger = (double v) { return v > Vthr; };
+    auto trigger = [=] (double v) { return v > Vthr; };
     auto it = hydra_thrust::find_if(vout.begin(), vout.end(), trigger );
     ERROR_RETURN( it==vout.end(), "In LeadingEdge: no element found.", vout.size() )
     return  it-vout.begin();

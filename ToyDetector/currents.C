@@ -109,10 +109,10 @@ float qi=3.8*1e-3/Ndz;
 
     // CASUAL POSITION AT Z=0 AND Z=h (RANDOM DIRETION FOR EVERY TRACK)
 	double x1 = gRandom->Rndm() * d;
-	//double x2 = gRandom->Rndm() * d;
+	double x2 = gRandom->Rndm() * d;
 
 	// if x1=x2 tracks parallel to columns
-	double x2 = x1;
+	//double x2 = x1;
 
 		for (int j=1; j<=Ndz; j++){
  
