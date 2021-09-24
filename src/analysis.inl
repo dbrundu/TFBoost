@@ -653,12 +653,13 @@ int main(int argv, char** argc)
       measures_noise[_vonth_le]   = conv_data_h[TOA_LE_noise_idx];    
       measures_noise[_vonth_cfd]  = conv_data_h[TOA_CFD];    
       measures_noise[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
-
+      
+      if(!(c.MakeGaussianFitNearVmax && TOA_CFD>1)){
       //fill electronic jitter histograms
       hist_JitterCFD.Fill(measures_noise[_toa_cfd]-measures[_toa_cfd]);
       hist_JitterLE.Fill(measures_noise[_toa_le]-measures[_toa_le]);
       hist_JitterRM.Fill(measures_noise[_toa_rm]-measures[_toa_rm]);
-
+      }
       
       if(c.MakeLinearFitNearThreshold && TOA_LE>1)
       {
