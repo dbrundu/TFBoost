@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------
  *
- *   Copyright (C) 2020 Davide Brundu, Gianmatteo Cossu
+ *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
  *
  *   This file is part of TFBoost Library.
  *
@@ -25,55 +25,78 @@
  *      Author: Davide Brundu
  */
  
-#ifndef CONFIGPARSER_H
-#define CONFIGPARSER_H
+#ifndef TFBOOST_CONFIGPARSER_H
+#define TFBOOST_CONFIGPARSER_H
     
+#include <tfboost/Types.h>
 #include <tfboost/Utils.h>
+#include <tfboost/Initializer.h>
 
     
 namespace tfboost { 
 
+/*
+ * Struct containing variables and methods to 
+ * parse the libconfig configuration.
+ */
 struct ConfigParser
 {
     ConfigParser( libconfig::Setting const& cfg_root )
     {
 
-        InputDirectory        = (const char*) cfg_root["InputDirectory"];
-        OutputDirectory       = (const char*) cfg_root["OutputDirectory"];
-        tf_inputfile          = (const char*) cfg_root["TFFile"];
-        TransferFunction      = (const char*) cfg_root["TransferFunction"];
-        InputFileExtension    = (const char*) cfg_root["InputFileExtension"];
-        conv_inputfile        = (const char*) cfg_root["ConvolutionFile"]; 
-        SingleFile            = (const char*) cfg_root["FileName"];
-        token                 = (const char*) cfg_root["token"];
         column                       = (int)  cfg_root["column"];
         offset                       = (int)  cfg_root["offset"]; 
         NlinesToSkip                 = (int)  cfg_root["NlinesToSkip"];
+        ADCnbits                     = (int)  cfg_root["ADCnbits"];
+
         LandauFluctuation            = (bool) cfg_root["LandauFluctuation"];
         MakeConvolution              = (bool) cfg_root["MakeConvolution"];
         SaveSinglePlotConvolution    = (bool) cfg_root["SaveSinglePlotConvolution"];
         SaveConvDataToFile           = (bool) cfg_root["SaveConvDataToFile"];
         MakeLinearFitNearThreshold   = (bool) cfg_root["MakeLinearFitNearThreshold"];
         MakeGaussianFitNearVmax      = (bool) cfg_root["MakeGaussianFitNearVmax"];
-        AddNoise                     = (bool) cfg_root["AddNoise"];
+        AddSimulatedNoise            = (bool) cfg_root["AddSimulatedNoise"];
+        DoMeasurementsWithNoise      = (bool) cfg_root["DoMeasurementsWithNoise"];
+        AddNoiseFromFiles            = (bool) cfg_root["AddNoiseFromFiles"];
+        FilterOnlyNoise              = (bool) cfg_root["FilterOnlyNoise"];
         UseRedNoise                  = (bool) cfg_root["UseRedNoise"];
         MakeTheoreticalTOA           = (bool) cfg_root["MakeTheoreticalTOA"];
         UseSameCurve                 = (bool) cfg_root["UseSameCurve"];
         IdxConvtoSave                = (int)  cfg_root["IdxConvtoSave"];
         Nfiles                       = (int)  cfg_root["MaxInputFiles"];
-        MakeDigitization             = (bool) cfg_root["MakeDigitization"];
+        MakeTimeDigitization         = (bool) cfg_root["MakeTimeDigitization"];
+        MakeVoltageDigitization      = (bool) cfg_root["MakeVoltageDigitization"];
+
         randomphase                  = (bool) cfg_root["randomphase"];
         TimeReferenceResolution      = (bool) cfg_root["TimeReferenceResolution"];
         TOTcorrection                = (bool) cfg_root["TOTcorrection"];
         PlotRMfit                    = (bool) cfg_root["PlotRMfit"];
         PlotLinFit                   = (bool) cfg_root["PlotLinFit"];
         PlotGausFit                  = (bool) cfg_root["PlotGausFit"];
+        LowPassFilter                = (bool) cfg_root["LowPassFilter"];
         DelayMonitoring              = (int)  cfg_root["DelayMonitoring"];
+        LowPassOrder                 = (int)  cfg_root["LowPassOrder"];
         TOT_a                      = (double) cfg_root["TOT_a"];
         TOT_b                      = (double) cfg_root["TOT_b"];
         LE_reject_nonoise          = (double) cfg_root["LE_reject_nonoise"];
         LE_reject_noise            = (double) cfg_root["LE_reject_noise"]; 
+        scale_factor               = (double) cfg_root["scale_factor"]; 
+        landaufactor_mean          = (double) cfg_root["landaufactor_mean"];
+        landaufactor_sigma         = (double) cfg_root["landaufactor_sigma"]; 
+        timeref_sigma              = (double) cfg_root["timeref_sigma"]; 
+        LowPassFrequency           = (double) cfg_root["LowPassFrequency"];
+        ADCmin                     = (double) cfg_root["ADCmin"];
+        ADCmax                     = (double) cfg_root["ADCmax"];
 
+        InputDirectory        = (const char*) cfg_root["InputDirectory"];
+        OutputDirectory       = (const char*) cfg_root["OutputDirectory"];
+        NoiseDirectory        = AddNoiseFromFiles? (const char*) cfg_root["NoiseDirectory"] : "./";
+        tf_inputfile          = (const char*) cfg_root["TFFile"];
+        TransferFunction      = (const char*) cfg_root["TransferFunction"];
+        InputFileExtension    = (const char*) cfg_root["InputFileExtension"];
+        SingleFile            = (const char*) cfg_root["FileName"];
+        token                 = (const char*) cfg_root["token"];
+        
         const libconfig::Setting& cfg_tf  = cfg_root[TransferFunction];
 
         Nsamples                   = (int)    cfg_tf["Nsamples"];
@@ -90,9 +113,11 @@ struct ConfigParser
         minplot                    = (double) cfg_tf["minplot"];
         maxplot                    = (double) cfg_tf["maxplot"]; 
         RM_delay                   = (double) cfg_tf["RM_delay"]; 
+       
         
         if(!InputDirectory.EndsWith("/")) InputDirectory   = InputDirectory+"/";
         if(!OutputDirectory.EndsWith("/")) OutputDirectory = OutputDirectory+"/";
+        
         
         dT_0 = dT;
         Nsamples_0    = Nsamples;
@@ -106,7 +131,9 @@ struct ConfigParser
         TF_IDs[5] = "FromFile";
         
         CheckTrFunctionID();
+        CheckBooleansConsistency();
     }
+    
     
     
     inline void ResetInitialValues() const {
@@ -121,28 +148,37 @@ struct ConfigParser
         SAFE_EXIT( search == TF_IDs.end() , "Wrong Tr.Function configuration ID.")
         SAFE_EXIT( TransferFunction != search->second , "Wrong Tr.Function configuration ID.")
     }
+    
+    
+    inline void CheckBooleansConsistency(){
+        SAFE_EXIT( AddSimulatedNoise && AddNoiseFromFiles, "You can't request to simulate noise AND add the noise from file, choose one option.")
+    }
 
 
-    TString InputDirectory, OutputDirectory;
+    TString InputDirectory, OutputDirectory, NoiseDirectory;
     TString tf_inputfile, TransferFunction, InputFileExtension, conv_inputfile, SingleFile, token;
 
     bool LandauFluctuation, MakeConvolution, SaveSinglePlotConvolution;
     bool SaveConvDataToFile, MakeLinearFitNearThreshold, MakeGaussianFitNearVmax, TimeReferenceResolution;
-    bool AddNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeDigitization, randomphase, TOTcorrection;
+    bool AddSimulatedNoise, UseRedNoise, MakeTheoreticalTOA, UseSameCurve, MakeTimeDigitization, randomphase, TOTcorrection;
+    bool DoMeasurementsWithNoise, AddNoiseFromFiles;
     bool PlotRMfit, PlotLinFit, PlotGausFit;
+    bool LowPassFilter, FilterOnlyNoise, MakeVoltageDigitization;
     
-    int column, ID, Nbins;
+    int column, ID, Nbins, LowPassOrder, ADCnbits;
     
     size_t offset, NlinesToSkip, IdxConvtoSave, Nfiles, bound_fit, DelayMonitoring;
     
     double LEthr, CFD_fr, sigma_noise, r_rednoise, LE_reject_nonoise, LE_reject_noise, RM_delay;
     double minplot, maxplot, TOT_a, TOT_b;
+    double scale_factor, landaufactor_mean, landaufactor_sigma, timeref_sigma, LowPassFrequency;
+    double ADCmin, ADCmax;
     
     mutable size_t Nsamples;
     mutable double dT;
     mutable double sampling_dT;
     
-    
+
     
 private: // for initial configurations
     
@@ -156,189 +192,61 @@ private: // for initial configurations
 
 
 
-struct HistConfigParser
-{
-    HistConfigParser( libconfig::Setting const& cfg_root )
-    {
 
-    const libconfig::Setting& cfg_tf  = cfg_root["HistogramsPars"];
+struct HistConfig {
 
-    TOALE_min = (double) cfg_tf["TOALE_min"];
-    TOALE_max = (double) cfg_tf["TOALE_max"];
-    TOALE_Nbins = (int)  cfg_tf["TOALE_Nbins"];
+    TString name;
+    TString title;
+    TString xtitle;
+    TString ytitle;
+    double  min;
+    double  max;
+    int     Nbins;
     
-    TOACFD_min = (double) cfg_tf["TOACFD_min"];
-    TOACFD_max = (double) cfg_tf["TOACFD_max"];
-    TOACFD_Nbins = (int)  cfg_tf["TOACFD_Nbins"];
-    
-    TOARM_min = (double) cfg_tf["TOARM_min"];
-    TOARM_max = (double) cfg_tf["TOARM_max"];
-    TOARM_Nbins = (int)  cfg_tf["TOARM_Nbins"];
-    
-    TOACFDnoise_min = (double) cfg_tf["TOACFDnoise_min"];
-    TOACFDnoise_max = (double) cfg_tf["TOACFDnoise_max"];
-    TOACFDnoise_Nbins = (int)  cfg_tf["TOACFDnoise_Nbins"];
-    
-
-    TOALEnoise_min = (double) cfg_tf["TOALEnoise_min"];
-    TOALEnoise_max = (double) cfg_tf["TOALEnoise_max"];
-    TOALEnoise_Nbins = (int)  cfg_tf["TOALEnoise_Nbins"];
-    
-
-    TOARMnoise_min = (double) cfg_tf["TOARMnoise_min"];
-    TOARMnoise_max = (double) cfg_tf["TOARMnoise_max"];
-    TOARMnoise_Nbins = (int)  cfg_tf["TOARMnoise_Nbins"];
-    
-
-    Vmax_min = (double) cfg_tf["Vmax_min"];
-    Vmax_max = (double) cfg_tf["Vmax_max"];
-    Vmax_Nbins = (int)  cfg_tf["Vmax_Nbins"];
-    
-
-    TimeatVmax_min = (double) cfg_tf["TimeatVmax_min"];
-    TimeatVmax_max = (double) cfg_tf["TimeatVmax_max"];
-    TimeatVmax_Nbins = (int)  cfg_tf["TimeatVmax_Nbins"];
-    
-
-    Vmax_noise_min = (double) cfg_tf["Vmax_noise_min"];
-    Vmax_noise_max = (double) cfg_tf["Vmax_noise_max"];
-    Vmax_noise_Nbins = (int)  cfg_tf["Vmax_noise_Nbins"];
-    
-
-    Vth_CFD_min = (double) cfg_tf["Vth_CFD_min"];
-    Vth_CFD_max = (double) cfg_tf["Vth_CFD_max"];
-    Vth_CFD_Nbins = (int)    cfg_tf["Vth_CFD_Nbins"];
-    
-
-    Vth_LE_min = (double) cfg_tf["Vth_LE_min"];
-    Vth_LE_max = (double) cfg_tf["Vth_LE_max"];
-    Vth_LE_Nbins = (int)    cfg_tf["Vth_LE_Nbins"];
-    
-
-    Vth_RM_min = (double) cfg_tf["Vth_RM_min"];
-    Vth_RM_max = (double) cfg_tf["Vth_RM_max"];
-    Vth_RM_Nbins = (int)    cfg_tf["Vth_RM_Nbins"];
-    
-
-    Vth_CFD_noise_min = (double) cfg_tf["Vth_CFD_noise_min"];
-    Vth_CFD_noise_max = (double) cfg_tf["Vth_CFD_noise_max"];
-    Vth_CFD_noise_Nbins = (int)    cfg_tf["Vth_CFD_noise_Nbins"];
-    
-
-    Vth_RM_noise_min = (double) cfg_tf["Vth_RM_noise_min"];
-    Vth_RM_noise_max = (double) cfg_tf["Vth_RM_noise_max"];
-    Vth_RM_noise_Nbins = (int)    cfg_tf["Vth_RM_noise_Nbins"];
-    
-
-    Vth_LE_noise_min = (double) cfg_tf["Vth_LE_noise_max"];
-    Vth_LE_noise_max = (double) cfg_tf["Vth_LE_noise_max"];
-    Vth_LE_noise_Nbins = (int)    cfg_tf["Vth_LE_noise_Nbins"];
-    
-
-    dVdt_LE_min = (double) cfg_tf["dVdt_LE_min"];
-    dVdt_LE_max = (double) cfg_tf["dVdt_LE_max"];
-    dVdt_LE_Nbins = (int)    cfg_tf["dVdt_LE_Nbins"];
-    
-
-    dVdt_CFD_min = (double) cfg_tf["dVdt_CFD_min"];
-    dVdt_CFD_max = (double) cfg_tf["dVdt_CFD_max"];
-    dVdt_CFD_Nbins = (int)    cfg_tf["dVdt_CFD_Nbins"];
-    
-
-    dVdt_RM_min = (double) cfg_tf["dVdt_RM_min"];
-    dVdt_RM_max = (double) cfg_tf["dVdt_RM_max"];
-    dVdt_RM_Nbins = (int)    cfg_tf["dVdt_RM_Nbins"];
-    
-
-    dVdt_CFD_noise_min = (double) cfg_tf["dVdt_CFD_noise_min"];
-    dVdt_CFD_noise_max = (double) cfg_tf["dVdt_CFD_noise_max"];
-    dVdt_CFD_noise_Nbins = (int)    cfg_tf["dVdt_CFD_noise_Nbins"];
-    
-
-    dVdt_LE_noise_min = (double) cfg_tf["dVdt_LE_noise_min"];
-    dVdt_LE_noise_max = (double) cfg_tf["dVdt_LE_noise_max"];
-    dVdt_LE_noise_Nbins = (int)    cfg_tf["dVdt_LE_noise_Nbins"];
- 
-    VthRMoverVmax_min = (double) cfg_tf["VthRMoverVmax_min"];
-    VthRMoverVmax_max = (double) cfg_tf["VthRMoverVmax_max"];   
-    VthRMoverVmax_Nbins = (int) cfg_tf["VthRMoverVmax_Nbins"];
-    
-    TOT_min = (double) cfg_tf["TOT_min"];
-    TOT_max = (double) cfg_tf["TOT_max"];
-    TOT_Nbins = (int) cfg_tf["TOT_Nbins"];
-    
-    }
-
-
-
-    double TOALE_min,
-        TOALE_max,
-        TOACFD_min,
-        TOACFD_max,
-        TOARM_min,
-        TOARM_max,
-        TOACFDnoise_min,
-        TOACFDnoise_max,
-        TOALEnoise_min,
-        TOALEnoise_max,
-        TOARMnoise_min,
-        TOARMnoise_max,
-        Vmax_min,
-        Vmax_max,
-        TimeatVmax_min,
-        TimeatVmax_max,
-        Vmax_noise_min,
-        Vmax_noise_max,
-        Vth_CFD_min,
-        Vth_CFD_max,
-        Vth_LE_min,
-        Vth_LE_max,
-        Vth_RM_min,
-        Vth_RM_max,
-        Vth_CFD_noise_min,
-        Vth_CFD_noise_max,
-        Vth_RM_noise_min,
-        Vth_RM_noise_max,
-        Vth_LE_noise_min,
-        Vth_LE_noise_max,
-        dVdt_LE_min,
-        dVdt_LE_max,
-        dVdt_CFD_min,
-        dVdt_CFD_max,
-        dVdt_RM_min,
-        dVdt_RM_max,
-        dVdt_CFD_noise_min,
-        dVdt_CFD_noise_max,
-        dVdt_LE_noise_min,
-        dVdt_LE_noise_max,
-        VthRMoverVmax_min,
-        VthRMoverVmax_max,
-        TOT_min,
-        TOT_max;
-
-    int  TOALE_Nbins, TOACFD_Nbins, TOARM_Nbins, TOACFDnoise_Nbins, 
-        TOALEnoise_Nbins,
-        TOARMnoise_Nbins,
-        Vmax_Nbins,
-        TimeatVmax_Nbins,
-        Vmax_noise_Nbins,
-        Vth_CFD_Nbins,
-        Vth_LE_Nbins,
-        Vth_RM_Nbins,
-        Vth_CFD_noise_Nbins,
-        Vth_RM_noise_Nbins,
-        Vth_LE_noise_Nbins,
-        dVdt_LE_Nbins,
-        dVdt_CFD_Nbins,
-        dVdt_RM_Nbins,
-        dVdt_CFD_noise_Nbins,
-        dVdt_LE_noise_Nbins,
-        VthRMoverVmax_Nbins,
-        TOT_Nbins;
-
-
 };
 
+
+/*
+ * Struct containing the histograms
+ * array and to configure them,
+ * parsing the libconfig configuration.
+ */
+struct HistConfigParser
+{
+    using HistConfigs_t = std::array< HistConfig, _num_of_measures>;
+
+    HistConfigParser( libconfig::Setting const& cfg_root )
+    {
+        const libconfig::Setting& cfg_tf      = cfg_root["HistogramsPars"];
+        
+        const MeasuresKeys_t  keys            = MeasuresInitializer::get_keys();
+        const MeasuresNames_t names           = MeasuresInitializer::get_names();
+        
+        for(auto const& key : keys){
+        
+            configs[key].name          = TString("hist") + names[key];
+            configs[key].title         = (const char*)  cfg_tf[names[key]]["title"];
+            configs[key].xtitle        = (const char*)  cfg_tf[names[key]]["xtitle"];
+            configs[key].ytitle        = (const char*)  cfg_tf[names[key]]["ytitle"];
+            configs[key].min           = (double)       cfg_tf[names[key]]["min"];
+            configs[key].max           = (double)       cfg_tf[names[key]]["max"];
+            configs[key].Nbins         = (int)          cfg_tf[names[key]]["Nbins"];
+            
+            configs_noise[key].name    = TString("hist") + names[key] + TString("_noise");
+            configs_noise[key].title   = (const char*)  cfg_tf[names[key]+"_noise"]["title"];
+            configs_noise[key].xtitle  = (const char*)  cfg_tf[names[key]+"_noise"]["xtitle"];
+            configs_noise[key].ytitle  = (const char*)  cfg_tf[names[key]+"_noise"]["ytitle"];
+            configs_noise[key].min     = (double)       cfg_tf[names[key]+"_noise"]["min"];
+            configs_noise[key].max     = (double)       cfg_tf[names[key]+"_noise"]["max"];
+            configs_noise[key].Nbins   = (int)          cfg_tf[names[key]+"_noise"]["Nbins"];
+            
+        }
+    }
+    
+HistConfigs_t configs;
+HistConfigs_t configs_noise;
+
+};
 
 
 } //namespace tfboost 

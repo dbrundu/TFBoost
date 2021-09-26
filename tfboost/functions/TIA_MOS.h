@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------
  *
- *   Copyright (C) 2020 Davide Brundu, Gianmatteo Cossu
+ *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
  *
  *   This file is part of TFBoost Library.
  *
@@ -22,7 +22,7 @@
  * 
  *
  *  Created on: 01/06/2020
- *      Author: Davide Brundu, Gianmatteo Cossu
+ *      Author: Davide Brundu, Gian Matteo Cossu
  */
 
 
@@ -139,7 +139,7 @@ public:
         double tau = ::sqrt( (Rf*Ro*xi)/(1+G0) );
         double zeta_mos=0.5*((Rf*(ci+cf*(1+G0))+Ro*co)/(::sqrt((1+G0)*Ro*Rf*xi)));
         double tauz=Ro*cf/G0;    
-    
+
         //return /* (1./2.87184e-06) */  (Rf*G0/(1+G0))*exp(-x/tau)*(tau*x-tau*tauz+x*tauz)/(tau*tau*tau);
         
         if (zeta_mos>1.05){ // overdumped solution
@@ -147,11 +147,10 @@ public:
             double tau2=tau/(zeta_mos-::sqrt(zeta_mos*zeta_mos-1));
             return fdT*(Rf*G0/(1+G0))*((exp(-x/tau2)*(tau2+tauz)/(tau2*(tau2-tau1)))-(exp(-x/tau1)*(tau1+tauz)/(tau1*(tau2-tau1))));
         } 
-        else if (zeta_mos>0.95 || zeta_mos<=1.05){ //critically dumped solution
+        else if (zeta_mos>0.95 && zeta_mos<=1.05){ //critically dumped solution
             return fdT*(Rf*G0/(1+G0))*exp(-x/tau)*(tau*x-tau*tauz+x*tauz)/(tau*tau*tau);
         } 
         else if (zeta_mos>0. && zeta_mos<=0.95){  //underdumped solution
-
 			double a=zeta_mos;
 			double b=::sqrt(1-a*a);
             double expaxtau = ::exp(-a*x/tau);

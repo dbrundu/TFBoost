@@ -4,8 +4,15 @@
 *.o
 *.obj
 build/*
+Currents/*
+ToyDetector/Currents/*
+ToyDetector/Summed/*
+TFBoost_GUI_WSL/3Ddiamond/*
+Results/*
 docs/*
 others/*
+dev/*
+.vscode/*
 
 # Precompiled Headers
 *.gch

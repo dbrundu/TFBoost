@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------
  *
- *   Copyright (C) 2020 Davide Brundu, Gianmatteo Cossu
+ *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
  *
  *   This file is part of TFBoost Library.
  *
@@ -25,20 +25,30 @@
  *      Author: Davide Brundu
  */
  
-#ifdef TCODE_ENABLE
  
 #ifndef INTERFACE_TCODE_H_
 #define INTERFACE_TCODE_H_
 
 
+#define TCODE_ENABLE false
+
+#define TCODE_PIXEL_XMAX 56
+#define TCODE_PIXEL_YMAX 195
+
+#define TCODE_SELECT_POSFUNC 1
+ 
 
     
 namespace tfboost { 
 
 namespace tcode {
 
+    template<size_t N>
+    std::pair< double , double > GetHitPosition(TString const& filename);
 
-    inline std::pair< int , int > GetHitPosition(TString const& filename)
+
+    template<>
+    std::pair< double , double > GetHitPosition<0>(TString const& filename)
     {
 
         size_t i = filename.First("_");
@@ -47,18 +57,18 @@ namespace tcode {
         TString str = (TString) filename(i+1, k-i-1);
         DEBUG(str)
 
-        int pos  = atoi(str);
+        int pos   = atoi(str);
 
-        int y    = std::floor(pos/56);
-        int x    = pos % 56;
+        double y  = static_cast<double>(std::floor(pos/56));
+        double x  = static_cast<double>(pos % 56);
 
-        return std::pair<int,int>(x,y); 
+        return std::pair<double,double>(x,y); 
 
     }
 
 
-
-    inline std::pair< double , double > GetHitPosition2(TString const& filename)
+    template<>
+    std::pair< double , double > GetHitPosition<1>(TString const& filename)
     {
 
         TObjArray *tokens = filename.Tokenize( "_" );
@@ -83,4 +93,4 @@ namespace tcode {
     
 #endif //INTERFACE_TCODE_H_
 
-#endif //TCODE
+

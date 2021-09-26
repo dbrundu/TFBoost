@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------
  *
- *   Copyright (C) 2020 Davide Brundu, Gianmatteo Cossu
+ *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
  *
  *   This file is part of TFBoost Library.
  *
@@ -25,12 +25,15 @@
  *      Author: Davide Brundu
  */
  
-#ifndef GENERAL_UTILS_H_
-#define GENERAL_UTILS_H_
+#ifndef TFBOOST_GENERAL_UTILS_H_
+#define TFBOOST_GENERAL_UTILS_H_
  
 /*------------------------------------------------------/
  *  Definition for message formatting
  *-----------------------------------------------------*/
+ 
+#define _START_INFO_ "\033[1;34m"
+#define _END_INFO_ "\033[0m"
 
 #define VERBOSE_LINE(flag, message)\
 if(flag){\
@@ -47,9 +50,11 @@ if(flag){\
     std::cout<< "\033[1;33mDEBUG: \033[0m" << message << "\n";\
 
 
-#define RULE_LINE(message)\
-    std::cout << " <==== " << message << " ====>" << "\n";\
+#define RULE_LINE \
+    std::cout << "===============================================" << "\n"\
 
+#define RULE_LINE_LIGHT \
+    std::cout << "-----------------------------------------------" << "\n"\
 
 #define WARNING_CHECK(x, message)\
     if(x) {\
@@ -71,26 +76,61 @@ if(flag){\
         std::cout<< "\033[1;33mWarning: \033[0m" << message << "\n";\
         return val;\
     }
-    
-#define CHECK_ERROR(x, message)\
-    if(x) {\
-        std::cout<< "\033[1;33mWarning: \033[0m" << message << "\n";\
-        BaseFitAlgorithm::is_error = true;\
-        return ;\
-    }
+
     
     
     
 namespace tfboost {
 
+
+/*
+ * Function to fill the signal, kernel or convolution
+ * histograms
+ */
 template<typename HIST, typename FUNCTION>
-inline void FillHistWithFunction(HIST& hist, FUNCTION const& fun){
-        for(size_t i=1;  i < (size_t) hist.GetNbinsX(); ++i) 
-            hist.SetBinContent(i, fun(hist.GetBinCenter(i)) );  
+inline void FillHistWithFunction(HIST& hist, FUNCTION const& fun)
+{
+    for(size_t i=1;  i < (size_t) hist.GetNbinsX(); ++i) 
+        hist.SetBinContent(i, fun(hist.GetBinCenter(i)) );
 }
 
+
+
+/*
+ * Function to save the canvas for monitoring graphs
+ * passing the name of axes and title
+ */
+template<typename GRAPH>
+inline void SaveMonitorGraph(TString const& title, 
+                       TString const& xtitle, 
+                       TString const& ytitle, 
+                       GRAPH& gr)
+{
+    TCanvas canv(title, title, 800,800);
+    gr.GetXaxis()->SetTitle(xtitle);
+    gr.GetYaxis()->SetTitle(ytitle);
+    gr.GetYaxis()->SetLabelSize(0.03);
+    gr.GetYaxis()->SetTitleOffset(1.5);
+    gr.Draw("APL");
+    canv.SaveAs( "monitor/"+title+TString(".pdf") );
+}
+
+
+
+
+/*
+ * Function to save a canvas 
+ * passing the name of axes, title and 
+ * drawing options
+ */
 template<typename HIST>
-inline void SaveCanvas(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, HIST& hist, const char* opt="")
+inline void SaveCanvas(TString const& directory, 
+                       TString const& title, 
+                       TString const& xtitle, 
+                       TString const& ytitle, 
+                       HIST& hist, 
+                       const char* opt="", 
+                       TF1* tf1ptr = nullptr)
 {
     TCanvas canv(title, title, 800,800);
     hist.SetLineWidth(2);
@@ -99,37 +139,45 @@ inline void SaveCanvas(TString const& directory, TString const& title, TString c
     hist.GetYaxis()->SetLabelSize(0.03);
     hist.GetYaxis()->SetTitleOffset(1.5);
     hist.Draw(opt);
-    canv.SaveAs( directory+title+TString(".pdf") );
+    if(tf1ptr) hist.Fit( tf1ptr , "R" );
+    //canv.SaveAs( directory+title+TString(".pdf") );
     canv.SaveAs( directory+title+TString(".C") );
+    //canv.SaveAs( directory+title+TString(".root") );
 }
 
 
+
+
+/*
+ * Function to save a canvas given
+ * a fully configured histogram
+ */
 template<typename HIST>
-inline void SaveCanvasAndFit(TString const& directory, TString const& title, TString const& xtitle, TString const& ytitle, TH1D& hist, TF1* tf1)
+inline void SaveCanvas(TString const& directory, 
+                       HIST& hist)
 {
-    TCanvas canv(title, title, 800,800);
-    hist.SetLineWidth(2);
-    hist.GetXaxis()->SetTitle(xtitle);
-    hist.GetYaxis()->SetTitle(ytitle);
-    hist.GetYaxis()->SetLabelSize(0.03);
-    hist.GetYaxis()->SetTitleOffset(1.5);
-    hist.Draw("E1");
-    hist.Fit( tf1 , "R" );
-    //tf1->Draw("same");
-    //TGraph g(tf1);
-    //g.Draw("AL same");
-    canv.SaveAs( directory+title+TString(".pdf") );
+    TString title = hist.GetName();
+    TCanvas canv( title, title, 800,800);
+    hist.Draw();
+    //canv.SaveAs( directory+title+TString(".pdf") );
     canv.SaveAs( directory+title+TString(".C") );
+    //canv.SaveAs( directory+title+TString(".root") );
 }
 
 
 
+/*
+ * Function to save the canvas
+ * containing the signal, kernel 
+ * and convolution curves
+ */
 inline void SaveConvolutionCanvas(TString const& directory, TString const& title, 
                           TH1D& hist_convol, TH1D& hist_signal, TH1D& hist_kernel)
 {
     TCanvas canvas(title, title, 4000,1000);
     canvas.Divide(3,1);
     canvas.cd(1);
+    
     hist_convol.SetStats(0);
     hist_convol.SetLineColor(4);
     hist_convol.SetLineWidth(1);
@@ -165,7 +213,10 @@ inline void SaveConvolutionCanvas(TString const& directory, TString const& title
 }
 
 
-
+/*
+ * Function to get a size_t
+ * to the nearest upper power of 2
+ */
 inline size_t upper_power_of_two(size_t v)
 {
     v--;
@@ -176,11 +227,15 @@ inline size_t upper_power_of_two(size_t v)
     v |= v >> 16;
     v++;
     return v;
-
 }
 
 
-
+/*
+ * Function to get a pointer
+ * to a list of all the files given a path
+ * NB: The list contains also other directories
+ * and special directories as "./" and "../"
+ */
 TList* GetFileList(TString dirname_string)
 {
     const char* dirname = dirname_string.Data();
@@ -191,33 +246,23 @@ TList* GetFileList(TString dirname_string)
         std::exit(1);
     }
 
-    return dir.GetListOfFiles();
-}
+    TList* list   = dir.GetListOfFiles();
+    TIterator* it = list->MakeIterator();
+    TSystemFile* currentfile; 
 
-
-
-template<typename Iterable, typename Iterable_t>
-void SaveConvToFile(Iterable const& data, Iterable_t const& time, double dT, TString filename )
-{
-   std::ofstream outdata( filename.Data() ); 
-
-    if( !outdata ) { // file couldn't be opened
-        std::cerr << "Error: file could not be opened" << std::endl;
-        std::exit(1);
+    while ( currentfile = (TSystemFile*) it->Next() ){
+        if (currentfile->IsDirectory()) list->Remove(currentfile);
     }
 
-    auto it = hydra_thrust::max_element( data.begin() , data.end() );
-    size_t k = it - data.begin();
-    double vmax = data[k];
-
-    for (size_t i=0; i<data.size(); ++i) 
-        outdata << time[i] << " " << data[i] << " " << vmax <<  std::endl;
-    
-    outdata.close();
+    return list;
 }
 
 
-
+/*
+ * Function to create recursively
+ * all the directories given a path,
+ * if they do not exist
+ */
 void CreateDirectories(TString path)
 {
     TObjArray *tokens = path.Tokenize("/");
@@ -231,14 +276,16 @@ void CreateDirectories(TString path)
 }
 
 
+
 void TFBoostHeader()
 {
     std::cout << "=====================================================" << "\n";
     std::cout << " TFBOOST, fast signals convolution and analyzer      " << "\n";
+    std::cout << "  Developed by D.Brundu and G.M.Cossu               " << "\n";
+    std::cout << "  https://github.com/dbrundu/TFBoost                 " << "\n";
     std::cout << "-----------------------------------------------------" << "\n";
-    std::cout << "  Developed by D.Brundu and G.M. Cossu               " << "\n";
-    std::cout << "    Powered by HYDRA, developed by A.A.A Junior,     " << "\n";
-    std::cout << "    https://github.com/MultithreadCorner             " << "\n";
+    std::cout << "  Powered by HYDRA, developed by A.A.A Junior,       " << "\n";
+    std::cout << "  https://github.com/MultithreadCorner               " << "\n";
     std::cout << "=====================================================" << "\n\n";
 }
 

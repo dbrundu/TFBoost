@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------
  *
- *   Copyright (C) 2020 Davide Brundu, Gianmatteo Cossu
+ *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
  *
  *   This file is part of TFBoost Library.
  *
@@ -25,8 +25,8 @@
  *      Author: Davide Brundu
  */
  
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef TFBOOST_LOGGER_H
+#define TFBOOST_LOGGER_H
     
 #include <tfboost/Utils.h>
 #include <tfboost/ConfigParser.h>
@@ -78,43 +78,54 @@ class Logger
 
 inline void Logger::PrintConfig( tfboost::ConfigParser const& c) { 
     
-    m_file << "=== General ===" << "\n";
-    m_file << "InputDirectory:   " << c.InputDirectory << "\n";
-    m_file << "OutputDirectory:  " << c.OutputDirectory << "\n";
-    m_file << "TransferFunction: " << c.TransferFunction << "\n";
-    m_file << "ConvolutionFile:  " << c.conv_inputfile << "\n\n";
+    m_file << "=== General ==="                 << "\n";
+    m_file << "InputDirectory:   "              << c.InputDirectory << "\n";
+    m_file << "OutputDirectory:  "              << c.OutputDirectory << "\n";
+    m_file << "TransferFunction: "              << c.TransferFunction << "\n";
+    m_file << "ConvolutionDirectory:  "         << c.InputDirectory << "\n\n";
     
-    m_file << "=== Flags ===" << "\n";
-    m_file << "LandauFluctuation:          " << bool_cast(c.LandauFluctuation) << "\n";
-    m_file << "MakeConvolution:            " << bool_cast(c.MakeConvolution) << "\n";
-    m_file << "SaveConvDataToFile:         " << bool_cast(c.SaveConvDataToFile) << "\n";
-    m_file << "MakeLinearFitNearThreshold: " << bool_cast(c.MakeLinearFitNearThreshold) << "\n";
-    m_file << "MakeGaussianFitNearVmax:    " << bool_cast(c.MakeGaussianFitNearVmax) << "\n";
-    m_file << "AddNoise:                   " << bool_cast(c.AddNoise) << "\n";
-    m_file << "UseRedNoise:                " << bool_cast(c.UseRedNoise) << "\n";
+    m_file << "=== Flags ==="                   << "\n";
+    m_file << "LandauFluctuation:          "    << bool_cast(c.LandauFluctuation) << "\n";
+    m_file << "MakeConvolution:            "    << bool_cast(c.MakeConvolution) << "\n";
+    m_file << "SaveConvDataToFile:         "    << bool_cast(c.SaveConvDataToFile) << "\n";
+    m_file << "MakeLinearFitNearThreshold: "    << bool_cast(c.MakeLinearFitNearThreshold) << "\n";
+    m_file << "MakeGaussianFitNearVmax:    "    << bool_cast(c.MakeGaussianFitNearVmax) << "\n";
+    m_file << "AddSimulatedNoise:          "    << bool_cast(c.AddSimulatedNoise) << "\n";
+    m_file << "DoMeasurementsWithNoise:    "    << bool_cast(c.DoMeasurementsWithNoise) << "\n";
+    m_file << "AddNoiseFromFiles:          "    << bool_cast(c.AddNoiseFromFiles) << "\n";
+    m_file << "UseRedNoise:                "    << bool_cast(c.UseRedNoise) << "\n";
+    m_file << "UseSameCurve:               "    << bool_cast(c.UseSameCurve) << "\n";
+    
+    if(c.UseSameCurve) 
+      m_file << "- File used:                "  << c.SingleFile << "\n";
    
-    m_file << "UseSameCurve:               " << bool_cast(c.UseSameCurve) << "\n";
-    if(c.UseSameCurve) m_file << "- File used:                " << c.SingleFile << "\n";
+    m_file << "MakeTimeDigitization:         "    << bool_cast(c.MakeTimeDigitization) << "\n";
+    m_file << "MakeVoltageDigitization:      "    << bool_cast(c.MakeVoltageDigitization) << "\n";
    
-    m_file << "MakeDigitization:           " << bool_cast(c.MakeDigitization) << "\n";
-    if(c.MakeDigitization) {
-        m_file << " - randomphase:             " << bool_cast(c.randomphase) << "\n";
-        m_file << " - sampling_dT:             " << c.sampling_dT << "\n";
+    if(c.MakeTimeDigitization) {
+      m_file << " - randomphase:             "  << bool_cast(c.randomphase) << "\n";
+      m_file << " - sampling_dT:             "  << c.sampling_dT << "\n"; 
+    }
+    
+    if(c.MakeVoltageDigitization) {
+      m_file << " - ADCmin:                  "  << c.ADCmin << "\n";
+      m_file << " - ADCmax:                  "  << c.ADCmax << "\n"; 
+      m_file << " - ADCnbits:                "  << c.ADCnbits << "\n"; 
     }
    
-    m_file << "TimeReferenceResolution:    " << bool_cast(c.TimeReferenceResolution) << "\n\n";
+    m_file << "TimeReferenceResolution:    "    << bool_cast(c.TimeReferenceResolution) << "\n\n";
     
-    m_file << "=== Trigger ===" << "\n";
-    m_file << "LE_reject_nonoise: " << c.LE_reject_nonoise << "\n";
-    m_file << "LE_reject_noise:   " << c.LE_reject_noise << "\n\n";
+    m_file << "=== Trigger ==="                 << "\n";
+    m_file << "LE_reject_nonoise: "             << c.LE_reject_nonoise << "\n";
+    m_file << "LE_reject_noise:   "             << c.LE_reject_noise << "\n\n";
     
-    m_file << "=== TF properties ===" << "\n";
-    m_file << "bound_fit:         " << c.bound_fit << "\n";
-    m_file << "dT:                " << c.dT << "\n";
-    m_file << "LEthr:             " << c.LEthr << "\n";
-    m_file << "CFD_fr:            " << c.CFD_fr << "\n";
-    m_file << "sigma_noise:       " << c.sigma_noise << "\n";
-    m_file << "r_rednoise:        " << c.r_rednoise << "\n\n";
+    m_file << "=== TF properties ==="           << "\n";
+    m_file << "bound_fit:         "             << c.bound_fit << "\n";
+    m_file << "dT:                "             << c.dT << "\n";
+    m_file << "LEthr:             "             << c.LEthr << "\n";
+    m_file << "CFD_fr:            "             << c.CFD_fr << "\n";
+    m_file << "sigma_noise:       "             << c.sigma_noise << "\n";
+    m_file << "r_rednoise:        "             << c.r_rednoise << "\n\n";
 
 }
 

@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------
  *
- *   Copyright (C) 2020 Davide Brundu, Gianmatteo Cossu
+ *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
  *
  *   This file is part of TFBoost Library.
  *
@@ -30,11 +30,9 @@
  
 
 #define PROJECT_NAME "TFBoost"
-#define PROJECT_VERSION "0.1-alpha"
+#define PROJECT_VERSION "0.2-alpha"
     
 
-    
-namespace tfboost { } 
     
     
 #endif

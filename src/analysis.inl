@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------
  *
- *   Copyright (C) 2020 Davide Brundu, Gianmatteo Cossu
+ *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
  *
  *   This file is part of TFBoost Library.
  *
@@ -27,10 +27,9 @@
 
 
 
-#ifndef ANALYSIS_INL_
-#define ANALYSIS_INL_
+#ifndef TFBOOST_ANALYSIS_INL_
+#define TFBOOST_ANALYSIS_INL_
 
-// #define TCODE_ENABLE
 
 // STD
 #include <iostream>
@@ -43,58 +42,9 @@
 #include <csignal>
 
  
-// HYDRA
-#include <hydra/Function.h>
-#include <hydra/GaussKronrodQuadrature.h>
-#include <hydra/Lambda.h>
-#include <hydra/Algorithm.h>
-#include <hydra/Convolution.h>
-#include <hydra/functions/Gaussian.h>
-#include <hydra/device/System.h>
-#include <hydra/functions/ConvolutionFunctor.h>
-#include <hydra/functions/SpilineFunctor.h>
-#include <hydra/functions/Polynomial.h>
-#include <hydra/Filter.h>
-#include <hydra/Parameter.h>
-#include <hydra/Random.h>
-#include <hydra/Plain.h>
-#include <hydra/Sobol.h>
-#include <hydra/RandomFill.h>
-#include <hydra/Zip.h>
-#include <hydra/Range.h>
-#include <hydra/SeedRNG.h>
-#if HYDRA_DEVICE_SYSTEM == CUDA
-#include <hydra/CuFFT.h>
-#endif
-#if HYDRA_DEVICE_SYSTEM != CUDA
-#include <hydra/FFTW.h>
-#endif
-
-
-// ROOT
-#include <TROOT.h>
-#include <TH1D.h>
-#include <TH2D.h>
-#include <TF1.h>
-#include <TApplication.h>
-#include <TCanvas.h>
-#include <TSystemDirectory.h>
-#include <TSystemFile.h>
-#include <TSystem.h>
-#include <TFile.h>
-#include <TGraph.h>
-#include <TMultiGraph.h>
-#include <TIterator.h>
-#include <TString.h>
-#include <TDirectory.h>
-#include <TObjArray.h>
-#include <TObjString.h>
-#include <TFitResultPtr.h>
-#include <TFitResult.h>
-#include <TStyle.h>
-#include <TRandom3.h>
-#include <TLine.h>
-#include <TProfile.h>
+// HYDRA & ROOT
+#include <tfboost/detail/external/HydraHeaders.h>
+#include <tfboost/detail/external/RootHeaders.h>
 
 // OTHERs
 #include <tclap/CmdLine.h>
@@ -110,14 +60,17 @@
 #include <tfboost/functions/TIA_BJT_2stages_GM.h>
 #include <tfboost/functions/TIA_IdealInt.h>
 #include <tfboost/functions/TIA_MOS.h>
-#include <tfboost/functions/DoConvolution.h>
 #include <tfboost/functions/ExpModifiedGaussian.h>
+#include <tfboost/functions/RCFilter.h>
 #include <tfboost/functions/ButterworthFilter.h>
-#include <tfboost/noise/Noise.h>
-#include <tfboost/ReadConvolution.h>
+#include <tfboost/DoConvolution.h>
+#include <tfboost/Noise.h>
+#include <tfboost/InputOutput.h>
 #include <tfboost/Algorithms.h>
+#include <tfboost/Digitizer.h>
 #include <tfboost/ConfigParser.h>
 #include <tfboost/Logger.h>
+#include <tfboost/Histograms.h>
 
 namespace libconf = libconfig;
 
@@ -128,28 +81,32 @@ namespace libconf = libconfig;
 
 int main(int argv, char** argc)
 {
+
+  auto main_start = std::chrono::high_resolution_clock::now();
+
   tfboost::TFBoostHeader();
 
   std::cout.precision(10);
 
-  
+
   /* ----------------------------------------------
    * Get Configuration
    * Instatiante Config parser and 
-   * Hist Config parser structs
+   * Hist Config parser 
    * --------------------------------------------*/
   libconf::Config Cfg;
   Cfg.readFile("../etc/configuration.cfg");
   const libconf::Setting& cfg_root  = Cfg.getRoot();
   
-  TString TransferFunction  = (const char*) cfg_root["TransferFunction"];
+  TString TransferFunction        = (const char*) cfg_root["TransferFunction"];
   const libconf::Setting& cfg_tf  = cfg_root[TransferFunction];
   
   const tfboost::ConfigParser      c(cfg_root);
   const tfboost::HistConfigParser  hc(cfg_root);
   
   size_t us_delay = 1e3 * c.DelayMonitoring;
-  bool dodelay = (us_delay!=0);
+  bool   dodelay  = (us_delay!=0);
+  
   
   
   
@@ -159,10 +116,12 @@ int main(int argv, char** argc)
    * --------------------------------------------*/
   tfboost::CreateDirectories( c.OutputDirectory + "plots");
   tfboost::CreateDirectories( c.OutputDirectory + "data");
+  tfboost::CreateDirectories( "monitor");
   
   auto& LOG = tfboost::Logger::getInstance( (c.OutputDirectory+TString("LOG.log")).Data() );
   LOG.PrintConfig(c);
 
+  const double SampRate    = 1./c.dT;
   const double min         = 0.0;
   const double max         = (c.Nsamples-1) * c.dT;
   const double minplot     = c.minplot;
@@ -170,54 +129,52 @@ int main(int argv, char** argc)
   const double min_kernel  = -0.5*(max-min);
   const double max_kernel  =  0.5*(max-min);
 
-  signal_type_h th_jitter_withTOA(120, 0.0);
+  HostSignal_t th_jitter_withTOA(120, 0.0);
   
   size_t INDEX = 0;
   
   hydra::SeedRNG S{};
-  hydra::default_random_engine engine( S() );
+  hydra::default_random_engine engine( S() ); 
   TRandom3 root_rng( S() );
   
-  tfboost::algo::CorrectTOA correct_tot(c.TOT_a , c.TOT_b);
   
   
   /* ----------------------------------------------
+   * Initialization of measurements
+   * --------------------------------------------*/
+  Measures_t init = tfboost::MeasuresInitializer::get_values();
+  Measures_t measures( init );
+  Measures_t measures_noise( init );
+  
+ 
+ 
+  /* ----------------------------------------------
    * Initialization of histograms
    * --------------------------------------------*/
-  TH1D            hist_TOA("hist_TOA","Time of arrival Leading Edge", hc.TOALE_Nbins, hc.TOALE_min, hc.TOALE_max);
-  TH1D         hist_TOACFD("hist_TOACFD","Time of arrival CFD at 0.35 of V max", hc.TOACFD_Nbins, hc.TOACFD_min, hc.TOACFD_max);
-  TH1D          hist_TOARM("hist_TOARM","Time of arrival Ref.Method", hc.TOARM_Nbins, hc.TOARM_min, hc.TOARM_max);
-  TH1D    hist_TOACFDnoise("hist_TOACFDnoise","Time of arrival CFD with noise", hc.TOACFDnoise_Nbins, hc.TOACFDnoise_min, hc.TOACFDnoise_max);
-  TH1D     hist_TOALEnoise("hist_TOALEnoise","Time of arrival LE with noise", hc.TOALEnoise_Nbins, hc.TOALEnoise_min, hc.TOALEnoise_max);
-  TH1D     hist_TOARMnoise("hist_TOARMnoise","Time of arrival RM with noise", hc.TOARMnoise_Nbins, hc.TOARMnoise_min, hc.TOARMnoise_max);
-  TH1D           hist_Vmax("hist_Vmax","V on peak", hc.Vmax_Nbins, hc.Vmax_min, hc.Vmax_max);
-  TH1D     hist_TimeatVmax("hist_TimeatVmax","Time at V max", hc.TimeatVmax_Nbins, hc.TimeatVmax_min, hc.TimeatVmax_max);
-  TH1D     hist_Vmax_noise("hist_Vmax_noise","V on peak with noise",hc.Vmax_noise_Nbins, hc.Vmax_noise_min, hc.Vmax_noise_max);
-  TH1D        hist_Vth_CFD("hist_Vth_CFD","V on CFD threshold",hc.Vth_CFD_Nbins, hc.Vth_CFD_min, hc.Vth_CFD_max);
-  TH1D         hist_Vth_LE("hist_Vth_LE","V on LE threshold",hc.Vth_LE_Nbins, hc.Vth_LE_min, hc.Vth_LE_max);
-  TH1D         hist_Vth_RM("hist_Vth_RM","V on RM threshold",hc.Vth_RM_Nbins, hc.Vth_RM_min, hc.Vth_RM_max);
-  TH1D  hist_Vth_CFD_noise("hist_Vth_CFD_noise","V on CFD threshold with noise",hc.Vth_CFD_noise_Nbins, hc.Vth_CFD_noise_min, hc.Vth_CFD_noise_max);
-  TH1D   hist_Vth_RM_noise("hist_Vth_RM_noise","V on RM threshold with noise",hc.Vth_RM_noise_Nbins, hc.Vth_RM_noise_min, hc.Vth_RM_noise_max);
-  TH1D   hist_Vth_LE_noise("hist_Vth_LE_noise","V on LE threshold with noise",hc.Vth_LE_noise_Nbins, hc.Vth_LE_noise_min, hc.Vth_LE_noise_max);
-  TH1D        hist_dVdt_LE("hist_dVdt_LE","Slope (dV/dT) on LE threshold",hc.dVdt_LE_Nbins, hc.dVdt_LE_min, hc.dVdt_LE_max);
-  TH1D       hist_dVdt_CFD("hist_dVdt_CFD","Slope (dV/dT) on CFD threshold",hc.dVdt_CFD_Nbins, hc.dVdt_CFD_min, hc.dVdt_CFD_max);
-  TH1D        hist_dVdt_RM("hist_dVdt_RM","Slope (dV/dT) on RM threshold",hc.dVdt_RM_Nbins, hc.dVdt_RM_min, hc.dVdt_RM_max);
-  TH1D hist_dVdt_CFD_noise("hist_dVdt_CFD_noise","Slope (dV/dT) on CFD threshold with noise",hc.dVdt_CFD_noise_Nbins, hc.dVdt_CFD_noise_min, hc.dVdt_CFD_noise_max);
-  TH1D  hist_dVdt_LE_noise("hist_dVdt_LE_noise","Slope (dV/dT) on LE threshold with noise",hc.dVdt_LE_noise_Nbins, hc.dVdt_LE_noise_min, hc.dVdt_LE_noise_max);
-  TH1D  hist_VthRMoverVmax("hist_VthRMoverVmax","Vth RM over Vmax with noise",hc.VthRMoverVmax_Nbins, hc.VthRMoverVmax_min, hc.VthRMoverVmax_max);
+  auto& histograms = tfboost::HistogramsManager::getInstance();
+  histograms.SetConfig(hc);
   
-  TH1D            hist_TOT("hist_TOT","Time over threshold", hc.TOT_Nbins, hc.TOT_min, hc.TOT_max);
-  TH2D       hist_TOTvsTOA("hist_TOTvsTOA","TOTvsTOA",  hc.TOT_Nbins, hc.TOT_min, hc.TOT_max, hc.TOALE_Nbins, hc.TOALE_min, hc.TOALE_max);
-  TH2D      hist_TOTvsVmax("hist_TOTvsVmax","hist_TOTvsVmax",  hc.TOT_Nbins, hc.TOT_min, hc.TOT_max, hc.Vmax_Nbins, hc.Vmax_min, hc.Vmax_max);
+  TH2D hist_TOTvsTOA("hist_TOTvsTOA","TOTvsTOA",  100, 0, -1, 100, 0, -1);
+  TH2D hist_TOTvsVmax("hist_TOTvsVmax","hist_TOTvsVmax",  100, 0, -1, 100, 0, -1);
 
   TH1D hist_convol("hist_convol;Time[s];Vout [V]","hist_convol", c.Nsamples, minplot, maxplot );
   TH1D hist_signal("hist_signal;Time[s];Vout [V]","hist_signal", c.Nsamples, minplot, maxplot );
   TH1D hist_kernel("hist_kernel;Time[s];Vout [V]","hist_kernel", c.Nsamples/30, minplot, maxplot );
 
-#ifdef TCODE_ENABLE
-  TH2D *TOAmaps   = new TH2D("TOAmaps","TOAmaps", 100, 0, 56, 100, 0, 56);
-  TH2D *Vmaxmaps  = new TH2D("Vmaxmaps","Vmaxmaps", 100, 0, 56, 100, 0, 56);
+  TH1D hist_rms_noise("hist_rms_noise;RMS[V];Counts","hist_rms_noise", 100, 0, -1 );
+
+  TH1D hist_JitterCFD("hist_JitterCFD","hist_JitterCFD", 2000, -1e-9, 1e-9 );
+  TH1D hist_JitterLE("hist_JitterLE","hist_JitterLE", 2000, -1e-9, 1e-9 );
+  TH1D hist_JitterRM("hist_JitterRM","hist_JitterRM", 2000, -1e-9, 1e-9 );
+
+#if TCODE_ENABLE==true
+  //TH2D *TOAmaps   = new TH2D("TOAmaps","TOAmaps",   100, 0, TCODE_PIXEL_YMAX, 100, 0, TCODE_PIXEL_XMAX);
+  //TH2D *Vmaxmaps  = new TH2D("Vmaxmaps","Vmaxmaps", 100, 0, TCODE_PIXEL_YMAX, 100, 0, TCODE_PIXEL_XMAX);
+  TGraph2D *TOAmaps = new TGraph2D();
+  TGraph2D *Vmaxmaps = new TGraph2D();
 #endif
+  
+  
   
   
   /* ----------------------------------------------
@@ -225,48 +182,80 @@ int main(int argv, char** argc)
    * related variables for the main loop
    * --------------------------------------------*/
   TList* listoffiles = tfboost::GetFileList(c.InputDirectory); 
-  listoffiles->Sort();
+  //listoffiles->Sort();
   TIter nextfile( listoffiles );
   TSystemFile *currentfile;
-  TString currentfilename, line;
+  TString currentfilename;
+  TString line;
+
+  /* ----------------------------------------------
+   * Preparing the list of noise input files 
+   * --------------------------------------------*/
+  TList* listofnoisefiles = tfboost::GetFileList(c.NoiseDirectory); 
+  TIter nextnoisefile( listofnoisefiles );
+
 
 
   /*-----------------------------------------------
    * Check if the a custom Tr.Function
    * by the user has to be preloaded
    *-----------------------------------------------*/
-  signal_type_h time_tf;
-  signal_type_h current_tf;
+  HostSignal_t time_tf;
+  HostSignal_t current_tf;
    
-  if(c.ID==5){
+  if(TransferFunction=="FromFile")
+  {
      int Nskip = (int) cfg_tf["NlinesToSkip"];
+     
      TString tf_infile = (const char*) cfg_tf["TFFile"];
      
-     tfboost::ReadTF( tf_infile, Nskip, 
-                      time_tf, current_tf, 
-                      /*scaling*/1.0, /*double range?*/true);
-   }
+     tfboost::ReadTF( tf_infile, Nskip, time_tf, current_tf, /*scaling*/1.0, /*double range?*/true);
+  }
+  
+  /* ----------------------------------------------
+   * Count number of files in input directory
+   * --------------------------------------------*/
+  TList* listoffiles2 = tfboost::GetFileList(c.InputDirectory); 
+  TIter nextfile2( listoffiles2 );
+  TSystemFile *currentfile2;
+  int Nf=0; 
+  while( (currentfile2 = (TSystemFile*) nextfile2()) ){ 
+    currentfilename = currentfile2->GetName();
+    if(currentfile2->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension)) continue;
+    Nf++;
+    
+    }
+  std::cout <<"    number of files in folder ="<<Nf <<std::endl;
+  
+  if(c.UseSameCurve) Nf = c.Nfiles;
+
+  if(!(c.UseSameCurve) && Nf>=c.Nfiles) Nf=c.Nfiles;
 
 
+
+  
 
   /* ----------------------------------------------
    * Main loop on input files
    * --------------------------------------------*/
-  while( (currentfile = (TSystemFile*) nextfile() ) && INDEX < c.Nfiles )
+  while( INDEX < Nf )
   {
-    
     auto start = std::chrono::high_resolution_clock::now();
 
-    currentfilename = currentfile->GetName();
-    if(c.UseSameCurve) currentfilename = c.SingleFile;
+    if(!(c.UseSameCurve)) {
+      currentfile = (TSystemFile*) nextfile() ;
+      currentfilename = currentfile->GetName(); 
+    }
+ 
+    if(c.UseSameCurve) currentfilename = c.SingleFile;    
 
+    if ( !(c.UseSameCurve) && (currentfile->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension) ) ) continue;
     
-    if ( currentfile->IsDirectory() || !currentfilename.EndsWith(c.InputFileExtension) ) continue;
+    RULE_LINE;
+    std::cout << "| "<< _START_INFO_ <<"FILE"<< _END_INFO_ << "  : "<<currentfilename<<" " << "\n";
+    std::cout << "| "<< _START_INFO_ <<"INDEX"<< _END_INFO_ << " : "<<INDEX<<" "           << "\n";
+    RULE_LINE_LIGHT;
     
-    std::cout << "========================================" << "\n";
-    std::cout << "|  FILE  : "<<currentfilename<<" "        << "\n";
-    std::cout << "|  INDEX : "<<INDEX<<" "                  << "\n";
-    std::cout << "========================================" << "\n\n";
     ++INDEX;
     
     const bool PlotConv = c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave;
@@ -276,33 +265,38 @@ int main(int argv, char** argc)
     c.ResetInitialValues();
   
     //Declare and prepare the containers
-    signal_type_h time;     time.reserve(c.Nsamples);
-    signal_type_h idx;      idx.reserve(c.Nsamples);
-    signal_type_h current;  current.reserve(c.Nsamples);
+    HostSignal_t time;     time.reserve(c.Nsamples);
+    HostSignal_t idx;      idx.reserve(c.Nsamples);
+    HostSignal_t current;  current.reserve(c.Nsamples);
      
-    
+    //Fill containers until offset
     for(size_t k=0; k < c.offset; ++k) {
       idx.push_back(k);
       time.push_back(k * c.dT);
       current.push_back(0.0); }
     
     
-#ifdef TCODE_ENABLE
-    std::pair<double,double> pos = tfboost::tcode::GetHitPosition2(currentfilename);
+#if TCODE_ENABLE==true
+    std::pair<double,double> pos = tfboost::tcode::GetHitPosition<TCODE_SELECT_POSFUNC>(currentfilename);
     double pos_x = pos.first;
     double pos_y = pos.second;
-    //if(pos_y<56) continue;
 #endif
 
 
     std::ifstream myFile( (c.InputDirectory+currentfilename).Data() );
     SAFE_EXIT( !myFile.is_open() , "In analysis.inl: input file cannot be open. ")
     
+    //Read file N times to skip lines
     for(size_t j=0; j < c.NlinesToSkip; ++j) 
       line.ReadLine(myFile);
     
+    
     // preload a Landau Fluctuation factor
-    double landau = root_rng.Landau(1,0.15);
+    double landau = c.LandauFluctuation? 
+                    root_rng.Landau(c.landaufactor_mean, c.landaufactor_sigma) : 1.0;
+
+    double scale = c.scale_factor;
+
 
     // Actual loop on file lines, fill all the containers
     size_t s = c.offset;
@@ -314,9 +308,9 @@ int main(int argv, char** argc)
       TObjArray *tokens = line.Tokenize( c.token.Data() );
       
       TString data_str  = ((TObjString*) tokens->At( c.column ) )->GetString();
-      if(data_str == "0" && s==c.offset) continue; //to avoid misaligned TCoDe input files 
+      //if(data_str == "0" && s==c.offset) continue; //--> to avoid misaligned TCoDe input files 
         
-      double data = c.LandauFluctuation? landau*atof(data_str) : atof(data_str);
+      double data = scale*landau*atof(data_str);
          
       idx.push_back(s);
       time.push_back( s * c.dT);
@@ -330,6 +324,8 @@ int main(int argv, char** argc)
     
     myFile.close();
 
+
+    //continue to fill containers until Nsamples size
     for(size_t k=current.size(); k<c.Nsamples; ++k) {
       idx.push_back(k);
       time.push_back( k * c.dT);
@@ -342,17 +338,15 @@ int main(int argv, char** argc)
     /* ----------------------------------------------
      * Time Reference resolution
      * --------------------------------------------*/ 
-    if(c.TimeReferenceResolution){
-      double TR_res = root_rng.Gaus( 0.0 , 12e-12);
-      for(auto& t : time ) t += TR_res;}
+    double TR_res = c.TimeReferenceResolution? root_rng.Gaus( 0.0 , c.timeref_sigma) : 0.0;
     
 
 
     /* ----------------------------------------------
      * Final signal curve
      * --------------------------------------------*/ 
-    signal_type_d time_d(time.size());
-    signal_type_d current_d(current.size());
+    DevSignal_t time_d(time.size());
+    DevSignal_t current_d(current.size());
     hydra::copy(time, time_d);
     hydra::copy(current, current_d);
 
@@ -374,13 +368,20 @@ int main(int argv, char** argc)
     auto fft_backend = hydra::fft::cufft_f64;
 #endif
     
-    signal_type_h conv_data_h(c.Nsamples);
+    HostSignal_t conv_data_h(c.Nsamples);
 
     
     if(!c.MakeConvolution){
-      // Read the convoluted signal from file
-      conv_data_h.clear();
-      tfboost::ReadConvolution( c.conv_inputfile, conv_data_h, c.Nsamples);
+      // The input signals are already the convoluted ones
+      // so skip the convolution and copy the input signals
+      // in conv_data_h
+      hydra::copy(current, conv_data_h);
+
+      if(c.LowPassFilter && !c.DoMeasurementsWithNoise){
+          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
+      }
       
     } else {
 
@@ -389,7 +390,7 @@ int main(int argv, char** argc)
         case 0:{
           auto kernel = tfboost::TIA_MOS<double>( cfg_tf );
           tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
+          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel); 
           }break;
 
         case 1:{
@@ -428,22 +429,32 @@ int main(int argv, char** argc)
       }//end switch
 
 
+      // Introduce a Low Pass Filter
+      if(c.LowPassFilter && !c.DoMeasurementsWithNoise){
+          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
+      }
 
-     /*-------------------------------------------------
-      * Digitization of the signal
-      * This step is done only if we are requesting noise
-      *------------------------------------------------*/
-      if(c.MakeDigitization && !c.AddNoise)
+
+      // Time Digitization of the signal
+      // This step is done only if we are not requesting noise
+      if(c.MakeTimeDigitization && !c.DoMeasurementsWithNoise)
       {
-        tfboost::algo::DigitizeSignal( conv_data_h, time, 
-                                       c.sampling_dT, max, 
-                                       engine, c.randomphase);
+        tfboost::TimeDigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
 
         // Override all the conv information
         c.Nsamples = conv_data_h.size();
         c.dT = c.sampling_dT;
         hist_convol.SetBins(c.Nsamples, min, maxplot);
       }
+
+
+      // Voltage Digitization of the signal
+      // This step is done only if we are not requesting noise
+      if(c.MakeVoltageDigitization && !c.DoMeasurementsWithNoise)
+        tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
+
       
 
     } // end MakeConvolution
@@ -453,10 +464,11 @@ int main(int argv, char** argc)
 
     /* ----------------------------------------------
      * Filling histogram for visualization
-     * --------------------------------------------*/ 
-    auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
-    
-    if(PlotConv) tfboost::FillHistWithFunction( hist_convol, conv_spline);
+     * --------------------------------------------*/     
+    if(PlotConv) {
+        auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
+        tfboost::FillHistWithFunction( hist_convol, conv_spline);
+    }
     
     
     
@@ -470,199 +482,265 @@ int main(int argv, char** argc)
         WARNING_LINE("Skipping empty event...")
         continue; }
 
+    size_t TOA_LE         = tfboost::algo::LeadingEdge(conv_data_h, c.LEthr);
+    measures[_toa_le]     = time[TOA_LE] ;
 
-    size_t TOA_LE     = tfboost::algo::LeadingEdge(conv_data_h, c.LEthr);
+    size_t TimeAtPeak     = tfboost::algo::GetTimeAtPeak(conv_data_h);
+    measures[_tpeak]      = time[TimeAtPeak] ;
+    
+    measures[_vpeak]      = tfboost::algo::GetVAtPeak(conv_data_h);
+    
+    size_t TOA_CFD        = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures[_vpeak]);
+    measures[_toa_cfd]    = time[TOA_CFD] ;
+    
+    auto rm_nonoise       = tfboost::algo::TimeRefMethod( conv_data_h, time, measures[_vpeak], c.RM_delay, c.bound_fit,/*noise?*/false, /*plot?*/false );
+    measures[_toa_rm]     = std::get<0>( rm_nonoise ) ;
+    
+    measures[_dvdt_rm]    = 1e-6 * std::get<2>( rm_nonoise ) ;
 
-    size_t timeatth_0 = tfboost::algo::GetTimeAtPeak(conv_data_h);
-    
-    double Vpeak      = tfboost::algo::GetVAtPeak(conv_data_h);
-    
-    size_t TOA_CFD    = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , Vpeak);
-    
-    size_t TOA_RM     = std::get<2>( tfboost::algo::TimeRefMethod( conv_data_h, 
-                                                                  time, Vpeak, c.RM_delay, c.bound_fit,
-                                                                   /*noise?*/false, /*plot?*/false ) ) ;
-    
-    double dvdt_CFD   = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
-    
-    double dvdt_LE    = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_LE);
-    
-    double dvdt_RM    = tfboost::algo::SlopeOnThrs(conv_data_h, TOA_RM);
-    
-    double VonThLE    = conv_data_h[TOA_LE];
-    
-    double VonThCFD   = conv_data_h[TOA_CFD];
-    
-    double VonThRM    = conv_data_h[TOA_RM];
-    
-    double TOT        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr);
+    measures[_vonth_rm]   =  std::get<1>( rm_nonoise ) ;
 
-    //TOAmaps->SetBinContent( pos_y+1, pos_x+1, ::abs(time[TOA_CFD]-0.2432374637e-9)/7.47e-11 );
-    //Vmaxmaps->SetBinContent( pos_y+1, pos_x+1, 1e3 * Vpeak );
- 
+    measures[_dvdt_le]    = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(conv_data_h, TOA_LE);
+    
+    measures[_dvdt_cfd]   = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
+
+    measures[_vonth_le]   = conv_data_h[TOA_LE];
+    
+    measures[_vonth_cfd]  = conv_data_h[TOA_CFD];
+    
+/*     measures[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
+    
+    measures[_toa_le]     = c.TOTcorrection? tfboost::algo::CorrectTOA(measures[_toa_le], measures[_tot], c.TOT_a, c.TOT_b) : measures[_toa_le]; */
+
+
+
+    // adding time tagger resolution
+    if(c.TimeReferenceResolution)
+      for(auto key : {_toa_le, _tpeak, _toa_cfd, _toa_rm, _tot} )
+        measures[key] += TR_res;
+     
     
     if(c.MakeTheoreticalTOA){
-      auto prob_curve = tfboost::noise::ComputeTOAcurve( TOA_CFD, TOA_CFD-100, TOA_CFD+100, 
-                                                         c.CFD_fr, Vpeak, c.sigma_noise, 
+      auto prob_curve = tfboost::ComputeTOAcurve( TOA_CFD, TOA_CFD-100, TOA_CFD+100, 
+                                                         c.CFD_fr, measures[_vpeak], c.sigma_noise, 
                                                          idx, conv_data_h, "th_jitter.pdf");
                                                          
       for(size_t i=0; i<prob_curve.size(); ++i) th_jitter_withTOA[i] += prob_curve[i];
     }
 
-    hist_TOA        .Fill( c.TOTcorrection? correct_tot(TOT) : time[TOA_LE] ); 
-    hist_TOACFD     .Fill( time[TOA_CFD] ); 
-    hist_TOARM      .Fill( time[TOA_RM] ); 
-    hist_Vmax       .Fill( 1e3 * Vpeak);
-    hist_TimeatVmax .Fill( time[timeatth_0] );
-    hist_Vth_CFD    .Fill( 1e3*VonThCFD);
-    hist_Vth_LE     .Fill( 1e3*VonThLE);
-    hist_Vth_RM     .Fill( 1e3*VonThRM);
-    hist_dVdt_CFD   .Fill( 1e-6 * dvdt_CFD/c.dT);
-    hist_dVdt_LE    .Fill( 1e-6 * dvdt_LE/c.dT);
-    hist_dVdt_RM    .Fill( 1e-6 * dvdt_RM/c.dT);
-    hist_TOT        .Fill(TOT);
-    hist_TOTvsTOA   .Fill(TOT, time[TOA_LE]);
-    hist_TOTvsVmax  .Fill(TOT, Vpeak);
+    histograms.FillMeasures( measures);
 
-    std::cout << "========================================" << "\n";
-    std::cout << "Measurements without noise:             " << "\n";
-    std::cout << "Time on thresholds (LE)  = " << time[TOA_LE]  << "  (s)" << "\n";
-    std::cout << "Time on thresholds (CFD) = " << time[TOA_CFD] << "  (s)" << "\n";
-    std::cout << "Time on thresholds (RM)  = " << time[TOA_RM]  << "  (s)" << "\n";
-    std::cout << "V on thresholds (CFD)    = " << 1e3*VonThCFD  << "  (mV)"<< "\n";
-    std::cout << "V on thresholds (LE)     = " << 1e3*VonThLE   << "  (mV)"<< "\n";
-    std::cout << "V on thresholds (RM)     = " << 1e3*VonThRM   << "  (mV)"<< "\n";
-    std::cout << "Vpeak                    = " << 1e3*Vpeak     << "  (mV)"<< "\n";
-    std::cout << "dv/dt (CFD)              = " << 1e-6*dvdt_CFD/c.dT << "  (uV/ps)"<< "\n";
-    std::cout << "dv/dt (LE)               = " << 1e-6*dvdt_LE/c.dT  << "  (uV/ps)"<< "\n";  
-    std::cout << "dv/dt (RM)               = " << 1e-6*dvdt_RM/c.dT  << "  (uV/ps)"<< "\n";  
-    std::cout << "========================================" << "\n";
+#if TCODE_ENABLE==true
+    if(measures[_toa_cfd] > -1.0 && pos_x>56){
+      //TOAmaps->SetBinContent( TOAmaps->FindBin( pos_x, pos_y), measures[_toa_cfd] );
+      TOAmaps->SetPoint(TOAmaps->GetN(),pos_x,pos_y, measures[_toa_cfd] ); 
+      //Vmaxmaps->SetBinContent( Vmaxmaps->FindBin( pos_x, pos_y), measures[_vpeak] );
+      Vmaxmaps->SetPoint(Vmaxmaps->GetN(),pos_x,pos_y, measures[_vpeak]  ); }
+#endif
+  
+    hist_TOTvsTOA  .Fill( measures[_tot], measures[_toa_le] );
+    hist_TOTvsVmax .Fill( measures[_tot], measures[_vpeak]  );
 
+    RULE_LINE_LIGHT;
+    std::cout << _START_INFO_;
+    std::cout << "Measurements without noise:\n";
+    std::cout << _END_INFO_;
+    std::cout << "Time on thresholds (LE)  = " << measures[_toa_le]     << " (s)\n";
+    std::cout << "Time on thresholds (CFD) = " << measures[_toa_cfd]    << " (s)\n";
+    std::cout << "Time on thresholds (RM)  = " << measures[_toa_rm]     << " (s)\n";
+    std::cout << "V on thresholds (CFD)    = " << measures[_vonth_cfd]  << " (V)\n";
+    std::cout << "V on thresholds (LE)     = " << measures[_vonth_le]   << " (V)\n";
+    std::cout << "V on thresholds (RM)     = " << measures[_vonth_rm]   << " (V)\n";
+    std::cout << "Tpeak                    = " << measures[_tpeak]      << " (s)\n";
+    std::cout << "Vpeak                    = " << measures[_vpeak]      << " (V)\n";
+    std::cout << "dv/dt (CFD)              = " << measures[_dvdt_cfd]   << " (uV/ps)\n";
+    std::cout << "dv/dt (LE)               = " << measures[_dvdt_le]    << " (uV/ps)\n";
+    std::cout << "dv/dt (RM)               = " << measures[_dvdt_rm]    << " (uV/ps)\n";
 
 
 
     /*-------------------------------------------------
-     * Measurements with noise
+     * Section where the noise is added to signal
      *------------------------------------------------*/
-    if(c.AddNoise)
+
+    if(c.DoMeasurementsWithNoise)
     {
-      auto noise = tfboost::noise::Noise(c.sigma_noise, c.UseRedNoise, c.r_rednoise);
       
-      noise.AddNoiseToSignal( conv_data_h, S() );
+      // if not from file, the noise is simulated
+      // using white or red spectrum model
+      if(c.AddSimulatedNoise){
+          auto noise = tfboost::Noise(c.sigma_noise, c.UseRedNoise, c.r_rednoise);
+          noise.AddNoiseToSignal( conv_data_h, S(), c );
+      }
 
-      // initialize measurments
-      size_t timeatmax=0, TOA_LE_noise_idx=0, TOA_CFD_noise_idx=0, TOA_RM_noise_idx=0;
-      double vmax=0.0, TOA_LE_noise=0.0, TOA_CFD_noise=0.0, TOA_RM_noise=0.0;
-      double VonThCFD_noise=0.0, VonThRM_noise=0.0, VonThLE_noise=0.0, VthRMoverVmax=0.0;;
-      double dvdt_CFD_noise=0.0, dvdt_LE_noise=0.0, TOTnoise=0.0;
-      
-      
-     /*-------------------------------------------------
-      * Digitization of the signal
-      * This step is done only if we are requesting noise
-      *------------------------------------------------*/ 
-      if(c.MakeDigitization)
-      {
-        tfboost::algo::DigitizeSignal( conv_data_h, time, 
-                                       c.sampling_dT, max, 
-                                       engine, c.randomphase);
-
-        // Override all the conv information
-        c.Nsamples = conv_data_h.size();
-        c.dT = c.sampling_dT;
-        hist_convol.SetBins(c.Nsamples, min, maxplot);
+     // Introduce a Low Pass Filter
+      // simulating an oscilloscope
+      if(c.LowPassFilter && !c.FilterOnlyNoise){
+          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
+          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
       }
       
       
+     // Digitization of the signal
+     // This step is done only if we are requesting noise
+      if(c.MakeTimeDigitization){
+        
+        tfboost::TimeDigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
+
+        // Override all relevant convolution information
+        c.dT        = c.sampling_dT;
+        c.Nsamples  = conv_data_h.size();
+        hist_convol.SetBins(c.Nsamples, min, maxplot);
+      }  
       
+       // Voltage Digitization of the signal
+      // This step is done only if we are requesting noise
+      if(c.MakeVoltageDigitization)
+        tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
+
+
+      // if noise from file, the noise samples are read
+      // and added directly to the signal
+      if(c.AddNoiseFromFiles){
+        TSystemFile* currentnoisefile = (TSystemFile*) nextnoisefile();
+        TString currentnoisefilename  = currentnoisefile->GetName();
+
+        HostSignal_t noise_h;
+        tfboost::ReadSimple( c.NoiseDirectory+currentnoisefilename, 0, noise_h, c.Nsamples, 1e-3);
+        tfboost::AddNoiseToSignal(conv_data_h, noise_h, c);
+      }
+      
+
       // Condition to avoid to process empty signal
-      // reject signal with amplitude < 1 mV
       if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_noise) == conv_data_h.size() ) 
         { WARNING_LINE("Skipping empty event...") continue; }
       
-      
-      
-      timeatmax         = tfboost::algo::GetTimeAtPeak(conv_data_h);
+ 
+
+     /*-------------------------------------------------
+      * Start measurmenets with noise
+      *------------------------------------------------*/
+
+      // calculating RMS of noise, if the offset is present
+      size_t new_offset = c.offset*1e-12 / c.sampling_dT;
+
+      double rms_noise = 0.0;
+	    for (size_t i=0; i<new_offset; i++) rms_noise += conv_data_h[i] * conv_data_h[i];
+      rms_noise = ::sqrt(rms_noise/new_offset);
+
+      // initialize indices
+      size_t timeatmax_idx=0, TOA_LE_noise_idx=0, TOA_CFD_noise_idx=0, TOA_RM_noise_idx=0;
+
+      timeatmax_idx     = tfboost::algo::GetTimeAtPeak(conv_data_h);
       TOA_LE_noise_idx  = tfboost::algo::LeadingEdge(conv_data_h , c.LEthr);
-      TOA_LE_noise      = time[TOA_LE_noise_idx];
-      VonThLE_noise     = conv_data_h[TOA_LE_noise_idx];
-      TOTnoise          = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr);
       
+      measures_noise[_tpeak]     = time[timeatmax_idx] ;
+      measures_noise[_toa_le]    = time[TOA_LE_noise_idx]  ;
+      measures_noise[_vonth_le]  = conv_data_h[TOA_LE_noise_idx];
+      measures_noise[_vpeak]     = tfboost::algo::GetVAtPeak(conv_data_h);  
+
+      size_t TOA_CFD             = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures_noise[_vpeak]);
+      measures_noise[_toa_cfd]   = time[TOA_CFD] ;  
+
+      auto rm_noise              = tfboost::algo::TimeRefMethod( conv_data_h, time, measures_noise[_vpeak], c.RM_delay, c.bound_fit,/*noise?*/false, /*plot?*/false );
+      measures_noise[_toa_rm]    = std::get<0>( rm_noise ) ;  
+
+      measures_noise[_dvdt_rm]    = 1e-6 * std::get<2>( rm_noise ) ;
+      measures_noise[_vonth_rm]   =  std::get<1>( rm_noise ) ;
+      measures_noise[_dvdt_le]    = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(conv_data_h, TOA_LE_noise_idx);    
+      measures_noise[_dvdt_cfd]   = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
+      measures_noise[_vonth_le]   = conv_data_h[TOA_LE_noise_idx];    
+      measures_noise[_vonth_cfd]  = conv_data_h[TOA_CFD];    
+      measures_noise[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
+      
+      if(!(c.MakeGaussianFitNearVmax && TOA_CFD>1)){
+      //fill electronic jitter histograms
+      hist_JitterCFD.Fill(measures_noise[_toa_cfd]-measures[_toa_cfd]);
+      hist_JitterLE.Fill(measures_noise[_toa_le]-measures[_toa_le]);
+      hist_JitterRM.Fill(measures_noise[_toa_rm]-measures[_toa_rm]);
+      }
       
       if(c.MakeLinearFitNearThreshold && TOA_LE>1)
       {
-        auto toa      = tfboost::algo::LinearFitNearThr( c.LEthr, conv_data_h, time, c.bound_fit, c.PlotLinFit, "LEfit");
-        TOA_LE_noise  = toa.first ;
-        dvdt_LE_noise = toa.second ;
+        auto toa = tfboost::algo::LinearFitNearThr( c.LEthr, conv_data_h, time, c.bound_fit, c.PlotLinFit, "LEfit");
+        
+        measures_noise[_toa_le]  =      std::get<0>(toa);  
+        measures_noise[_dvdt_le] = 1e-6*std::get<1>(toa) ;
       }
       
       
       
       if(c.MakeGaussianFitNearVmax && TOA_CFD>1)
       {
+        auto gaussfit = tfboost::algo::GaussianFitNearVmax( conv_data_h, time, c.bound_fit, c.PlotGausFit );
+        measures_noise[_tpeak] = std::get<1>(gaussfit); 
+        measures_noise[_vpeak] = std::get<0>(gaussfit);
 
-        auto gfit = tfboost::algo::GaussianFitNearVmax( conv_data_h, time, c.bound_fit, c.PlotGausFit );
-        vmax      = gfit.first ;
-        timeatmax = gfit.second ;
-
-        TOA_CFD_noise_idx = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , vmax);
-        TOA_CFD_noise     = time[TOA_CFD_noise_idx];
-        VonThCFD_noise    = conv_data_h[ TOA_CFD_noise_idx ];
+        auto cfd_idx = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures_noise[_vpeak]);
+        measures_noise[_toa_cfd]    = time[cfd_idx] ;
+        measures_noise[_vonth_cfd]  = conv_data_h[ cfd_idx ];        
 
         if(c.MakeLinearFitNearThreshold && TOA_LE>1)
         {
-          auto toa       = tfboost::algo::LinearFitNearThr( c.CFD_fr*vmax, 
-                                                            conv_data_h, time, c.bound_fit, 
-                                                            /*plot?*/c.PlotLinFit, "CFDfit");
-          TOA_CFD_noise  = toa.first ;
-          dvdt_CFD_noise = toa.second ;
-          
-          auto rm           = tfboost::algo::TimeRefMethod( conv_data_h, time, 
-                                                            vmax, c.RM_delay, c.bound_fit, 
-                                                            /*noise?*/true, /*plot?*/c.PlotRMfit);
-          TOA_RM_noise_idx  = std::get<2>(rm); 
-          TOA_RM_noise      = std::get<0>(rm);
-          VthRMoverVmax     = std::get<1>(rm);
-          VonThRM_noise     = conv_data_h[ TOA_RM_noise_idx ];
-        }
+          auto toa_cf = tfboost::algo::LinearFitNearThr( c.CFD_fr*measures_noise[_vpeak], 
+                                                       conv_data_h, time, c.bound_fit, 
+                                                       /*plot?*/c.PlotLinFit, "CFDfit");
+                                                            
+          auto rm     = tfboost::algo::TimeRefMethod( conv_data_h, time, 
+                                                      measures_noise[_vpeak], c.RM_delay, c.bound_fit, 
+                                                      /*noise?*/true, /*plot?*/c.PlotRMfit);
+                                                            
+          measures_noise[_toa_cfd]   = std::get<0>(toa_cf);
+          measures_noise[_dvdt_cfd]  = 1e-6 * std::get<1>(toa_cf);
+          measures_noise[_toa_rm]    = std::get<0>(rm) ;
+          measures_noise[_vonth_rm]  = std::get<1>(rm);
+          measures_noise[_dvdt_rm]   =  1e-6 * std::get<2>(rm);
 
+          hist_JitterCFD.Fill(measures_noise[_toa_cfd]-measures[_toa_cfd]);
+          hist_JitterLE.Fill(measures_noise[_toa_le]-measures[_toa_le]);
+          hist_JitterRM.Fill(measures_noise[_toa_rm]-measures[_toa_rm]);
+          
+        }
       }
 
-      //if(TOA_RM_noise<0 || TOA_CFD_noise<0) continue;
-
-      hist_TOALEnoise    .Fill( c.TOTcorrection?  correct_tot(TOTnoise) : TOA_LE_noise );
-      hist_Vth_LE_noise  .Fill( VonThLE_noise );
-      hist_TOARMnoise    .Fill( TOA_RM_noise );
-      hist_TOACFDnoise   .Fill( TOA_CFD_noise );
-      hist_Vmax_noise    .Fill( vmax );
-      hist_Vth_CFD_noise .Fill( VonThCFD_noise );
-      hist_Vth_RM_noise  .Fill( VonThRM_noise );
-      hist_VthRMoverVmax .Fill( VthRMoverVmax );
-      hist_dVdt_CFD_noise .Fill( 1e-6*dvdt_CFD_noise );
-      hist_dVdt_LE_noise  .Fill( 1e-6*dvdt_LE_noise );
+      if(c.TOTcorrection)
+          measures_noise[_toa_le] = tfboost::algo::CorrectTOA(measures_noise[_toa_le], measures_noise[_tot], c.TOT_a, c.TOT_b);
       
-#ifdef TCODE_ENABLE
-      TOAmaps->SetBinContent( TOAmaps->FindBin( pos_x, pos_y), TOA_CFD_noise ); 
-      Vmaxmaps->SetBinContent( Vmaxmaps->FindBin( pos_x, pos_y), vmax ); 
-#endif
+    // adding time tagger resolution
+    if(c.TimeReferenceResolution)
+      for(auto key : {_toa_le, _tpeak, _toa_cfd, _toa_rm, _tot} )
+        measures_noise[key] += TR_res;
 
-
-      std::cout << "========================================" << "\n";
-      std::cout << "Measurements with noise:                " << "\n";
-      std::cout << "Time on thresholds (LE)  = " << TOA_LE_noise  << "  (s)" << "\n";
-      std::cout << "Time on thresholds (CFD) = " << TOA_CFD_noise << "  (s)" << "\n";
-      std::cout << "Time on thresholds (RM)  = " << TOA_RM_noise  << "  (s)" << "\n";
-      std::cout << "V on thresholds (CFD)    = " << 1e3*VonThCFD_noise  << "  (mV)"<< "\n";
-      std::cout << "V on thresholds (LE)     = " << 1e3*VonThLE_noise   << "  (mV)"<< "\n";
-      std::cout << "V on thresholds (RM)     = " << 1e3*VonThRM_noise   << "  (mV)"<< "\n";
-      std::cout << "Vpeak                    = " << 1e3*vmax   << "  (mV)"<< "\n";
-      std::cout << "dv/dt CFD                = " << 1e-6*dvdt_CFD_noise << "  (uV/ps)"<< "\n";
-      std::cout << "dv/dt LE                 = " << 1e-6*dvdt_LE_noise  << "  (uV/ps)"<< "\n";  
-      std::cout << "========================================" << "\n";
-
-      auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
+     /*-------------------------------------------------
+      * Fill histograms for noise measurements
+      *------------------------------------------------*/
+      histograms.FillMeasures_noise( measures_noise );
+      hist_rms_noise.Fill(rms_noise);
       
-      if(PlotConv) tfboost::FillHistWithFunction( hist_convol, conv_spline);
+      
+      RULE_LINE_LIGHT;
+      std::cout << _START_INFO_;
+      std::cout << "Measurements with noise:\n";
+      std::cout << _END_INFO_;
+      std::cout << "Time on thresholds (LE)  = " << measures_noise[_toa_le]     << " (s)\n";
+      std::cout << "Time on thresholds (CFD) = " << measures_noise[_toa_cfd]    << " (s)\n";
+      std::cout << "Time on thresholds (RM)  = " << measures_noise[_toa_rm]     << " (s)\n";
+      std::cout << "V on thresholds (CFD)    = " << measures_noise[_vonth_cfd]  << " (V)\n";
+      std::cout << "V on thresholds (LE)     = " << measures_noise[_vonth_le]   << " (V)\n";
+      std::cout << "V on thresholds (RM)     = " << measures_noise[_vonth_rm]   << " (V)\n";
+      std::cout << "Vpeak                    = " << measures_noise[_vpeak]      << " (V)\n";
+      std::cout << "Tpeak                    = " << measures_noise[_tpeak]      << " (s)\n";
+      std::cout << "dv/dt (CFD)              = " << measures_noise[_dvdt_cfd]   << " (uV/ps)\n";
+      std::cout << "dv/dt (LE)               = " << measures_noise[_dvdt_le]    << " (uV/ps)\n";
+      std::cout << "dv/dt (RM)               = " << measures_noise[_dvdt_rm]    << " (uV/ps)\n";
+      std::cout << "RMS of noise             = " << rms_noise                   << " (V)\n";
+
+      
+      if(PlotConv) {
+          auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
+          tfboost::FillHistWithFunction( hist_convol, conv_spline);
+      }
 
     }
    
@@ -681,9 +759,11 @@ int main(int argv, char** argc)
   
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end - start;
-    std::cout << "========================================"  << "\n";
-    std::cout << "Single iteration time: " <<elapsed.count() << " ms\n";
-    std::cout << "========================================"  << "\n";
+
+    RULE_LINE_LIGHT;
+    std::cout << _START_INFO_ << "Single iteration time  " << _END_INFO_ << "  = " <<elapsed.count() << " (ms)\n";
+    RULE_LINE;
+    std::cout << "\n\n";
     
   }//end loop on files
   
@@ -693,66 +773,26 @@ int main(int argv, char** argc)
   /*-------------------------------------------------
    *  Save all the plots
    *------------------------------------------------*/  
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_LE",  "Time [s]",    "counts", hist_TOA);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_CFD",   "Time [s]",    "counts", hist_TOACFD);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_RM",  "Time [s]",    "counts", hist_TOARM); 
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOT",     "Time [s]",    "counts", hist_TOT);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOT_2d",     "Time [s]",    "TOA [s]", hist_TOTvsTOA, "colz"); 
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsVmax",   "TOT [s]",    "Vmax [V]", hist_TOTvsVmax, "colz");
+  histograms.SaveHistograms( c.OutputDirectory + "plots/" );
+   
+
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOT_2d",    "Time [s]", "TOA [s]",  hist_TOTvsTOA,  "colz"); 
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsVmax", "TOT [s]",  "Vmax [V]", hist_TOTvsVmax, "colz");
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "rms_noise", "RMS [V]",  "Counts",   hist_rms_noise);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "JitterCFD", "Time[s]",  "Counts",   hist_JitterCFD);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "JitterLE", "Time[s]",  "Counts",   hist_JitterLE);
+  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "JitterRM", "Time[s]",  "Counts",   hist_JitterRM);
   
   TProfile* prof =  hist_TOTvsVmax.ProfileX();
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsVmax_profile",   "TOT [s]",    "Vmax [V]", *prof);
   
   TProfile* prof2 =  hist_TOTvsTOA.ProfileX();
   tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsTOA_profile",   "TOT [s]",    "Vmax [V]", *prof2);
-  
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_LE",   "Slope [uV/ps]", "counts", hist_dVdt_LE);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_CFD",  "Slope [uV/ps]", "counts", hist_dVdt_CFD);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_RM",  "Slope [uV/ps]", "counts", hist_dVdt_RM);
-
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vmax",    "Voltage [mV]",  "counts", hist_Vmax);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TimeatVmax","Time [ps]",   "counts", hist_TimeatVmax);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vth_CFD",   "Voltage [mV]",  "counts", hist_Vth_CFD);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vth_LE",  "Voltage [mV]",  "counts", hist_Vth_LE);
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vth_RM",  "Voltage [mV]",  "counts", hist_Vth_RM);
 
 
+  if(c.DoMeasurementsWithNoise) 
+    histograms.SaveHistograms_noise( c.OutputDirectory + "plots/" );
 
-  if(c.AddNoise)
-  {
-     
-   /*
-   gStyle->SetOptFit(1);
-   tfboost::ExpModifiedGaussian f(0.15e-9, 0.6e-9);
-   f.SetParFromHist(hist_TOACFDnoise);
-   (f.fun)->FixParameter(5,1);
-   tfboost::SaveCanvasAndFit(c.OutputDirectory + "plots/", "TOA_CFDnoise", "Time [s]",  "counts", *hist_TOACFDnoise, f.fun );
-   */
-
-   
-   /*
-   tfboost::ExpModifiedGaussian f2(0.15e-9, 0.6e-9);
-   f2.SetParFromHist(hist_TOARMnoise);
-   (f2.fun)->FixParameter(5,1);
-   tfboost::SaveCanvasAndFit(c.OutputDirectory + "plots/", "TOA_RMnoise", "Time [s]",  "counts", *hist_TOARMnoise, f2.fun );
-    */
-
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_LEnoise", "Voltage [mV]", "counts",  hist_Vth_LE_noise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_LEnoise",   "Time [s]",   "counts",  hist_TOALEnoise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_CFDnoise", "Time [s]",  "counts", hist_TOACFDnoise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOA_RMnoise",  "Time [s]",   "counts", hist_TOARMnoise);
-    
-
-  
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "Vmax_noise",   "Voltage [mV]", "counts", hist_Vmax_noise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_CFDnoise", "Voltage [mV]", "counts", hist_Vth_CFD_noise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "VonTh_RMnoise", "Voltage [mV]", "counts",  hist_Vth_RM_noise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "hist_VthRMoverVmax", "Frac. of Vmax", "counts",  hist_VthRMoverVmax);
-   
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_CFDnoise", "Slope [uV/ps]", "counts", hist_dVdt_CFD_noise);
-    tfboost::SaveCanvas(c.OutputDirectory + "plots/", "dVdT_LEnoise",  "Slope [uV/ps]", "counts", hist_dVdt_LE_noise); 
-    
-  }
 
 
   if(c.MakeTheoreticalTOA)
@@ -773,24 +813,32 @@ int main(int argv, char** argc)
   LOG.PrintMessage("Number of files analyzed: ", INDEX);
   LOG.Exit();
 
-  
-//  gStyle->SetOptStat(0);
-//  gStyle->SetPalette(kRainBow);
+#if TCODE_ENABLE==true
+  gStyle->SetOptStat(0);
+  gStyle->SetPalette(kRainBow);
 
-//  TCanvas canv_TOAmaps("canv_TOAmaps", "canv_TOAmaps", 4*200, 4*200);
-//  TOAmaps->SetMinimum(0.15e-9);
-//  TOAmaps->SetMaximum(0.5e-9);
-//  //TOAmaps->SetMinimum(0.0);
-//  TOAmaps->Draw("colz");
-//  canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.pdf");
-//    canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.C");
+  TCanvas canv_TOAmaps( "canv_TOAmaps", "canv_TOAmaps", 4*TCODE_PIXEL_YMAX, 4*TCODE_PIXEL_XMAX);
+  //TOAmaps->SetMinimum(0.15e-9);
+  //TOAmaps->SetMaximum(0.5e-9);
+  //TOAmaps->SetMinimum(0.0);  
+  TOAmaps->Draw("colz");
+  canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.pdf");
+  //canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.C");
 
-//  TCanvas canv_Vmaxmaps("canv_Vmaxmaps", "canv_Vmaxmaps", 4*200, 4*200);
-//  //Vmaxmaps->SetMinimum(TOAmaps->GetMinimum(0.));
-//    Vmaxmaps->SetMinimum(0.0);
-//  Vmaxmaps->Draw("colz");
-//  canv_Vmaxmaps.SaveAs( c.OutputDirectory + "plots/" +"canv_Vmaxmaps.pdf");
-//  
+  TCanvas canv_Vmaxmaps("canv_Vmaxmaps", "canv_Vmaxmaps", 4*TCODE_PIXEL_YMAX, 4*TCODE_PIXEL_XMAX);
+  //Vmaxmaps->SetMinimum(TOAmaps->GetMinimum(0.));
+  //Vmaxmaps->SetMinimum(0.0);
+  Vmaxmaps->Draw("colz");
+  canv_Vmaxmaps.SaveAs( c.OutputDirectory + "plots/" +"canv_Vmaxmaps.pdf");
+  //canv_Vmaxmaps.SaveAs( c.OutputDirectory + "plots/" +"canv_Vmaxmaps.C");
+#endif
+
+  auto main_end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> main_elapsed = main_end - main_start;
+
+  RULE_LINE;
+  std::cout << _START_INFO_ << "Total time  " << _END_INFO_ << "  = " <<main_elapsed.count() << " (ms)\n";
+  RULE_LINE;
 
   return 0;
 }

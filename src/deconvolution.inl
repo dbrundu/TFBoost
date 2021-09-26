@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------
  *
- *   Copyright (C) 2020 Davide Brundu, Gianmatteo Cossu
+ *   Copyright (C) 2020 Davide Brundu, Gian Matteo Cossu
  *
  *   This file is part of TFBoost Library.
  *
@@ -21,8 +21,8 @@
 /*
  * 
  *
- *  Created on: 07/05/2020
- *    Author: Davide Brundu
+ *  Created on: 10/08/2021
+ *    Author: Davide Brundu, Gian Matteo Cossu 
  */
 
 
@@ -96,22 +96,25 @@
 #include <sys/stat.h>
 
 // TFBOOST
+#include <tfboost/Types.h>
 #include <tfboost/Utils.h>
+#include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
 #include <tfboost/functions/TIA_BJT_2stages_GM.h>
 #include <tfboost/functions/TIA_IdealInt.h>
 #include <tfboost/functions/TIA_MOS.h>
-#include <tfboost/functions/DoConvolution.h>
-#include <tfboost/noise/Noise.h>
-#include <tfboost/ReadConvolution.h>
-#include <tfboost/Algorithms.h>
+#include <tfboost/functions/RCFilter.h>
 #include <tfboost/functions/ButterworthFilter.h>
+#include <tfboost/functions/RCFilter.h>
+#include <tfboost/DoConvolution.h>
+#include <tfboost/Noise.h>
+#include <tfboost/InputOutput.h>
+#include <tfboost/Algorithms.h>
+#include <tfboost/Digitizer.h>
 
 
 namespace libconf = libconfig;
-
-
 
 int main(int argv, char** argc)
 {
@@ -130,15 +133,19 @@ int main(int argv, char** argc)
   const libconf::Setting& cfg_root  = Cfg.getRoot();
   
   TString OutputDirectory          = (const char*) cfg_root["OutputDirectory"];
-  const TString conv_inputfile     = (const char*) cfg_root["InputFileConv"]; 
+  const TString conv_inputfile     = (const char*) cfg_root["InputFileConvorTF"]; 
   const TString InputFile_current  = (const char*) cfg_root["InputFileCurrent"]; 
   const TString OutputFileName     = (const char*) cfg_root["OutputFileName"]; 
-
-  const char*  token         = (const char*) cfg_root["token"];
-  const int    column        = (int)  cfg_root["column"];
+  const bool deconvolution         = (bool)        cfg_root["Deconvolution"];
+  const double dT                  = (double)  cfg_root["dT"];
+  const char*  token1         = (const char*) cfg_root["token1"];
+  const char*  token2         = (const char*) cfg_root["token2"];
+  const int    columnT       = (int)  cfg_root["columnT"];
+  const int    columnI       = (int)  cfg_root["columnI"];
   const size_t offset        = (int)  cfg_root["offset"];
   const size_t Nsamples      = (int)  cfg_root["Nsamples"];
-  const size_t Nlinestoskip  = (int)  cfg_root["Nlinestoskip"];
+  const size_t Nlinestoskip1  = (int)  cfg_root["Nlinestoskip1"];
+  const size_t Nlinestoskip2  = (int)  cfg_root["Nlinestoskip2"];
   const double scale         = (double) cfg_root["scale_factor"];
   
   const bool filter       = (bool)   cfg_root["filter"];
@@ -154,49 +161,37 @@ int main(int argv, char** argc)
   tfboost::CreateDirectories( OutputDirectory + "plots");
   tfboost::CreateDirectories( OutputDirectory + "data");
 
-  const double dT      = 1e-12;
   const double min     = 0.0;
   const double max     = (Nsamples-1)*dT;
   const double min_kernel  = -0.5*(max-min);
   const double max_kernel  =  0.5*(max-min);
   
-  auto flt = tfboost::ButterworthFilter<double>( frequency, order, dT);
+  auto flt = tfboost::RCFilter<double>( frequency, order, dT);
   
   hydra::SeedRNG S{};
+  hydra::default_random_engine engine( S() ); 
+  TRandom3 root_rng( S() );
 
 
-  /* ----------------------------------------------
-   * Initialization of histograms
-   * --------------------------------------------*/
-  TH1D *hist_convol     = new TH1D("hist_deconvol;Time[s];Vout [V]","hist_convol", Nsamples/30, min, max );
-  TH1D *hist_signal     = new TH1D("hist_signal;Time[s];Vout [V]","hist_signal", Nsamples, min, 0.1*max );
-  TH1D *hist_kernel     = new TH1D("hist_kernel;Time[s];Vout [V]","hist_kernel", Nsamples, min, max);
-  
-  
-  
-  /* ----------------------------------------------
-   * Read Input currents
-   * --------------------------------------------*/
   hydra::device::vector<double> time;
   hydra::device::vector<double> idx;
   hydra::device::vector<double> current;
     
   time.reserve(Nsamples);
-  idx.reserve(Nsamples);
   current.reserve(Nsamples);
-  
-  for(size_t k=0; k<offset; ++k)
-  {
-    idx.push_back(k);
-    time.push_back(k*dT);
-    current.push_back(0.0);
-  }
 
   TString line;
 
+   /* ----------------------------------------------
+   * Read Input current
+   * --------------------------------------------*/
   std::ifstream myFile( InputFile_current.Data() );
-  line.ReadLine(myFile);
-    
+
+  for (int i=0; i<Nlinestoskip1; i++)
+    {
+      line.ReadLine(myFile);
+    }
+
   // Actual loop on file lines
   if (myFile.is_open()) 
   {
@@ -205,15 +200,18 @@ int main(int argv, char** argc)
       line.ReadLine(myFile);
       if (!myFile.good()) break;
       
-      TObjArray *tokens = line.Tokenize( token );
+      TObjArray *tokens = line.Tokenize( token1 );
       
-      TString data_str  = ((TObjString*) tokens->At( column ) )->GetString();
+      TString data_str  = ((TObjString*) tokens->At( columnI ) )->GetString();
+      TString time_str  = ((TObjString*) tokens->At( columnT ) )->GetString();
         
       const double data = atof(data_str);
+      const double tm   = dT*offset + atof(time_str);
         
-      idx.push_back(j);
-      time.push_back(j*dT);
+      time.push_back(tm);
       current.push_back(data);
+
+      //std::cout<<tm<<" "<<data<<std::endl;
         
       tokens->Delete();
       delete tokens;
@@ -222,24 +220,107 @@ int main(int argv, char** argc)
   myFile.close();
 
 
-    
+  // add zeros until Nsamples is reached
   if(Nsamples - current.size() > 0)
   {
+    double t0 = time.back();
+    size_t j = 1;
+    
     for(size_t k=current.size(); k<Nsamples; ++k)
     {
       idx.push_back(k);
-      time.push_back(k*dT);
+      time.push_back(t0 + j*dT);
       current.push_back(0.0);
+      ++j;
     }
   }
    
-  SAFE_EXIT( current.size() != Nsamples , "In analysis.inl: size of container not equal to Nsamples. ")
+  SAFE_EXIT( current.size() != Nsamples , "In deconvolution.inl: size of container not equal to Nsamples. ")
 
+  // time digitization to fix variable time step (LTSPice)
+  tfboost::TimeDigitizeSignal( current, time, dT, max, engine, false);
+
+  // recreate a time vector with fixed timestep
+  for(int i=0; i<Nsamples; i++){time[i]=i*dT;}
+
+  // make spline with fixed timestep and save it in "signal"
   auto signal = hydra::make_spiline<double>(time, current);
+
+  DEBUG(time[0])
+  DEBUG(time.back())
+  DEBUG(time.size())
+
     
+  /* ----------------------------------------------
+   * Read Output voltage
+   * --------------------------------------------*/ 
+ 
+  hydra::host::vector<double> time2;
+  hydra::host::vector<double> voltage2;
+  time2.reserve(Nsamples);
+  voltage2.reserve(Nsamples);
+
+  TString line2;
+
+  // output file read section
+  std::ifstream myFile2( conv_inputfile.Data() );
+
+  for (int i=0; i<Nlinestoskip2; i++){
+    line2.ReadLine(myFile2);
+  }
     
+  // Actual loop on file lines
+  if (myFile2.is_open()) 
+  {
+    for(size_t j = offset; j < Nsamples ; ++j)
+    {
+      line2.ReadLine(myFile2);
+      if (!myFile2.good()) break;
+      
+      TObjArray *tokens = line2.Tokenize( token2 );
+      
+      TString data_str  = ((TObjString*) tokens->At( columnI ) )->GetString();
+      TString time_str  = ((TObjString*) tokens->At( columnT ) )->GetString();
+        
+      const double data = atof(data_str);
+      const double tm   = dT*offset + atof(time_str);
+        
+      time2.push_back(tm);
+      voltage2.push_back(data);
+
+      //std::cout<<tm<<" "<<data<<std::endl;
+        
+      tokens->Delete();
+      delete tokens;
+
+    }
+  } else { SAFE_EXIT(true, "Input file cannot be open.") }
+  myFile2.close();
+
+
+   // add zeros until Nsamples is reached
+  if(Nsamples - voltage2.size() > 0)
+  {
+    double t0 = time2.back();
+    size_t j = 1;
     
-    
+    for(size_t k=voltage2.size(); k<Nsamples; ++k)
+    {
+      time2.push_back(t0 + j*dT);
+      voltage2.push_back(0.0);
+      ++j;
+    }
+  }
+   
+  SAFE_EXIT( voltage2.size() != Nsamples , "In deconvolution.inl: size of container not equal to Nsamples. ")
+  
+  // time digitization to fix variable time step (LTSPice)
+  tfboost::TimeDigitizeSignal( voltage2, time2, dT, max, engine, false);  
+
+  // make spline with same time array of current and save it in "kernel"
+  auto kernel = hydra::make_spiline<double>(time, voltage2);
+
+      
   /* ----------------------------------------------
    * Performing the de-convolution
    * --------------------------------------------*/
@@ -253,33 +334,40 @@ int main(int argv, char** argc)
   #endif
     
   hydra::host::vector<double>   conv_data_h(Nsamples);
-  hydra::device::vector<double> conv_data_d(Nsamples);
-    
-  hydra::host::vector<double> time2;
-  hydra::host::vector<double> voltage2;
-  time2.reserve(Nsamples);
-  voltage2.reserve(Nsamples);
-
-  tfboost::ReadTF( conv_inputfile, Nlinestoskip, time2, voltage2, scale);
-
-  auto kernel = hydra::make_spiline<double>(time2, voltage2);
         
-  tfboost::Do_DeConvolution(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
+  if(deconvolution){
+    tfboost::Do_DeConvolution(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
+  } else {
+    tfboost::Do_Convolution(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
+  }  
   
   if(filter){
     auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
     tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, Nsamples);
   }
+  
 
-  auto conv = hydra::make_spiline<double>(time, conv_data_h);
+  hydra::host::vector<double> time_f;
+  double dT_f = (max-min)/(Nsamples-1);
+  for(size_t i=0; i<conv_data_h.size(); ++i) time_f.push_back(i*dT_f);
 
+  auto conv = hydra::make_spiline<double>(time_f, conv_data_h);
+  DEBUG(time_f[0])
+  DEBUG(time_f.back())
+  DEBUG(time_f.size())
+ 
 
-  /* ----------------------------------------------
-   * Performing plots and save results
+   /* ----------------------------------------------
+   * Initialization of histograms
    * --------------------------------------------*/
-  for(size_t i=1;  i < (size_t) Nsamples+1; ++i) {
+  TH1D *hist_convol     = new TH1D("hist_deconvol;Time[s];Vout [V]",deconvolution? "Deconvoluted kernel" : "Output signal", Nsamples+1, min, max/4 );
+  TH1D *hist_signal     = new TH1D("hist_signal;Time[s];Vout [V]","signal", Nsamples+1, min, max/4 );
+  TH1D *hist_kernel     = new TH1D("hist_kernel;Time[s];Vout [V]",deconvolution? "Output Signal" : "kernel", Nsamples+1, min, max/4);
+  
+   
+  for(size_t i=1;  i < (size_t) Nsamples; ++i) {
     hist_kernel->SetBinContent(i, kernel(hist_kernel->GetBinCenter(i)) ); 
-    hist_convol->SetBinContent(i, conv(hist_convol->GetBinCenter(i)));// conv_data_h[i-1] );
+    hist_convol->SetBinContent(i, conv(hist_convol->GetBinCenter(i)));
     hist_signal->SetBinContent(i, signal(hist_signal->GetBinCenter(i)) ); 
   }
 
@@ -307,10 +395,10 @@ int main(int argv, char** argc)
   //hist_convol->SetLineColor(1);
   //hist_convol->Draw("same");
       
-  canvas.SaveAs(OutputDirectory + "plots/hist_convol_functor.pdf");
+  canvas.SaveAs(OutputDirectory + "plots/" + OutputFileName + ".pdf");
   
-  tfboost::SaveConvToFile(conv_data_h, time, dT, OutputDirectory + OutputFileName );
-    
+  tfboost::SaveConvToFile(conv_data_h, time, dT, OutputDirectory + OutputFileName + ".txt" );
+  
   return 0;
 }
 
