@@ -10,7 +10,7 @@
 
 TFBoost is a C++14 compliant application, highly based on [HYDRA v.3](https://github.com/MultithreadCorner/Hydra) and mainly with a functional design, to perform the convolution between a signal (for example a voltage or current signal from a sensor) and a transfer function of a signal analyzer system (for example a readout electronics) in massively parallel platforms on Linux systems. The transfer function can be read from a file as a set of sampling points, or can be chosen from a set of analytical functions provided by the library and fully configurable. 
 The available transfer functions are: 
-- Two Transimpedance, with 1 and 2 stages, 
+- Two Transimpedance, with 1 and 2 stages,  
 - CSA, 
 - Ideal integrator, described as the input impedance of a CSA, 
 - Order-n Butterworth filter,
