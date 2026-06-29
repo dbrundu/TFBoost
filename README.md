@@ -27,7 +27,33 @@ Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, deve
 
 
 ## Dependencies
-TFBoost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/). For the best performances at least TBB or OMP backends are needed. Optionally  [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. [GCC >= v.8](https://gcc.gnu.org/) is needed. 
+TFBoost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/) (C++ bindings), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/) and [FFTW3](http://www.fftw.org/). For the best performances at least TBB or OMP backends are needed. Optionally [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. A C++ compiler with C++14 support ([GCC >= v.8](https://gcc.gnu.org/), Clang or ICC) and [CMake >= v.3.24](https://cmake.org/) are needed.
+
+Two of these dependencies are header-only / source distributions and are *not* installed through the system package manager:
+
+- **HYDRA** is header-only: just clone it (see [Installation, Build and Run](#installation-build-and-run)) and point `HYDRA_INCLUDE_DIR` to it. No build or install step is required.
+- **ROOT** must be installed separately (from the [official binaries/packages](https://root.cern/install/) or built from source) and its environment sourced so that `root-config` is on the `PATH` and `ROOTSYS` is set:
+  ```bash
+  source <path-to-root>/bin/thisroot.sh
+  ```
+
+### Installing the system packages
+
+The remaining dependencies (libconfig C++ bindings, TCLAP, FFTW3, the TBB/OpenMP backends and the build toolchain) are available from the system package manager. **For libconfig and TBB make sure to install the development (`-devel` / `-dev`) packages**: the runtime shared libraries alone are not enough, as CMake needs the headers (e.g. `libconfig.h++`) to configure the build.
+
+On **Fedora / RHEL / CentOS** (`dnf`):
+```bash
+sudo dnf install gcc-c++ cmake libconfig-devel tclap tbb-devel fftw-devel
+```
+
+On **Debian / Ubuntu** (`apt`):
+```bash
+sudo apt install g++ cmake libconfig++-dev libtclap-dev libtbb-dev libfftw3-dev
+```
+
+OpenMP support ships with GCC/Clang, so no extra package is needed for the OMP backend. The CUDA backend is built only when the CUDA toolkit is detected; it can be installed separately following the [NVIDIA instructions](https://developer.nvidia.com/cuda-downloads).
+
+> **Note on recent TBB (oneTBB):** modern distributions ship oneTBB (>= 2021), which still works but no longer provides the legacy `tbb/tbb_stddef.h` header. The bundled `cmake/FindTBB.cmake` already handles this; if you use an older/custom TBB finder and configuration fails on a missing `tbb_stddef.h`, this is the cause.
 
 
 ## Disclaimer
