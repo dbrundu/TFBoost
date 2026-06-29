@@ -54,6 +54,7 @@
 // TFBOOST
 #include <tfboost/Types.h>
 #include <tfboost/Utils.h>
+#include <tfboost/core/Signal.h>
 #include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
@@ -230,11 +231,12 @@ int main(int argv, char** argc)
     ++INDEX;
     
     const bool PlotConv = c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave;
-    
 
-    //Clean the configuration
-    c.ResetInitialValues();
-  
+    // The working sampling step of the signal: starts at the configured dT and
+    // is updated (on the Signal) by time digitization. The configuration object
+    // is left untouched (it stays the immutable input dT / Nsamples).
+    double workingDT = c.dT;
+
     //Declare and prepare the containers
     HostSignal_t time;     time.reserve(c.Nsamples);
     HostSignal_t idx;      idx.reserve(c.Nsamples);
@@ -398,10 +400,9 @@ int main(int argv, char** argc)
       {
         tfboost::TimeDigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
 
-        // Override all the conv information
-        c.Nsamples = conv_data_h.size();
-        c.dT = c.sampling_dT;
-        hist_convol.SetBins(c.Nsamples, min, maxplot);
+        // the signal has been resampled: track the new working dT
+        workingDT = c.sampling_dT;
+        hist_convol.SetBins(conv_data_h.size(), min, maxplot);
       }
 
 
@@ -413,57 +414,65 @@ int main(int argv, char** argc)
       
 
     } // end MakeConvolution
-      
+
+
+    /* ----------------------------------------------
+     * Wrap the working waveform (the convoluted /
+     * possibly digitized signal on its time base) into
+     * a Signal object that owns its samples and dT.
+     * From here on the loop operates on `sig`.
+     * --------------------------------------------*/
+    tfboost::core::Signal sig{ std::move(time), std::move(conv_data_h), workingDT };
 
 
 
     /* ----------------------------------------------
      * Filling histogram for visualization
-     * --------------------------------------------*/     
+     * --------------------------------------------*/
     if(PlotConv) {
-        auto conv_spline = hydra::make_spline<double>(time, conv_data_h );
+        auto conv_spline = sig.spline();
         tfboost::FillHistWithFunction( hist_convol, conv_spline);
     }
-    
-    
-    
+
+
+
     /* ----------------------------------------------
      * Measurements without noise
      * --------------------------------------------*/
 
     // Condition to avoid to process empty signal
     // reject signal with amplitude < 1 mV
-    if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_nonoise) ==  conv_data_h.size() ) { 
+    if( tfboost::algo::LeadingEdge(sig.amplitude(), c.LE_reject_nonoise) ==  sig.size() ) {
         WARNING_LINE("Skipping empty event...")
         continue; }
 
-    size_t TOA_LE         = tfboost::algo::LeadingEdge(conv_data_h, c.LEthr);
-    measures[_toa_le]     = time[TOA_LE] ;
+    size_t TOA_LE         = tfboost::algo::LeadingEdge(sig.amplitude(), c.LEthr);
+    measures[_toa_le]     = sig.time()[TOA_LE] ;
 
-    size_t TimeAtPeak     = tfboost::algo::GetTimeAtPeak(conv_data_h);
-    measures[_tpeak]      = time[TimeAtPeak] ;
-    
-    measures[_vpeak]      = tfboost::algo::GetVAtPeak(conv_data_h);
-    
-    size_t TOA_CFD        = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures[_vpeak]);
-    measures[_toa_cfd]    = time[TOA_CFD] ;
-    
-    auto rm_nonoise       = tfboost::algo::TimeRefMethod( conv_data_h, time, measures[_vpeak], c.RM_delay, c.bound_fit,/*noise?*/false, /*plot?*/false );
+    size_t TimeAtPeak     = tfboost::algo::GetTimeAtPeak(sig.amplitude());
+    measures[_tpeak]      = sig.time()[TimeAtPeak] ;
+
+    measures[_vpeak]      = tfboost::algo::GetVAtPeak(sig.amplitude());
+
+    size_t TOA_CFD        = tfboost::algo::ConstantFraction(sig.amplitude() , c.CFD_fr , measures[_vpeak]);
+    measures[_toa_cfd]    = sig.time()[TOA_CFD] ;
+
+    auto rm_nonoise       = tfboost::algo::TimeRefMethod( sig.amplitude(), sig.time(), measures[_vpeak], c.RM_delay, c.bound_fit,/*noise?*/false, /*plot?*/false );
     measures[_toa_rm]     = std::get<0>( rm_nonoise ) ;
-    
+
     measures[_dvdt_rm]    = 1e-6 * std::get<2>( rm_nonoise ) ;
 
     measures[_vonth_rm]   =  std::get<1>( rm_nonoise ) ;
 
-    measures[_dvdt_le]    = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(conv_data_h, TOA_LE);
-    
-    measures[_dvdt_cfd]   = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(conv_data_h, TOA_CFD);
+    measures[_dvdt_le]    = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(sig.amplitude(), TOA_LE);
 
-    measures[_vonth_le]   = conv_data_h[TOA_LE];
-    
-    measures[_vonth_cfd]  = conv_data_h[TOA_CFD];
-    
-    measures[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
+    measures[_dvdt_cfd]   = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(sig.amplitude(), TOA_CFD);
+
+    measures[_vonth_le]   = sig.amplitude()[TOA_LE];
+
+    measures[_vonth_cfd]  = sig.amplitude()[TOA_CFD];
+
+    measures[_tot]        = tfboost::algo::TimeOverThr(sig.amplitude(), sig.time(), c.LEthr, c.LEthr) ;
     
     measures[_toa_le]     = c.TOTcorrection? tfboost::algo::CorrectTOA(measures[_toa_le], measures[_tot], c.TOT_a, c.TOT_b) : measures[_toa_le];
 
@@ -476,9 +485,9 @@ int main(int argv, char** argc)
  
     
     if(c.MakeTheoreticalTOA){
-      auto prob_curve = tfboost::ComputeTOAcurve( TOA_CFD, TOA_CFD-100, TOA_CFD+100, 
-                                                         c.CFD_fr, measures[_vpeak], c.sigma_noise, 
-                                                         idx, conv_data_h, "th_jitter.pdf");
+      auto prob_curve = tfboost::ComputeTOAcurve( TOA_CFD, TOA_CFD-100, TOA_CFD+100,
+                                                         c.CFD_fr, measures[_vpeak], c.sigma_noise,
+                                                         idx, sig.amplitude(), "th_jitter.pdf");
                                                          
       for(size_t i=0; i<prob_curve.size(); ++i) th_jitter_withTOA[i] += prob_curve[i];
     }
@@ -524,36 +533,35 @@ int main(int argv, char** argc)
       // using white or red spectrum model
       if(c.AddSimulatedNoise){
           auto noise = tfboost::Noise(c.sigma_noise, c.UseRedNoise, c.r_rednoise);
-          noise.AddNoiseToSignal( conv_data_h, S(), c );
+          noise.AddNoiseToSignal( sig.amplitude(), S(), c );
       }
-      
-      
+
+
      // Digitization of the signal
      // This step is done only if we are requesting noise
       if(c.MakeTimeDigitization){
-        
-        tfboost::TimeDigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
 
-        // Override all relevant convolution information
-        c.dT        = c.sampling_dT;
-        c.Nsamples  = conv_data_h.size();
-        hist_convol.SetBins(c.Nsamples, min, maxplot);
+        tfboost::TimeDigitizeSignal( sig.amplitude(), sig.time(), c.sampling_dT, max, engine, c.randomphase);
+
+        // the signal has been resampled: update its working dT
+        sig.setDT(c.sampling_dT);
+        hist_convol.SetBins(sig.size(), min, maxplot);
       }
-      
-      
+
+
       // Introduce a Low Pass Filter
       // simulating an oscilloscope
       if(c.LowPassFilter && !c.FilterOnlyNoise){
-          auto flt       = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
-          auto conv_temp = hydra::make_spline<double>(time, conv_data_h);
-          tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
+          auto flt       = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, sig.dT());
+          auto conv_temp = sig.spline();
+          tfboost::Do_Convolution(fft_backend, flt, conv_temp, sig.amplitude(), min, max, sig.size());
       }
-      
+
 
       // Voltage Digitization of the signal
       // This step is done only if we are requesting noise
       if(c.MakeVoltageDigitization)
-        tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
+        tfboost::VoltageDigitizeSignal( sig.amplitude(), c.ADCmin, c.ADCmax, c.ADCnbits);
 
 
       // if noise from file, the noise samples are read
@@ -563,8 +571,8 @@ int main(int argv, char** argc)
         TString currentnoisefilename  = currentnoisefile->GetName();
 
         HostSignal_t noise_h;
-        tfboost::ReadSimple( c.NoiseDirectory+currentnoisefilename, 0, noise_h, c.Nsamples, 1e-3);
-        tfboost::AddNoiseToSignal(conv_data_h, noise_h, c);
+        tfboost::ReadSimple( c.NoiseDirectory+currentnoisefilename, 0, noise_h, sig.size(), 1e-3);
+        tfboost::AddNoiseToSignal(sig.amplitude(), noise_h, c);
       }
       
 
@@ -572,10 +580,10 @@ int main(int argv, char** argc)
       
 
       // Condition to avoid to process empty signal
-      if( tfboost::algo::LeadingEdge(conv_data_h, c.LE_reject_noise) == conv_data_h.size() ) 
+      if( tfboost::algo::LeadingEdge(sig.amplitude(), c.LE_reject_noise) == sig.size() )
         { WARNING_LINE("Skipping empty event...") continue; }
-      
-      
+
+
 
      /*-------------------------------------------------
       * Start measurmenets with noise
@@ -584,44 +592,44 @@ int main(int argv, char** argc)
       // initialize indices
       size_t timeatmax_idx=0, TOA_LE_noise_idx=0, TOA_CFD_noise_idx=0, TOA_RM_noise_idx=0;
 
-      timeatmax_idx     = tfboost::algo::GetTimeAtPeak(conv_data_h);
-      TOA_LE_noise_idx  = tfboost::algo::LeadingEdge(conv_data_h , c.LEthr);
-      
-      measures_noise[_tpeak]     = time[timeatmax_idx] ;
-      measures_noise[_toa_le]    = time[TOA_LE_noise_idx]  ;
-      measures_noise[_vonth_le]  = conv_data_h[TOA_LE_noise_idx];
-      measures_noise[_tot]       = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
-      
-      
-      
+      timeatmax_idx     = tfboost::algo::GetTimeAtPeak(sig.amplitude());
+      TOA_LE_noise_idx  = tfboost::algo::LeadingEdge(sig.amplitude() , c.LEthr);
+
+      measures_noise[_tpeak]     = sig.time()[timeatmax_idx] ;
+      measures_noise[_toa_le]    = sig.time()[TOA_LE_noise_idx]  ;
+      measures_noise[_vonth_le]  = sig.amplitude()[TOA_LE_noise_idx];
+      measures_noise[_tot]       = tfboost::algo::TimeOverThr(sig.amplitude(), sig.time(), c.LEthr, c.LEthr) ;
+
+
+
       if(c.MakeLinearFitNearThreshold && TOA_LE>1)
       {
-        auto toa = tfboost::algo::LinearFitNearThr( c.LEthr, conv_data_h, time, c.bound_fit, c.PlotLinFit, "LEfit");
-        
-        measures_noise[_toa_le]  =      std::get<0>(toa);  
+        auto toa = tfboost::algo::LinearFitNearThr( c.LEthr, sig.amplitude(), sig.time(), c.bound_fit, c.PlotLinFit, "LEfit");
+
+        measures_noise[_toa_le]  =      std::get<0>(toa);
         measures_noise[_dvdt_le] = 1e-6*std::get<1>(toa) ;
       }
-      
-      
-      
+
+
+
       if(c.MakeGaussianFitNearVmax && TOA_CFD>1)
       {
-        auto gaussfit = tfboost::algo::GaussianFitNearVmax( conv_data_h, time, c.bound_fit, c.PlotGausFit );
-        measures_noise[_tpeak] = time[std::get<1>(gaussfit)] ; 
+        auto gaussfit = tfboost::algo::GaussianFitNearVmax( sig.amplitude(), sig.time(), c.bound_fit, c.PlotGausFit );
+        measures_noise[_tpeak] = sig.time()[std::get<1>(gaussfit)] ;
         measures_noise[_vpeak] = std::get<0>(gaussfit);
 
-        auto cfd_idx = tfboost::algo::ConstantFraction(conv_data_h , c.CFD_fr , measures_noise[_vpeak]);
-        measures_noise[_toa_cfd]    = time[cfd_idx] ;
-        measures_noise[_vonth_cfd]  = conv_data_h[ cfd_idx ];        
+        auto cfd_idx = tfboost::algo::ConstantFraction(sig.amplitude() , c.CFD_fr , measures_noise[_vpeak]);
+        measures_noise[_toa_cfd]    = sig.time()[cfd_idx] ;
+        measures_noise[_vonth_cfd]  = sig.amplitude()[ cfd_idx ];
 
         if(c.MakeLinearFitNearThreshold && TOA_LE>1)
         {
-          auto toa_cf = tfboost::algo::LinearFitNearThr( c.CFD_fr*measures_noise[_vpeak], 
-                                                       conv_data_h, time, c.bound_fit, 
+          auto toa_cf = tfboost::algo::LinearFitNearThr( c.CFD_fr*measures_noise[_vpeak],
+                                                       sig.amplitude(), sig.time(), c.bound_fit,
                                                        /*plot?*/c.PlotLinFit, "CFDfit");
-                                                            
-          auto rm     = tfboost::algo::TimeRefMethod( conv_data_h, time, 
-                                                      measures_noise[_vpeak], c.RM_delay, c.bound_fit, 
+
+          auto rm     = tfboost::algo::TimeRefMethod( sig.amplitude(), sig.time(),
+                                                      measures_noise[_vpeak], c.RM_delay, c.bound_fit,
                                                       /*noise?*/true, /*plot?*/c.PlotRMfit);
                                                             
           measures_noise[_toa_cfd]   = std::get<0>(toa_cf);
@@ -664,20 +672,20 @@ int main(int argv, char** argc)
 
       
       if(PlotConv) {
-          auto conv_spline = hydra::make_spline<double>(time, conv_data_h );
+          auto conv_spline = sig.spline();
           tfboost::FillHistWithFunction( hist_convol, conv_spline);
       }
 
     }
-   
+
 
     if(PlotConv)
-       tfboost::SaveConvolutionCanvas(c.OutputDirectory + "plots/", "hist_convol_functor", 
+       tfboost::SaveConvolutionCanvas(c.OutputDirectory + "plots/", "hist_convol_functor",
               hist_convol, hist_signal, hist_kernel);
 
 
-    if(c.SaveConvDataToFile) 
-      tfboost::SaveConvToFile(conv_data_h, time, c.dT, 
+    if(c.SaveConvDataToFile)
+      tfboost::SaveConvToFile(sig.amplitude(), sig.time(), sig.dT(),
                               c.OutputDirectory + "data/" +currentfilename );
 
     
