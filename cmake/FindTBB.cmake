@@ -184,7 +184,18 @@ if(NOT TBB_FOUND)
   ##################################
 
   if(TBB_INCLUDE_DIRS)
-    file(READ "${TBB_INCLUDE_DIRS}/tbb/tbb_stddef.h" _tbb_version_file)
+    # Legacy TBB exposes the version in tbb/tbb_stddef.h; oneTBB (>=2021)
+    # removed that header and moved the macros to tbb/version.h (also
+    # available as oneapi/tbb/version.h). Pick whichever exists.
+    if(EXISTS "${TBB_INCLUDE_DIRS}/tbb/tbb_stddef.h")
+      file(READ "${TBB_INCLUDE_DIRS}/tbb/tbb_stddef.h" _tbb_version_file)
+    elseif(EXISTS "${TBB_INCLUDE_DIRS}/tbb/version.h")
+      file(READ "${TBB_INCLUDE_DIRS}/tbb/version.h" _tbb_version_file)
+    elseif(EXISTS "${TBB_INCLUDE_DIRS}/oneapi/tbb/version.h")
+      file(READ "${TBB_INCLUDE_DIRS}/oneapi/tbb/version.h" _tbb_version_file)
+    else()
+      set(_tbb_version_file "")
+    endif()
     string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1"
         TBB_VERSION_MAJOR "${_tbb_version_file}")
     string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1"

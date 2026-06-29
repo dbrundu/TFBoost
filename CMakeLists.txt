@@ -1,6 +1,6 @@
 ### CMakeList for TFBoost examples and documentation
 
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.24)
 
 # project name
 project(TFBoost)
@@ -26,17 +26,17 @@ endif()
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
  MESSAGE(STATUS "Setting Clang flags")
- set(CMAKE_CXX_FLAGS " --std=c++14 -W -march=native -fPIC -O3 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
+ set(CMAKE_CXX_FLAGS " --std=c++20 -W -march=native -fPIC -O4 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
   
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
  MESSAGE(STATUS "Setting GCC flags")
- set(CMAKE_CXX_FLAGS " --std=c++14 -W -march=native -fPIC -O3 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
+ set(CMAKE_CXX_FLAGS " --std=c++20 -W -march=native -fPIC -O4 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
  
  MESSAGE(STATUS "Setting ICC flags")
- set(CMAKE_CXX_FLAGS " --std=c++14 -W -march=native -fPIC -O3 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
+ set(CMAKE_CXX_FLAGS " --std=c++20 -W -march=native -fPIC -O4 -funroll-loops -ldl" CACHE STRING "compile flags" FORCE)
   
 #elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
  #MESSAGE(STATUS "===> Compiling with MSVC")
@@ -64,9 +64,9 @@ endif(ROOT_FOUND)
 
 #-----------------------
 # get GSL
-find_package(GSL REQUIRED)
-include_directories(${GSL_INCLUDE_DIRS})
-link_directories(${GSL_LIBRARIES})
+#find_package(GSL REQUIRED)
+#include_directories(${GSL_INCLUDE_DIRS})
+#link_directories(${GSL_LIBRARIES})
 
 #-----------------------
 # get FFTW for convolution examples
