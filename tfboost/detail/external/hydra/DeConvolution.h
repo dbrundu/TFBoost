@@ -46,7 +46,11 @@
 #include <hydra/detail/external/hydra_thrust/reduce.h>
 #include <hydra/detail/external/hydra_thrust/iterator/transform_iterator.h>
 #include <hydra/detail/external/hydra_thrust/memory.h>
-#include <hydra/detail/external/hydra_thrust/system/cuda/detail/execution_policy.h>
+// NOTE: hydra_thrust/system/cuda/detail/execution_policy.h was included here only
+// to name hydra_thrust::system::cuda::tag in the (now removed) USING_CUDA_BACKEND /
+// GPU_DATA template parameters below. On recent Hydra/Thrust+CUB bundles that header
+// transitively includes <cuda_runtime_api.h>, breaking host-only (TBB/CPP/OMP) builds
+// when no CUDA toolkit is installed, so it is intentionally not included.
 
 #include <utility>
 #include <type_traits>
@@ -83,11 +87,10 @@ namespace hydra {
 
 template<detail::Backend BACKEND, detail::FFTCalculator FFTBackend,  typename Functor, typename Kernel, typename Iterable,
      typename T = typename detail::stripped_type<typename hydra_thrust::iterator_traits<decltype(std::declval<Iterable>().begin())>::value_type>::type,
-     typename USING_CUDA_BACKEND = typename std::conditional< std::is_convertible<detail::BackendPolicy<BACKEND>,hydra_thrust::system::cuda::tag >::value, std::integral_constant<int, 1>,std::integral_constant<int, 0>>::type,
-     typename USING_CUFFT = typename std::conditional< FFTBackend==detail::CuFFT, std::integral_constant<int, 1>,std::integral_constant<int, 0>>::type,
-     typename GPU_DATA = typename std::conditional< std::is_convertible<typename hydra_thrust::iterator_system< decltype(std::declval<Iterable>().begin())>::type,
-                        hydra_thrust::system::cuda::tag>::value
-         , std::integral_constant<int, 1>, std::integral_constant<int, 0> >::type>
+     typename USING_CUFFT = typename std::conditional< FFTBackend==detail::CuFFT, std::integral_constant<int, 1>,std::integral_constant<int, 0>>::type>
+// NOTE: the former USING_CUDA_BACKEND / GPU_DATA template parameters (which referenced
+// hydra_thrust::system::cuda::tag) were removed: their only uses were the commented-out
+// enable_if constraints below, and naming cuda::tag dragged in CUDA-only headers.
 inline typename std::enable_if<std::is_floating_point<T>::value  && hydra::detail::is_iterable<Iterable>::value
                    // && (USING_CUDA_BACKEND::value == USING_CUFFT::value)
                    //  && (USING_CUDA_BACKEND::value == GPU_DATA::value),
@@ -187,9 +190,9 @@ deconvolute(detail::BackendPolicy<BACKEND> policy, detail::FFTPolicy<T, FFTBacke
 
 	hydra::copy(fft_product_range,  std::forward<Iterable>(output));
 
-	hydra_thrust::return_temporary_buffer( policy,  complex_buffer.first  );
-	hydra_thrust::return_temporary_buffer( policy,  kernel_samples.first  );
-	hydra_thrust::return_temporary_buffer( policy, functor_samples.first  );
+	hydra_thrust::return_temporary_buffer( policy,  complex_buffer.first ,  complex_buffer.second  );
+	hydra_thrust::return_temporary_buffer( policy,  kernel_samples.first ,  kernel_samples.second  );
+	hydra_thrust::return_temporary_buffer( policy, functor_samples.first , functor_samples.second  );
 }
 
 

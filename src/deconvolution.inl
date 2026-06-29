@@ -47,7 +47,7 @@
 #include <hydra/functions/Gaussian.h>
 #include <hydra/device/System.h>
 #include <hydra/functions/ConvolutionFunctor.h>
-#include <hydra/functions/SpilineFunctor.h>
+#include <hydra/functions/SplineFunctor.h>
 #include <hydra/functions/Polynomial.h>
 #include <hydra/Filter.h>
 #include <hydra/Parameter.h>
@@ -244,7 +244,7 @@ int main(int argv, char** argc)
   for(int i=0; i<Nsamples; i++){time[i]=i*dT;}
 
   // make spline with fixed timestep and save it in "signal"
-  auto signal = hydra::make_spiline<double>(time, current);
+  auto signal = hydra::make_spline<double>(time, current);
 
   DEBUG(time[0])
   DEBUG(time.back())
@@ -318,7 +318,7 @@ int main(int argv, char** argc)
   tfboost::TimeDigitizeSignal( voltage2, time2, dT, max, engine, false);  
 
   // make spline with same time array of current and save it in "kernel"
-  auto kernel = hydra::make_spiline<double>(time, voltage2);
+  auto kernel = hydra::make_spline<double>(time, voltage2);
 
       
   /* ----------------------------------------------
@@ -342,7 +342,7 @@ int main(int argv, char** argc)
   }  
   
   if(filter){
-    auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+    auto conv_temp = hydra::make_spline<double>(time, conv_data_h);
     tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, Nsamples);
   }
   
@@ -351,7 +351,7 @@ int main(int argv, char** argc)
   double dT_f = (max-min)/(Nsamples-1);
   for(size_t i=0; i<conv_data_h.size(); ++i) time_f.push_back(i*dT_f);
 
-  auto conv = hydra::make_spiline<double>(time_f, conv_data_h);
+  auto conv = hydra::make_spline<double>(time_f, conv_data_h);
   DEBUG(time_f[0])
   DEBUG(time_f.back())
   DEBUG(time_f.size())

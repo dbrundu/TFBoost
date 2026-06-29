@@ -38,7 +38,7 @@
 #include <hydra/Parameter.h>
 #include <hydra/Tuple.h>
 #include <hydra/Range.h>
-#include <hydra/Spiline.h>
+#include <hydra/Spline.h>
 #include <tfboost/detail/external/hydra/DeConvolution.h>
 #include <hydra/detail/external/hydra_thrust/transform_reduce.h>
 #include <hydra/detail/FFTPolicy.h>
@@ -297,14 +297,14 @@ typedef typename detail::convolution::_traits<hydra_thrust::tuple<Functor, Kerne
 
 
 #ifdef __CUDA_ARCH__
-		if( fInterpolate ) return spiline( fXMin, fXMax, fDeviceData, X);
+		if( fInterpolate ) return spline( fXMin, fXMax, fDeviceData, X);
 		else{
 
 			unsigned i = fNSamples*(X-fMin)/(fMax-fMin);
 			return fDeviceData[i];
 		}
 #else
-		if( fInterpolate ) return spiline( fXMin, fXMax, fHostData, X);
+		if( fInterpolate ) return spline( fXMin, fXMax, fHostData, X);
 			else{
 
 				unsigned i = fNSamples*(X-fMin)/(fMax-fMin);
@@ -317,9 +317,9 @@ typedef typename detail::convolution::_traits<hydra_thrust::tuple<Functor, Kerne
 void Dispose(){
 		using hydra_thrust::return_temporary_buffer;
 
-		return_temporary_buffer(  device_system_type(), fDeviceData );
-		return_temporary_buffer(  host_system_type(),   fHostData );
-		return_temporary_buffer(  fft_system_type()  , fFFTData );
+		return_temporary_buffer(  device_system_type(), fDeviceData, fNSamples );
+		return_temporary_buffer(  host_system_type(),   fHostData,   fNSamples );
+		return_temporary_buffer(  fft_system_type()  ,  fFFTData,    fNSamples );
 
 	}
 

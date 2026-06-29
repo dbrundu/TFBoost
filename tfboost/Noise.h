@@ -121,7 +121,7 @@ public:
            for(size_t i=0; i<N; ++i) time_temp[i] = i*c.dT;
 
            auto flt        = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
-           auto conv_temp  = hydra::make_spiline<double>(time_temp, noise_h);
+           auto conv_temp  = hydra::make_spline<double>(time_temp, noise_h);
 
            tfboost::Do_Convolution(hydra::fft::fftw_f64, flt, conv_temp, noise_h, 0, (N-1)*c.dT, N);
            hydra::copy(noise_h , noise_d);
@@ -180,7 +180,7 @@ void inline AddNoiseToSignal(SIGNAL& signal, NOISE const& noise,  tfboost::Confi
         for(size_t i=0; i<noise_N; ++i) time_temp[i] = i*c.dT;
 
         auto flt        = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
-        auto conv_temp  = hydra::make_spiline<double>(time_temp, noise_h);
+        auto conv_temp  = hydra::make_spline<double>(time_temp, noise_h);
 
         tfboost::Do_Convolution(hydra::fft::fftw_f64, flt, conv_temp, noise_h, 0, (noise_N-1)*c.dT, noise_N);
         hydra::copy(noise_h , noise_d);

@@ -37,7 +37,7 @@
 #include <hydra/functions/Gaussian.h>
 #include <hydra/device/System.h>
 #include <hydra/functions/ConvolutionFunctor.h>
-#include <hydra/functions/SpilineFunctor.h>
+#include <hydra/functions/SplineFunctor.h>
 #include <hydra/functions/Polynomial.h>
 #include <hydra/Filter.h>
 #include <hydra/Parameter.h>

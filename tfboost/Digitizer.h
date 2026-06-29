@@ -92,7 +92,7 @@ inline void TimeDigitizeSignal(Iterable& data,
     HostSignal_t time_dig; 
 
     //time and data are the not digitized ones
-    auto conv_spline = hydra::make_spiline<double>(time, data );
+    auto conv_spline = hydra::make_spline<double>(time, data );
 
     tfboost::detail::DoTimeDigitization(conv_dig, time_dig, conv_spline, dT, Tmax, rng, rndmphase);
                                 

@@ -48,7 +48,7 @@
 #include <hydra/functions/Gaussian.h>
 #include <hydra/device/System.h>
 #include <hydra/functions/ConvolutionFunctor.h>
-#include <hydra/functions/SpilineFunctor.h>
+#include <hydra/functions/SplineFunctor.h>
 #include <hydra/functions/Polynomial.h>
 #include <hydra/Filter.h>
 #include <hydra/Parameter.h>
@@ -565,8 +565,8 @@ int main(int argv, char** argc)
   HostSignal_t delta_time;
   HostSignal_t delta_val;
 
-  auto kernel1 = hydra::make_spiline<double>(time_tfn, current_tfn );
-  auto kernel2 = hydra::make_spiline<double>(time_tfn, current_tfn );
+  auto kernel1 = hydra::make_spline<double>(time_tfn, current_tfn );
+  auto kernel2 = hydra::make_spline<double>(time_tfn, current_tfn );
 
   size_t INDEX = 0;  
 
@@ -590,15 +590,15 @@ int main(int argv, char** argc)
 
     std::cout<<"read Delta Function path="<< tf_delta.Data() << std::endl;     
     tfboost::ReadTF( tf_delta, Nskip, delta_time, delta_val, /*scaling*/1.0, /*double range?*/true);
-    auto kernelD = hydra::make_spiline<double>(delta_time, delta_val );
+    auto kernelD = hydra::make_spline<double>(delta_time, delta_val );
 
     std::cout<<"read Trasfer functions Hnz path="<< tf_infile1.Data() << std::endl;     
     tfboost::ReadTF( tf_infile1, Nskip, time_tfn, current_tfn, /*scaling*/1.0, /*double range?*/true);
-    auto kernel1 = hydra::make_spiline<double>(time_tfn, current_tfn );
+    auto kernel1 = hydra::make_spline<double>(time_tfn, current_tfn );
 
     std::cout<<"read Trasfer functions Hpz path="<< tf_infile2.Data() << std::endl;
     tfboost::ReadTF( tf_infile2, Nskip, time_tfp, current_tfp, /*scaling*/1.0, /*double range?*/true);
-    auto kernel2 = hydra::make_spiline<double>(time_tfp, current_tfp );
+    auto kernel2 = hydra::make_spline<double>(time_tfp, current_tfp );
 
     for(int f=1; f<=NTracks; f++){
 
@@ -703,15 +703,15 @@ int main(int argv, char** argc)
  /*     HostSignal_t conv_delta_n(Nsamples);
      HostSignal_t conv_delta_p(Nsamples); */
 
-     auto signal_e = hydra::make_spiline<double>(time, current_e );
-     auto signal_h = hydra::make_spiline<double>(time, current_h ); 
+     auto signal_e = hydra::make_spline<double>(time, current_e );
+     auto signal_h = hydra::make_spline<double>(time, current_h ); 
 
   /*   //convolution with delta to round corners
      tfboost::Do_Convolution(fft_backend, kernelD, signal_e, conv_delta_n, min, max, Nsamples);
      tfboost::Do_Convolution(fft_backend, kernelD, signal_h, conv_delta_p, min, max, Nsamples);
    
-    auto delta_e = hydra::make_spiline<double>(time, conv_delta_n );
-    auto delta_h = hydra::make_spiline<double>(time, conv_delta_p );
+    auto delta_e = hydra::make_spline<double>(time, conv_delta_n );
+    auto delta_h = hydra::make_spline<double>(time, conv_delta_p );
 
     //convolution after delta
     tfboost::Do_Convolution(fft_backend, kernel1, delta_e, conv_data_n, min, max, Nsamples);
@@ -784,7 +784,7 @@ int main(int argv, char** argc)
     tf_infile1 += "3Ddiamond.txt";
     std::cout<<"Trasfer functions H(s) path="<< tf_infile1.Data() << std::endl;     
     tfboost::ReadTF( tf_infile1, Nskip, time_tfn, current_tfn, /*scaling*/1.0, /*double range?*/true);
-    auto kernel1 = hydra::make_spiline<double>(time_tfn, current_tfn );
+    auto kernel1 = hydra::make_spline<double>(time_tfn, current_tfn );
     }
     
     //preload transfer functions
@@ -794,11 +794,11 @@ int main(int argv, char** argc)
 
     std::cout<<"Trasfer functions H(s)_Rn path="<< tf_infile1.Data() << std::endl;     
     tfboost::ReadTF( tf_infile1, Nskip, time_tfn, current_tfn, /*scaling*/1.0, /*double range?*/true);
-    auto kernel1 = hydra::make_spiline<double>(time_tfn, current_tfn );
+    auto kernel1 = hydra::make_spline<double>(time_tfn, current_tfn );
 
     std::cout<<"Trasfer functions H(s)_Rp path="<< tf_infile2.Data() << std::endl;
     tfboost::ReadTF( tf_infile2, Nskip, time_tfp, current_tfp, /*scaling*/1.0, /*double range?*/true);
-    auto kernel2 = hydra::make_spiline<double>(time_tfp, current_tfp );
+    auto kernel2 = hydra::make_spline<double>(time_tfp, current_tfp );
     }
           
       /* ----------------------------------------------
@@ -898,11 +898,11 @@ int main(int argv, char** argc)
   HostSignal_t conv_data_e(Nsamples);
   HostSignal_t conv_data_h(Nsamples);
 
-  auto signal_e = hydra::make_spiline<double>(time, current_e );
-  auto signal_h = hydra::make_spiline<double>(time, current_h ); 
+  auto signal_e = hydra::make_spline<double>(time, current_e );
+  auto signal_h = hydra::make_spline<double>(time, current_h ); 
 
-  auto kernel1 = hydra::make_spiline<double>(time_tfn, current_tfn );
-  auto kernel2 = hydra::make_spiline<double>(time_tfn, current_tfn );
+  auto kernel1 = hydra::make_spline<double>(time_tfn, current_tfn );
+  auto kernel2 = hydra::make_spline<double>(time_tfn, current_tfn );
 
   tfboost::Do_Convolution(fft_backend, kernel1, signal_e, conv_data_e, min, max, Nsamples);
   tfboost::Do_Convolution(fft_backend, kernel2, signal_h, conv_data_h, min, max, Nsamples);
@@ -922,8 +922,8 @@ int main(int argv, char** argc)
 
   HostSignal_t conv_data(Nsamples);
 
-  auto signal = hydra::make_spiline<double>(time, current);
-  auto kernel1 = hydra::make_spiline<double>(time_tfn, current_tfn );
+  auto signal = hydra::make_spline<double>(time, current);
+  auto kernel1 = hydra::make_spline<double>(time_tfn, current_tfn );
 
   tfboost::Do_Convolution(fft_backend, kernel1, signal, conv_data, min, max, Nsamples);
 
