@@ -55,6 +55,7 @@
 #include <tfboost/Types.h>
 #include <tfboost/Utils.h>
 #include <tfboost/core/Signal.h>
+#include <tfboost/transforms/ConvolutionModule.h>
 #include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
@@ -201,12 +202,20 @@ int main(int argv, char** argc)
   if(TransferFunction=="FromFile")
   {
      int Nskip = (int) cfg_tf["NlinesToSkip"];
-     
+
      TString tf_infile = (const char*) cfg_tf["TFFile"];
-     
+
      tfboost::ReadTF( tf_infile, Nskip, time_tf, current_tf, /*scaling*/1.0, /*double range?*/true);
   }
-   
+
+
+  /* ----------------------------------------------
+   * Instantiate the signal-transformation modules
+   * selected by the configuration (run-time).
+   * --------------------------------------------*/
+  tfboost::transforms::ConvolutionModule convolution( c.ID, cfg_tf, time_tf, current_tf );
+
+
 
 
 
@@ -231,11 +240,6 @@ int main(int argv, char** argc)
     ++INDEX;
     
     const bool PlotConv = c.SaveSinglePlotConvolution && INDEX==c.IdxConvtoSave;
-
-    // The working sampling step of the signal: starts at the configured dT and
-    // is updated (on the Signal) by time digitization. The configuration object
-    // is left untouched (it stays the immutable input dT / Nsamples).
-    double workingDT = c.dT;
 
     //Declare and prepare the containers
     HostSignal_t time;     time.reserve(c.Nsamples);
@@ -314,115 +318,51 @@ int main(int argv, char** argc)
 
 
     /* ----------------------------------------------
-     * Final signal curve
-     * --------------------------------------------*/ 
-    DevSignal_t time_d(time.size());
-    DevSignal_t current_d(current.size());
-    hydra::copy(time, time_d);
-    hydra::copy(current, current_d);
+     * Build the working Signal from the input curve.
+     * The convolution (and the later transforms) mutate
+     * it in place; the loop operates on `sig` from here on.
+     * --------------------------------------------*/
+    tfboost::core::Signal sig{ std::move(time), std::move(current), c.dT };
 
-    auto signal   = hydra::make_spline<double>(time, current );
-    auto signal_d = hydra::make_spline<double>(time_d, current_d );
-    
-    if(PlotConv) tfboost::FillHistWithFunction( hist_signal, signal);
-    
-    
-    
+    if(PlotConv) tfboost::FillHistWithFunction( hist_signal, sig.spline());
+
+
     /* ----------------------------------------------
      * Performing the convolution
      * --------------------------------------------*/
 #if HYDRA_DEVICE_SYSTEM!=CUDA
     auto fft_backend = hydra::fft::fftw_f64;
 #endif
-    
+
 #if HYDRA_DEVICE_SYSTEM==CUDA
     auto fft_backend = hydra::fft::cufft_f64;
 #endif
-    
-    HostSignal_t conv_data_h(c.Nsamples);
 
-    
-    if(!c.MakeConvolution){
-      // The input signals are already the convoluted ones
-      // so skip the convolution and copy the input signals
-      // in conv_data_h
-      hydra::copy(current, conv_data_h);
-      
-    } else {
-
-      switch(c.ID) 
-      {
-        case 0:{
-          auto kernel = tfboost::TIA_MOS<double>( cfg_tf );
-          tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel); 
-          }break;
-
-        case 1:{
-          auto kernel = tfboost::TIA_BJT_2stages<double>( cfg_tf );
-          tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
-          }break;
-
-        case 2:{
-          auto kernel = tfboost::TIA_BJT_2stages_GM<double>( cfg_tf );
-          tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
-          }break;
-
-        case 3:{
-          auto kernel = tfboost::TIA_BJT_1stage<double>( cfg_tf );
-          tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
-          }break;
-
-        case 4:{
-          auto kernel = tfboost::TIA_IdealInt<double>( cfg_tf );
-          tfboost::Do_Convolution(fft_backend, kernel, signal_d, conv_data_h, min, max, c.Nsamples);
-          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
-          }break;
-
-        case 5:{
-          auto kernel = hydra::make_spline<double>(time_tf, current_tf );
-          tfboost::Do_Convolution(fft_backend, kernel, signal, conv_data_h, min, max, c.Nsamples);
-          if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
-        } break;
-
-        default:
-          SAFE_EXIT( true , "In analysis.inl: bad transfer function ID.")
-          
-      }//end switch
+    if(c.MakeConvolution)
+    {
+      // convolve the input signal with the configured transfer function
+      convolution.Convolve( sig, PlotConv ? &hist_kernel : nullptr );
 
 
       // Time Digitization of the signal
       // This step is done only if we are not requesting noise
       if(c.MakeTimeDigitization && !c.DoMeasurementsWithNoise)
       {
-        tfboost::TimeDigitizeSignal( conv_data_h, time, c.sampling_dT, max, engine, c.randomphase);
+        tfboost::TimeDigitizeSignal( sig.amplitude(), sig.time(), c.sampling_dT, max, engine, c.randomphase);
 
-        // the signal has been resampled: track the new working dT
-        workingDT = c.sampling_dT;
-        hist_convol.SetBins(conv_data_h.size(), min, maxplot);
+        // the signal has been resampled: update its working dT
+        sig.setDT(c.sampling_dT);
+        hist_convol.SetBins(sig.size(), min, maxplot);
       }
 
 
       // Voltage Digitization of the signal
       // This step is done only if we are not requesting noise
       if(c.MakeVoltageDigitization && !c.DoMeasurementsWithNoise)
-        tfboost::VoltageDigitizeSignal( conv_data_h, c.ADCmin, c.ADCmax, c.ADCnbits);
-
-      
+        tfboost::VoltageDigitizeSignal( sig.amplitude(), c.ADCmin, c.ADCmax, c.ADCnbits);
 
     } // end MakeConvolution
-
-
-    /* ----------------------------------------------
-     * Wrap the working waveform (the convoluted /
-     * possibly digitized signal on its time base) into
-     * a Signal object that owns its samples and dT.
-     * From here on the loop operates on `sig`.
-     * --------------------------------------------*/
-    tfboost::core::Signal sig{ std::move(time), std::move(conv_data_h), workingDT };
+    // else: the input is already the convoluted signal, `sig` holds it as is
 
 
 
