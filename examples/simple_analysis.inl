@@ -319,8 +319,8 @@ int main(int argv, char** argc)
     hydra::copy(time, time_d);
     hydra::copy(current, current_d);
 
-    auto signal   = hydra::make_spiline<double>(time, current );
-    auto signal_d = hydra::make_spiline<double>(time_d, current_d );
+    auto signal   = hydra::make_spline<double>(time, current );
+    auto signal_d = hydra::make_spline<double>(time_d, current_d );
     
     if(PlotConv) tfboost::FillHistWithFunction( hist_signal, signal);
     
@@ -381,7 +381,7 @@ int main(int argv, char** argc)
           }break;
 
         case 5:{
-          auto kernel = hydra::make_spiline<double>(time_tf, current_tf );
+          auto kernel = hydra::make_spline<double>(time_tf, current_tf );
           tfboost::Do_Convolution(fft_backend, kernel, signal, conv_data_h, min, max, c.Nsamples);
           if(PlotConv) tfboost::FillHistWithFunction( hist_kernel, kernel);
         } break;
@@ -421,7 +421,7 @@ int main(int argv, char** argc)
      * Filling histogram for visualization
      * --------------------------------------------*/     
     if(PlotConv) {
-        auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
+        auto conv_spline = hydra::make_spline<double>(time, conv_data_h );
         tfboost::FillHistWithFunction( hist_convol, conv_spline);
     }
     
@@ -545,7 +545,7 @@ int main(int argv, char** argc)
       // simulating an oscilloscope
       if(c.LowPassFilter && !c.FilterOnlyNoise){
           auto flt       = tfboost::ButterworthFilter<double>( c.LowPassFrequency, c.LowPassOrder, c.dT);
-          auto conv_temp = hydra::make_spiline<double>(time, conv_data_h);
+          auto conv_temp = hydra::make_spline<double>(time, conv_data_h);
           tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, c.Nsamples);
       }
       
@@ -664,7 +664,7 @@ int main(int argv, char** argc)
 
       
       if(PlotConv) {
-          auto conv_spline = hydra::make_spiline<double>(time, conv_data_h );
+          auto conv_spline = hydra::make_spline<double>(time, conv_data_h );
           tfboost::FillHistWithFunction( hist_convol, conv_spline);
       }
 
