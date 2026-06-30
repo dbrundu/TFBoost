@@ -182,12 +182,6 @@ int main(int argv, char** argc)
   TString currentfilename;
   TString line;
 
-  /* ----------------------------------------------
-   * Preparing the list of noise input files 
-   * --------------------------------------------*/
-  TList* listofnoisefiles = tfboost::GetFileList(c.NoiseDirectory); 
-  TIter nextnoisefile( listofnoisefiles );
-
 
 
   /*-----------------------------------------------
@@ -452,22 +446,11 @@ int main(int argv, char** argc)
     if(c.DoMeasurementsWithNoise)
     {
 
-      // apply the noise transforms (simulated noise, oscilloscope low-pass
-      // filter, time/voltage digitization) assembled from the configuration
+      // apply the noise transforms (simulated noise or noise-from-file,
+      // oscilloscope low-pass filter, time/voltage digitization) assembled
+      // from the configuration
       noise_pipeline.apply( sig, ctx );
 
-
-      // if noise from file, the noise samples are read
-      // and added directly to the signal
-      if(c.AddNoiseFromFiles){
-        TSystemFile* currentnoisefile = (TSystemFile*) nextnoisefile();
-        TString currentnoisefilename  = currentnoisefile->GetName();
-
-        HostSignal_t noise_h;
-        tfboost::ReadSimple( c.NoiseDirectory+currentnoisefilename, 0, noise_h, sig.size(), 1e-3);
-        tfboost::core::add_noise_samples(sig.amplitude(), noise_h, c);
-      }
-      
 
 
       

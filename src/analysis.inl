@@ -57,6 +57,8 @@
 #include <tfboost/core/Signal.h>
 #include <tfboost/transforms/ConvolutionModule.h>
 #include <tfboost/transforms/Pipeline.h>
+#include <tfboost/measurements/CleanMeasurer.h>
+#include <tfboost/measurements/NoisyMeasurer.h>
 #include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
@@ -140,12 +142,11 @@ int main(int argv, char** argc)
   
   
   /* ----------------------------------------------
-   * Initialization of measurements
+   * Measurement modules (no-noise and noisy passes)
    * --------------------------------------------*/
-  Measures_t init = tfboost::MeasuresInitializer::get_values();
-  Measures_t measures( init );
-  Measures_t measures_noise( init );
-  
+  tfboost::measurements::CleanMeasurer clean_measurer;
+  tfboost::measurements::NoisyMeasurer noisy_measurer;
+
  
  
   /* ----------------------------------------------
@@ -187,12 +188,6 @@ int main(int argv, char** argc)
   TSystemFile *currentfile;
   TString currentfilename;
   TString line;
-
-  /* ----------------------------------------------
-   * Preparing the list of noise input files 
-   * --------------------------------------------*/
-  TList* listofnoisefiles = tfboost::GetFileList(c.NoiseDirectory); 
-  TIter nextnoisefile( listofnoisefiles );
 
 
 
@@ -392,53 +387,16 @@ int main(int argv, char** argc)
     /* ----------------------------------------------
      * Measurements without noise
      * --------------------------------------------*/
+    tfboost::measurements::MeasureContext mctx{ c, SampRate, TR_res };
 
-    // Condition to avoid to process empty signal
-    // reject signal with amplitude < 1 mV
-    if( tfboost::algo::LeadingEdge(sig.amplitude(), c.LE_reject_nonoise) ==  sig.size() ) {
-        WARNING_LINE("Skipping empty event...")
-        continue; }
+    auto measures = clean_measurer.measure( sig, mctx );
 
-    size_t TOA_LE         = tfboost::algo::LeadingEdge(sig.amplitude(), c.LEthr);
-    measures[_toa_le]     = sig.time()[TOA_LE] ;
-
-    size_t TimeAtPeak     = tfboost::algo::GetTimeAtPeak(sig.amplitude());
-    measures[_tpeak]      = sig.time()[TimeAtPeak] ;
-
-    measures[_vpeak]      = tfboost::algo::GetVAtPeak(sig.amplitude());
-
-    size_t TOA_CFD        = tfboost::algo::ConstantFraction(sig.amplitude() , c.CFD_fr , measures[_vpeak]);
-    measures[_toa_cfd]    = sig.time()[TOA_CFD] ;
-
-    auto rm_nonoise       = tfboost::algo::TimeRefMethod( sig.amplitude(), sig.time(), measures[_vpeak], c.RM_delay, c.bound_fit,/*noise?*/false, /*plot?*/false );
-    measures[_toa_rm]     = std::get<0>( rm_nonoise ) ;
-
-    measures[_dvdt_rm]    = 1e-6 * std::get<2>( rm_nonoise ) ;
-
-    measures[_vonth_rm]   =  std::get<1>( rm_nonoise ) ;
-
-    measures[_dvdt_le]    = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(sig.amplitude(), TOA_LE);
-
-    measures[_dvdt_cfd]   = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(sig.amplitude(), TOA_CFD);
-
-    measures[_vonth_le]   = sig.amplitude()[TOA_LE];
-
-    measures[_vonth_cfd]  = sig.amplitude()[TOA_CFD];
-    
-/*     measures[_tot]        = tfboost::algo::TimeOverThr(conv_data_h, time, c.LEthr, c.LEthr) ;
-    
-    measures[_toa_le]     = c.TOTcorrection? tfboost::algo::CorrectTOA(measures[_toa_le], measures[_tot], c.TOT_a, c.TOT_b) : measures[_toa_le]; */
+    // reject "empty" events
+    if(!mctx.valid) { WARNING_LINE("Skipping empty event...") continue; }
 
 
-
-    // adding time tagger resolution
-    if(c.TimeReferenceResolution)
-      for(auto key : {_toa_le, _tpeak, _toa_cfd, _toa_rm, _tot} )
-        measures[key] += TR_res;
-     
-    
     if(c.MakeTheoreticalTOA){
-      auto prob_curve = tfboost::core::compute_toa_curve( TOA_CFD, TOA_CFD-100, TOA_CFD+100,
+      auto prob_curve = tfboost::core::compute_toa_curve( mctx.toa_cfd_idx, mctx.toa_cfd_idx-100, mctx.toa_cfd_idx+100,
                                                          c.CFD_fr, measures[_vpeak], c.sigma_noise,
                                                          idx, sig.amplitude(), "th_jitter.pdf");
                                                          
@@ -483,128 +441,33 @@ int main(int argv, char** argc)
     if(c.DoMeasurementsWithNoise)
     {
 
-      // apply the noise transforms (simulated noise, oscilloscope low-pass
-      // filter, time/voltage digitization) assembled from the configuration
+      // apply the noise transforms (simulated noise or noise-from-file,
+      // oscilloscope low-pass filter, time/voltage digitization) assembled
+      // from the configuration
       noise_pipeline.apply( sig, ctx );
 
 
-      // if noise from file, the noise samples are read
-      // and added directly to the signal
-      if(c.AddNoiseFromFiles){
-        TSystemFile* currentnoisefile = (TSystemFile*) nextnoisefile();
-        TString currentnoisefilename  = currentnoisefile->GetName();
+      // measure on the noisy signal (the clean measures provide the
+      // electronic-jitter reference)
+      mctx.clean_measures = measures;
+      auto measures_noise = noisy_measurer.measure( sig, mctx );
 
-        HostSignal_t noise_h;
-        tfboost::ReadSimple( c.NoiseDirectory+currentnoisefilename, 0, noise_h, sig.size(), 1e-3);
-        tfboost::core::add_noise_samples(sig.amplitude(), noise_h, c);
-      }
-      
+      // reject "empty" events
+      if(!mctx.valid) { WARNING_LINE("Skipping empty event...") continue; }
 
-      // Condition to avoid to process empty signal
-      if( tfboost::algo::LeadingEdge(sig.amplitude(), c.LE_reject_noise) == sig.size() )
-        { WARNING_LINE("Skipping empty event...") continue; }
-
-
-
-     /*-------------------------------------------------
-      * Start measurmenets with noise
-      *------------------------------------------------*/
-
-      // calculating RMS of noise, if the offset is present
-      size_t new_offset = c.offset*1e-12 / c.sampling_dT;
-
-      double rms_noise = 0.0;
-	    for (size_t i=0; i<new_offset; i++) rms_noise += sig.amplitude()[i] * sig.amplitude()[i];
-      rms_noise = ::sqrt(rms_noise/new_offset);
-
-      // initialize indices
-      size_t timeatmax_idx=0, TOA_LE_noise_idx=0, TOA_CFD_noise_idx=0, TOA_RM_noise_idx=0;
-
-      timeatmax_idx     = tfboost::algo::GetTimeAtPeak(sig.amplitude());
-      TOA_LE_noise_idx  = tfboost::algo::LeadingEdge(sig.amplitude() , c.LEthr);
-
-      measures_noise[_tpeak]     = sig.time()[timeatmax_idx] ;
-      measures_noise[_toa_le]    = sig.time()[TOA_LE_noise_idx]  ;
-      measures_noise[_vonth_le]  = sig.amplitude()[TOA_LE_noise_idx];
-      measures_noise[_vpeak]     = tfboost::algo::GetVAtPeak(sig.amplitude());
-
-      size_t TOA_CFD             = tfboost::algo::ConstantFraction(sig.amplitude() , c.CFD_fr , measures_noise[_vpeak]);
-      measures_noise[_toa_cfd]   = sig.time()[TOA_CFD] ;
-
-      auto rm_noise              = tfboost::algo::TimeRefMethod( sig.amplitude(), sig.time(), measures_noise[_vpeak], c.RM_delay, c.bound_fit,/*noise?*/false, /*plot?*/false );
-      measures_noise[_toa_rm]    = std::get<0>( rm_noise ) ;
-
-      measures_noise[_dvdt_rm]    = 1e-6 * std::get<2>( rm_noise ) ;
-      measures_noise[_vonth_rm]   =  std::get<1>( rm_noise ) ;
-      measures_noise[_dvdt_le]    = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(sig.amplitude(), TOA_LE_noise_idx);
-      measures_noise[_dvdt_cfd]   = 1e-6 * SampRate * tfboost::algo::SlopeOnThrs(sig.amplitude(), TOA_CFD);
-      measures_noise[_vonth_le]   = sig.amplitude()[TOA_LE_noise_idx];
-      measures_noise[_vonth_cfd]  = sig.amplitude()[TOA_CFD];
-      measures_noise[_tot]        = tfboost::algo::TimeOverThr(sig.amplitude(), sig.time(), c.LEthr, c.LEthr) ;
-      
-      if(!(c.MakeGaussianFitNearVmax && TOA_CFD>1)){
-      //fill electronic jitter histograms
-      hist_JitterCFD.Fill(measures_noise[_toa_cfd]-measures[_toa_cfd]);
-      hist_JitterLE.Fill(measures_noise[_toa_le]-measures[_toa_le]);
-      hist_JitterRM.Fill(measures_noise[_toa_rm]-measures[_toa_rm]);
-      }
-      
-      if(c.MakeLinearFitNearThreshold && TOA_LE>1)
-      {
-        auto toa = tfboost::algo::LinearFitNearThr( c.LEthr, sig.amplitude(), sig.time(), c.bound_fit, c.PlotLinFit, "LEfit");
-
-        measures_noise[_toa_le]  =      std::get<0>(toa);
-        measures_noise[_dvdt_le] = 1e-6*std::get<1>(toa) ;
-      }
-
-
-
-      if(c.MakeGaussianFitNearVmax && TOA_CFD>1)
-      {
-        auto gaussfit = tfboost::algo::GaussianFitNearVmax( sig.amplitude(), sig.time(), c.bound_fit, c.PlotGausFit );
-        measures_noise[_tpeak] = std::get<1>(gaussfit);
-        measures_noise[_vpeak] = std::get<0>(gaussfit);
-
-        auto cfd_idx = tfboost::algo::ConstantFraction(sig.amplitude() , c.CFD_fr , measures_noise[_vpeak]);
-        measures_noise[_toa_cfd]    = sig.time()[cfd_idx] ;
-        measures_noise[_vonth_cfd]  = sig.amplitude()[ cfd_idx ];
-
-        if(c.MakeLinearFitNearThreshold && TOA_LE>1)
-        {
-          auto toa_cf = tfboost::algo::LinearFitNearThr( c.CFD_fr*measures_noise[_vpeak],
-                                                       sig.amplitude(), sig.time(), c.bound_fit,
-                                                       /*plot?*/c.PlotLinFit, "CFDfit");
-
-          auto rm     = tfboost::algo::TimeRefMethod( sig.amplitude(), sig.time(),
-                                                      measures_noise[_vpeak], c.RM_delay, c.bound_fit,
-                                                      /*noise?*/true, /*plot?*/c.PlotRMfit);
-                                                            
-          measures_noise[_toa_cfd]   = std::get<0>(toa_cf);
-          measures_noise[_dvdt_cfd]  = 1e-6 * std::get<1>(toa_cf);
-          measures_noise[_toa_rm]    = std::get<0>(rm) ;
-          measures_noise[_vonth_rm]  = std::get<1>(rm);
-          measures_noise[_dvdt_rm]   =  1e-6 * std::get<2>(rm);
-
-          hist_JitterCFD.Fill(measures_noise[_toa_cfd]-measures[_toa_cfd]);
-          hist_JitterLE.Fill(measures_noise[_toa_le]-measures[_toa_le]);
-          hist_JitterRM.Fill(measures_noise[_toa_rm]-measures[_toa_rm]);
-          
-        }
-      }
-
-      if(c.TOTcorrection)
-          measures_noise[_toa_le] = tfboost::algo::CorrectTOA(measures_noise[_toa_le], measures_noise[_tot], c.TOT_a, c.TOT_b);
-      
-    // adding time tagger resolution
-    if(c.TimeReferenceResolution)
-      for(auto key : {_toa_le, _tpeak, _toa_cfd, _toa_rm, _tot} )
-        measures_noise[key] += TR_res;
 
      /*-------------------------------------------------
       * Fill histograms for noise measurements
       *------------------------------------------------*/
       histograms.FillMeasures_noise( measures_noise );
-      hist_rms_noise.Fill(rms_noise);
+      hist_rms_noise.Fill(mctx.rms_noise);
+
+      if(mctx.fill_jitter)
+      {
+        hist_JitterCFD.Fill(mctx.jitter_cfd);
+        hist_JitterLE .Fill(mctx.jitter_le);
+        hist_JitterRM .Fill(mctx.jitter_rm);
+      }
       
       
       RULE_LINE_LIGHT;
@@ -622,7 +485,7 @@ int main(int argv, char** argc)
       std::cout << "dv/dt (CFD)              = " << measures_noise[_dvdt_cfd]   << " (uV/ps)\n";
       std::cout << "dv/dt (LE)               = " << measures_noise[_dvdt_le]    << " (uV/ps)\n";
       std::cout << "dv/dt (RM)               = " << measures_noise[_dvdt_rm]    << " (uV/ps)\n";
-      std::cout << "RMS of noise             = " << rms_noise                   << " (V)\n";
+      std::cout << "RMS of noise             = " << mctx.rms_noise              << " (V)\n";
 
       
       if(PlotConv) {

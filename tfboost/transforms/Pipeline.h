@@ -38,6 +38,7 @@
 #include <tfboost/core/Signal.h>
 #include <tfboost/transforms/ISignalTransform.h>
 #include <tfboost/transforms/NoiseModule.h>
+#include <tfboost/transforms/NoiseFromFileModule.h>
 #include <tfboost/transforms/FilterModule.h>
 #include <tfboost/transforms/TimeDigitizerModule.h>
 #include <tfboost/transforms/VoltageDigitizerModule.h>
@@ -134,6 +135,9 @@ inline Pipeline BuildNoisePipeline(ConfigParser const& c, double Tmax, FilterKin
 
     if(c.MakeVoltageDigitization)
         p.add( std::make_unique<VoltageDigitizerModule>(c.ADCmin, c.ADCmax, c.ADCnbits) );
+
+    if(c.AddNoiseFromFiles)
+        p.add( std::make_unique<NoiseFromFileModule>(c) );
 
     return p;
 }
