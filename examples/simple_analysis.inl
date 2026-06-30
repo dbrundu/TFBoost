@@ -56,10 +56,7 @@
 #include <tfboost/Utils.h>
 #include <tfboost/core/Signal.h>
 #include <tfboost/transforms/ConvolutionModule.h>
-#include <tfboost/transforms/NoiseModule.h>
-#include <tfboost/transforms/FilterModule.h>
-#include <tfboost/transforms/TimeDigitizerModule.h>
-#include <tfboost/transforms/VoltageDigitizerModule.h>
+#include <tfboost/transforms/Pipeline.h>
 #include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
@@ -215,13 +212,17 @@ int main(int argv, char** argc)
    * selected by the configuration (run-time), and the
    * context holding the shared random engines.
    * --------------------------------------------*/
-  tfboost::transforms::TransformContext       ctx{ engine, root_rng, S };
+  tfboost::transforms::TransformContext  ctx{ engine, root_rng, S };
 
-  tfboost::transforms::ConvolutionModule      convolution( c.ID, cfg_tf, time_tf, current_tf );
-  tfboost::transforms::NoiseModule            noise_module( c );
-  tfboost::transforms::FilterModule           lowpass( c, tfboost::transforms::FilterKind::Butterworth );
-  tfboost::transforms::TimeDigitizerModule    time_digitizer( c.sampling_dT, max, c.randomphase );
-  tfboost::transforms::VoltageDigitizerModule voltage_digitizer( c.ADCmin, c.ADCmax, c.ADCnbits );
+  tfboost::transforms::ConvolutionModule convolution( c.ID, cfg_tf, time_tf, current_tf );
+
+  // signal-transformation pipelines, assembled from the configuration:
+  //  - conditioning: transforms applied before the no-noise measurements
+  //  - noise:        transforms producing the noisy signal
+  auto conditioning_pipeline =
+      tfboost::transforms::BuildConditioningPipeline( c, max, tfboost::transforms::FilterKind::Butterworth );
+  auto noise_pipeline =
+      tfboost::transforms::BuildNoisePipeline( c, max, tfboost::transforms::FilterKind::Butterworth );
 
 
 
@@ -338,28 +339,13 @@ int main(int argv, char** argc)
     /* ----------------------------------------------
      * Performing the convolution
      * --------------------------------------------*/
+    // convolve the input signal with the configured transfer function
+    // (when disabled, `sig` already holds the convoluted input signal)
     if(c.MakeConvolution)
-    {
-      // convolve the input signal with the configured transfer function
       convolution.Convolve( sig, PlotConv ? &hist_kernel : nullptr );
 
-
-      // Time Digitization of the signal
-      // This step is done only if we are not requesting noise
-      if(c.MakeTimeDigitization && !c.DoMeasurementsWithNoise)
-      {
-        time_digitizer.apply( sig, ctx );
-        hist_convol.SetBins(sig.size(), min, maxplot);
-      }
-
-
-      // Voltage Digitization of the signal
-      // This step is done only if we are not requesting noise
-      if(c.MakeVoltageDigitization && !c.DoMeasurementsWithNoise)
-        voltage_digitizer.apply( sig, ctx );
-
-    } // end MakeConvolution
-    // else: the input is already the convoluted signal, `sig` holds it as is
+    // apply the no-noise conditioning transforms (filter / digitization)
+    conditioning_pipeline.apply( sig, ctx );
 
 
 
@@ -367,8 +353,8 @@ int main(int argv, char** argc)
      * Filling histogram for visualization
      * --------------------------------------------*/
     if(PlotConv) {
-        auto conv_spline = sig.spline();
-        tfboost::FillHistWithFunction( hist_convol, conv_spline);
+        hist_convol.SetBins(sig.size(), min, maxplot);
+        tfboost::FillHistWithFunction( hist_convol, sig.spline());
     }
 
 
@@ -465,31 +451,10 @@ int main(int argv, char** argc)
 
     if(c.DoMeasurementsWithNoise)
     {
-      
-      // if not from file, the noise is simulated
-      // using white or red spectrum model
-      if(c.AddSimulatedNoise)
-        noise_module.apply( sig, ctx );
 
-
-     // Digitization of the signal
-     // This step is done only if we are requesting noise
-      if(c.MakeTimeDigitization){
-        time_digitizer.apply( sig, ctx );
-        hist_convol.SetBins(sig.size(), min, maxplot);
-      }
-
-
-      // Introduce a Low Pass Filter
-      // simulating an oscilloscope
-      if(c.LowPassFilter && !c.FilterOnlyNoise)
-        lowpass.apply( sig, ctx );
-
-
-      // Voltage Digitization of the signal
-      // This step is done only if we are requesting noise
-      if(c.MakeVoltageDigitization)
-        voltage_digitizer.apply( sig, ctx );
+      // apply the noise transforms (simulated noise, oscilloscope low-pass
+      // filter, time/voltage digitization) assembled from the configuration
+      noise_pipeline.apply( sig, ctx );
 
 
       // if noise from file, the noise samples are read
@@ -600,8 +565,8 @@ int main(int argv, char** argc)
 
       
       if(PlotConv) {
-          auto conv_spline = sig.spline();
-          tfboost::FillHistWithFunction( hist_convol, conv_spline);
+          hist_convol.SetBins(sig.size(), min, maxplot);
+          tfboost::FillHistWithFunction( hist_convol, sig.spline());
       }
 
     }
