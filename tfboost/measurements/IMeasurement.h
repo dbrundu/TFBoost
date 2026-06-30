@@ -89,6 +89,9 @@ public:
     virtual Measures_t  measure(core::Signal const& sig, MeasureContext& mctx) const = 0;
     virtual const char* name() const = 0;
 
+    // print the measured observables to stdout (diagnostic)
+    virtual void print(Measures_t const& m, MeasureContext const& mctx) const = 0;
+
 };
 
 } // namespace measurements

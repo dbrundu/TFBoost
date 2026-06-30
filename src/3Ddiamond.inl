@@ -112,7 +112,6 @@
 // TFBOOST
 #include <tfboost/Types.h>
 #include <tfboost/Utils.h>
-#include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
 #include <tfboost/functions/TIA_BJT_2stages_GM.h>

@@ -28,7 +28,10 @@
 #ifndef TFBOOST_MEASUREMENTS_CLEANMEASURER_H_
 #define TFBOOST_MEASUREMENTS_CLEANMEASURER_H_
 
+#include <iostream>
+
 #include <tfboost/Types.h>
+#include <tfboost/Utils.h>
 #include <tfboost/Initializer.h>
 #include <tfboost/Algorithms.h>
 #include <tfboost/core/Signal.h>
@@ -98,6 +101,26 @@ public:
         mctx.valid       = true;
 
         return m;
+    }
+
+
+    void print(Measures_t const& m, MeasureContext const& /*mctx*/) const override
+    {
+        RULE_LINE_LIGHT;
+        std::cout << _START_INFO_;
+        std::cout << "Measurements without noise:\n";
+        std::cout << _END_INFO_;
+        std::cout << "Time on thresholds (LE)  = " << m[_toa_le]    << " (s)\n";
+        std::cout << "Time on thresholds (CFD) = " << m[_toa_cfd]   << " (s)\n";
+        std::cout << "Time on thresholds (RM)  = " << m[_toa_rm]    << " (s)\n";
+        std::cout << "V on thresholds (CFD)    = " << m[_vonth_cfd] << " (V)\n";
+        std::cout << "V on thresholds (LE)     = " << m[_vonth_le]  << " (V)\n";
+        std::cout << "V on thresholds (RM)     = " << m[_vonth_rm]  << " (V)\n";
+        std::cout << "Tpeak                    = " << m[_tpeak]     << " (s)\n";
+        std::cout << "Vpeak                    = " << m[_vpeak]     << " (V)\n";
+        std::cout << "dv/dt (CFD)              = " << m[_dvdt_cfd]  << " (uV/ps)\n";
+        std::cout << "dv/dt (LE)               = " << m[_dvdt_le]   << " (uV/ps)\n";
+        std::cout << "dv/dt (RM)               = " << m[_dvdt_rm]   << " (uV/ps)\n";
     }
 
 };

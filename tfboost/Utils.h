@@ -27,7 +27,9 @@
  
 #ifndef TFBOOST_GENERAL_UTILS_H_
 #define TFBOOST_GENERAL_UTILS_H_
- 
+
+#include <sys/stat.h>   // mkdir, used by CreateDirectories
+
 /*------------------------------------------------------/
  *  Definition for message formatting
  *-----------------------------------------------------*/

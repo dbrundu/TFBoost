@@ -33,10 +33,12 @@
 
 #include <vector>
 #include <memory>
+#include <libconfig.h++>
 
 #include <tfboost/ConfigParser.h>
 #include <tfboost/core/Signal.h>
 #include <tfboost/transforms/ISignalTransform.h>
+#include <tfboost/transforms/ConvolutionModule.h>
 #include <tfboost/transforms/NoiseModule.h>
 #include <tfboost/transforms/NoiseFromFileModule.h>
 #include <tfboost/transforms/FilterModule.h>
@@ -90,22 +92,33 @@ private:
  *  the bare convolution output). The digitization steps are applied only when a
  *  convolution was actually performed, mirroring the historical behaviour.
  */
-inline Pipeline BuildConditioningPipeline(ConfigParser const& c, double Tmax, FilterKind filter_kind)
+inline Pipeline BuildConditioningPipeline(ConfigParser       const& c,
+                                          libconfig::Setting const& cfg_tf,
+                                          HostSignal_t       const& time_tf,
+                                          HostSignal_t       const& current_tf,
+                                          double Tmax, FilterKind filter_kind,
+                                          TH1D* kernel_hist = nullptr)
 {
     Pipeline p;
 
-    if(c.DoMeasurementsWithNoise) return p;
-
-    if(c.LowPassFilter)
-        p.add( std::make_unique<FilterModule>(c, filter_kind) );
-
+    // the convolution runs regardless of the noise request
     if(c.MakeConvolution)
-    {
-        if(c.MakeTimeDigitization)
-            p.add( std::make_unique<TimeDigitizerModule>(c.sampling_dT, Tmax, c.randomphase) );
+        p.add( std::make_unique<ConvolutionModule>(c.ID, cfg_tf, time_tf, current_tf, kernel_hist) );
 
-        if(c.MakeVoltageDigitization)
-            p.add( std::make_unique<VoltageDigitizerModule>(c.ADCmin, c.ADCmax, c.ADCnbits) );
+    // the remaining conditioning steps apply only when measuring without noise
+    if(!c.DoMeasurementsWithNoise)
+    {
+        if(c.LowPassFilter)
+            p.add( std::make_unique<FilterModule>(c, filter_kind) );
+
+        if(c.MakeConvolution)
+        {
+            if(c.MakeTimeDigitization)
+                p.add( std::make_unique<TimeDigitizerModule>(c.sampling_dT, Tmax, c.randomphase) );
+
+            if(c.MakeVoltageDigitization)
+                p.add( std::make_unique<VoltageDigitizerModule>(c.ADCmin, c.ADCmax, c.ADCnbits) );
+        }
     }
 
     return p;

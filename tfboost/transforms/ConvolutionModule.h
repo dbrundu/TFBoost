@@ -21,7 +21,7 @@
 /*
  *  ConvolutionModule.h
  *
- *  Created on: 29/06/2026
+ *  Created on: 2026
  *      Author: Davide Brundu
  */
 
@@ -52,7 +52,8 @@ namespace transforms {
  *  Convolves a Signal in place with the transfer function selected by the
  *  configuration. The transfer-function dispatch (the former switch on the
  *  configuration ID) and the device-side spline preparation are encapsulated
- *  here, so the analytic-kernel template types never leak into the caller.
+ *  here, so the analytic-kernel template types never leak into the caller, and
+ *  the module plugs into the pipeline like any other ISignalTransform.
  *
  *  Selection (kept identical to the historical numbering):
  *    0 -> TIA_MOS,  1 -> TIA_BJT_2stages,  2 -> TIA_BJT_2stages_GM,
@@ -61,6 +62,10 @@ namespace transforms {
  *  For the analytic kernels (0-4) the signal is convolved as a device-resident
  *  spline; the tabulated transfer function (5) convolves the host spline of the
  *  signal with the host spline of the loaded TF samples.
+ *
+ *  If a (non-null) kernel histogram is given at construction it is filled once
+ *  with the transfer-function shape -- the kernel is event-independent, so the
+ *  diagnostic plot does not need to be produced inside the event loop.
  */
 class ConvolutionModule : public ISignalTransform {
 
@@ -71,93 +76,91 @@ public:
     ConvolutionModule(int ID,
                       libconfig::Setting const& cfg_tf,
                       HostSignal_t       const& time_tf,
-                      HostSignal_t       const& current_tf)
+                      HostSignal_t       const& current_tf,
+                      TH1D*                     kernel_hist = nullptr)
         : fID(ID), fCfgTf(cfg_tf), fTimeTF(time_tf), fCurrentTF(current_tf)
-    {}
+    {
+        if(kernel_hist) process(nullptr, kernel_hist);
+    }
 
     const char* name() const override { return "Convolution"; }
 
     void apply(core::Signal& sig, TransformContext& /*ctx*/) const override
     {
-        Convolve(sig, nullptr);
+        process(&sig, nullptr);
+    }
+
+
+private:
+
+    /*
+     *  Build the configured transfer-function kernel and, depending on the
+     *  arguments, fill `kernelHist` with its shape and/or convolve `sig` with it.
+     *  Passing sig==nullptr produces the kernel plot only (no convolution).
+     */
+    void process(core::Signal* sig, TH1D* kernelHist) const
+    {
+        if(fID == 5)
+        {
+            auto kernel = hydra::make_spline<double>(fTimeTF, fCurrentTF);
+            if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
+            if(sig)
+            {
+#if HYDRA_DEVICE_SYSTEM!=CUDA
+                auto fft_backend = hydra::fft::fftw_f64;
+#else
+                auto fft_backend = hydra::fft::cufft_f64;
+#endif
+                const size_t N = sig->size();
+                HostSignal_t out(N);
+                auto signal = sig->spline();
+                tfboost::core::convolve( fft_backend, kernel, signal, out, 0.0, (N-1)*sig->dT(), N );
+                sig->amplitude() = std::move(out);
+            }
+            return;
+        }
+
+        switch(fID)
+        {
+            case 0: do_analytic( tfboost::TIA_MOS<double>( fCfgTf ),            sig, kernelHist); break;
+            case 1: do_analytic( tfboost::TIA_BJT_2stages<double>( fCfgTf ),    sig, kernelHist); break;
+            case 2: do_analytic( tfboost::TIA_BJT_2stages_GM<double>( fCfgTf ), sig, kernelHist); break;
+            case 3: do_analytic( tfboost::TIA_BJT_1stage<double>( fCfgTf ),     sig, kernelHist); break;
+            case 4: do_analytic( tfboost::TIA_IdealInt<double>( fCfgTf ),       sig, kernelHist); break;
+            default:
+                SAFE_EXIT( true , "In ConvolutionModule: bad transfer function ID.")
+        }
     }
 
     /*
-     *  Convolve `sig` in place. If `kernelHist` is non-null it is also filled
-     *  with the transfer-function shape (used only for the diagnostic plot).
+     *  Convolve `sig` (as a device-resident spline) with an analytic `kernel`,
+     *  optionally filling the kernel-shape histogram first.
      */
-    void Convolve(core::Signal& sig, TH1D* kernelHist = nullptr) const
+    template<typename KERNEL>
+    void do_analytic(KERNEL const& kernel, core::Signal* sig, TH1D* kernelHist) const
     {
+        if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
+        if(!sig) return;
+
 #if HYDRA_DEVICE_SYSTEM!=CUDA
         auto fft_backend = hydra::fft::fftw_f64;
 #else
         auto fft_backend = hydra::fft::cufft_f64;
 #endif
 
-        const size_t N   = sig.size();
-        const double min = 0.0;
-        const double max = (N-1) * sig.dT();
+        const size_t N = sig->size();
+
+        DevSignal_t time_d(N);
+        DevSignal_t amp_d(N);
+        hydra::copy(sig->time(),      time_d);
+        hydra::copy(sig->amplitude(), amp_d);
+        auto signal_d = hydra::make_spline<double>(time_d, amp_d);
 
         HostSignal_t out(N);
-
-        if(fID == 5)
-        {
-            auto kernel = hydra::make_spline<double>(fTimeTF, fCurrentTF);
-            auto signal = sig.spline();
-            if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-            tfboost::core::convolve(fft_backend, kernel, signal, out, min, max, N);
-        }
-        else
-        {
-            // analytic kernels convolve a device-resident spline of the signal
-            DevSignal_t time_d(N);
-            DevSignal_t amp_d(N);
-            hydra::copy(sig.time(),      time_d);
-            hydra::copy(sig.amplitude(), amp_d);
-            auto signal_d = hydra::make_spline<double>(time_d, amp_d);
-
-            switch(fID)
-            {
-                case 0:{
-                    auto kernel = tfboost::TIA_MOS<double>( fCfgTf );
-                    if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-                    tfboost::core::convolve(fft_backend, kernel, signal_d, out, min, max, N);
-                    }break;
-
-                case 1:{
-                    auto kernel = tfboost::TIA_BJT_2stages<double>( fCfgTf );
-                    if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-                    tfboost::core::convolve(fft_backend, kernel, signal_d, out, min, max, N);
-                    }break;
-
-                case 2:{
-                    auto kernel = tfboost::TIA_BJT_2stages_GM<double>( fCfgTf );
-                    if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-                    tfboost::core::convolve(fft_backend, kernel, signal_d, out, min, max, N);
-                    }break;
-
-                case 3:{
-                    auto kernel = tfboost::TIA_BJT_1stage<double>( fCfgTf );
-                    if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-                    tfboost::core::convolve(fft_backend, kernel, signal_d, out, min, max, N);
-                    }break;
-
-                case 4:{
-                    auto kernel = tfboost::TIA_IdealInt<double>( fCfgTf );
-                    if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-                    tfboost::core::convolve(fft_backend, kernel, signal_d, out, min, max, N);
-                    }break;
-
-                default:
-                    SAFE_EXIT( true , "In ConvolutionModule: bad transfer function ID.")
-            }
-        }
-
-        sig.amplitude() = std::move(out);
+        tfboost::core::convolve( fft_backend, kernel, signal_d, out, 0.0, (N-1)*sig->dT(), N );
+        sig->amplitude() = std::move(out);
     }
 
-
-private:
 
     int                       fID;
     libconfig::Setting const& fCfgTf;

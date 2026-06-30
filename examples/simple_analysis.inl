@@ -57,7 +57,6 @@
 #include <tfboost/core/Signal.h>
 #include <tfboost/transforms/ConvolutionModule.h>
 #include <tfboost/transforms/Pipeline.h>
-#include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
 #include <tfboost/functions/TIA_BJT_2stages_GM.h>
@@ -151,26 +150,11 @@ int main(int argv, char** argc)
    * Initialization of histograms
    * --------------------------------------------*/
   auto& histograms = tfboost::HistogramsManager::getInstance();
-  histograms.SetConfig(hc);
-  
-  TH2D hist_TOTvsTOA("hist_TOTvsTOA","TOTvsTOA",  100, 0, -1, 100, 0, -1);
-  TH2D hist_TOTvsVmax("hist_TOTvsVmax","hist_TOTvsVmax",  100, 0, -1, 100, 0, -1);
-
-  TH1D hist_convol("hist_convol;Time[s];Vout [V]","hist_convol", c.Nsamples, minplot, maxplot );
-  TH1D hist_signal("hist_signal;Time[s];Vout [V]","hist_signal", c.Nsamples, minplot, maxplot );
-  TH1D hist_kernel("hist_kernel;Time[s];Vout [V]","hist_kernel", c.Nsamples/30, minplot, maxplot );
+  histograms.SetConfig(hc, c);
 
 
-#if TCODE_ENABLE==true
-  //TH2D *TOAmaps   = new TH2D("TOAmaps","TOAmaps",   100, 0, TCODE_PIXEL_YMAX, 100, 0, TCODE_PIXEL_XMAX);
-  //TH2D *Vmaxmaps  = new TH2D("Vmaxmaps","Vmaxmaps", 100, 0, TCODE_PIXEL_YMAX, 100, 0, TCODE_PIXEL_XMAX);
-  TGraph2D *TOAmaps = new TGraph2D();
-  TGraph2D *Vmaxmaps = new TGraph2D();
-#endif
-  
-  
-  
-  
+
+
   /* ----------------------------------------------
    * Preparing the list of input files and
    * related variables for the main loop
@@ -208,13 +192,14 @@ int main(int argv, char** argc)
    * --------------------------------------------*/
   tfboost::transforms::TransformContext  ctx{ engine, root_rng, S };
 
-  tfboost::transforms::ConvolutionModule convolution( c.ID, cfg_tf, time_tf, current_tf );
-
   // signal-transformation pipelines, assembled from the configuration:
-  //  - conditioning: transforms applied before the no-noise measurements
+  //  - conditioning: convolution + the transforms applied before the no-noise
+  //                  measurements (the kernel-shape plot is filled here once)
   //  - noise:        transforms producing the noisy signal
   auto conditioning_pipeline =
-      tfboost::transforms::BuildConditioningPipeline( c, max, tfboost::transforms::FilterKind::Butterworth );
+      tfboost::transforms::BuildConditioningPipeline( c, cfg_tf, time_tf, current_tf, max,
+                                                      tfboost::transforms::FilterKind::Butterworth,
+                                                      c.SaveSinglePlotConvolution ? histograms.KernelHist() : nullptr );
   auto noise_pipeline =
       tfboost::transforms::BuildNoisePipeline( c, max, tfboost::transforms::FilterKind::Butterworth );
 
@@ -256,11 +241,6 @@ int main(int argv, char** argc)
       current.push_back(0.0); }
     
     
-#if TCODE_ENABLE==true
-    std::pair<double,double> pos = tfboost::tcode::GetHitPosition<TCODE_SELECT_POSFUNC>(currentfilename);
-    double pos_x = pos.first;
-    double pos_y = pos.second;
-#endif
 
 
     std::ifstream myFile( (c.InputDirectory+currentfilename).Data() );
@@ -327,18 +307,15 @@ int main(int argv, char** argc)
      * --------------------------------------------*/
     tfboost::core::Signal sig{ std::move(time), std::move(current), c.dT };
 
-    if(PlotConv) tfboost::FillHistWithFunction( hist_signal, sig.spline());
+    if(PlotConv) histograms.FillSignalPlot( sig );
 
 
     /* ----------------------------------------------
-     * Performing the convolution
+     * Convolution + no-noise conditioning transforms
+     * (the convolution is the first step of the pipeline;
+     *  when MakeConvolution is off, `sig` already holds the
+     *  convoluted input signal)
      * --------------------------------------------*/
-    // convolve the input signal with the configured transfer function
-    // (when disabled, `sig` already holds the convoluted input signal)
-    if(c.MakeConvolution)
-      convolution.Convolve( sig, PlotConv ? &hist_kernel : nullptr );
-
-    // apply the no-noise conditioning transforms (filter / digitization)
     conditioning_pipeline.apply( sig, ctx );
 
 
@@ -346,10 +323,7 @@ int main(int argv, char** argc)
     /* ----------------------------------------------
      * Filling histogram for visualization
      * --------------------------------------------*/
-    if(PlotConv) {
-        hist_convol.SetBins(sig.size(), min, maxplot);
-        tfboost::FillHistWithFunction( hist_convol, sig.spline());
-    }
+    if(PlotConv) histograms.FillConvolPlot( sig, min, maxplot );
 
 
 
@@ -410,17 +384,6 @@ int main(int argv, char** argc)
     }
 
     histograms.FillMeasures( measures);
-
-#if TCODE_ENABLE==true
-    if(measures[_toa_cfd] > -1.0 && pos_x>56){
-      //TOAmaps->SetBinContent( TOAmaps->FindBin( pos_x, pos_y), measures[_toa_cfd] );
-      TOAmaps->SetPoint(TOAmaps->GetN(),pos_x,pos_y, measures[_toa_cfd] ); 
-      //Vmaxmaps->SetBinContent( Vmaxmaps->FindBin( pos_x, pos_y), measures[_vpeak] );
-      Vmaxmaps->SetPoint(Vmaxmaps->GetN(),pos_x,pos_y, measures[_vpeak]  ); }
-#endif
-  
-    hist_TOTvsTOA  .Fill( measures[_tot], measures[_toa_le] );
-    hist_TOTvsVmax .Fill( measures[_tot], measures[_vpeak]  );
 
     RULE_LINE_LIGHT;
     std::cout << _START_INFO_;
@@ -547,17 +510,13 @@ int main(int argv, char** argc)
       std::cout << "dv/dt (RM)               = " << measures_noise[_dvdt_rm]    << " (uV/ps)\n";
 
       
-      if(PlotConv) {
-          hist_convol.SetBins(sig.size(), min, maxplot);
-          tfboost::FillHistWithFunction( hist_convol, sig.spline());
-      }
+      if(PlotConv) histograms.FillConvolPlot( sig, min, maxplot );
 
     }
 
 
     if(PlotConv)
-       tfboost::SaveConvolutionCanvas(c.OutputDirectory + "plots/", "hist_convol_functor",
-              hist_convol, hist_signal, hist_kernel);
+       histograms.SaveConvolutionPlot( c.OutputDirectory + "plots/" );
 
 
     if(c.SaveConvDataToFile)
@@ -584,19 +543,9 @@ int main(int argv, char** argc)
    *  Save all the plots
    *------------------------------------------------*/  
   histograms.SaveHistograms( c.OutputDirectory + "plots/" );
-   
-
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOT_2d",     "Time [s]",    "TOA [s]", hist_TOTvsTOA, "colz"); 
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsVmax",   "TOT [s]",    "Vmax [V]", hist_TOTvsVmax, "colz");
-  
-  TProfile* prof =  hist_TOTvsVmax.ProfileX();
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsVmax_profile",   "TOT [s]",    "Vmax [V]", *prof);
-  
-  TProfile* prof2 =  hist_TOTvsTOA.ProfileX();
-  tfboost::SaveCanvas(c.OutputDirectory + "plots/", "TOTvsTOA_profile",   "TOT [s]",    "Vmax [V]", *prof2);
 
 
-  if(c.DoMeasurementsWithNoise) 
+  if(c.DoMeasurementsWithNoise)
     histograms.SaveHistograms_noise( c.OutputDirectory + "plots/" );
 
 
@@ -619,26 +568,6 @@ int main(int argv, char** argc)
   
   LOG.PrintMessage("Number of files analyzed: ", INDEX);
   LOG.Exit();
-
-#if TCODE_ENABLE==true
-  gStyle->SetOptStat(0);
-  gStyle->SetPalette(kRainBow);
-
-  TCanvas canv_TOAmaps( "canv_TOAmaps", "canv_TOAmaps", 4*TCODE_PIXEL_YMAX, 4*TCODE_PIXEL_XMAX);
-  //TOAmaps->SetMinimum(0.15e-9);
-  //TOAmaps->SetMaximum(0.5e-9);
-  //TOAmaps->SetMinimum(0.0);  
-  TOAmaps->Draw("colz");
-  canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.pdf");
-  //canv_TOAmaps.SaveAs( c.OutputDirectory + "plots/" + "canv_TOAmaps.C");
-
-  TCanvas canv_Vmaxmaps("canv_Vmaxmaps", "canv_Vmaxmaps", 4*TCODE_PIXEL_YMAX, 4*TCODE_PIXEL_XMAX);
-  //Vmaxmaps->SetMinimum(TOAmaps->GetMinimum(0.));
-  //Vmaxmaps->SetMinimum(0.0);
-  Vmaxmaps->Draw("colz");
-  canv_Vmaxmaps.SaveAs( c.OutputDirectory + "plots/" +"canv_Vmaxmaps.pdf");
-  //canv_Vmaxmaps.SaveAs( c.OutputDirectory + "plots/" +"canv_Vmaxmaps.C");
-#endif
 
   auto main_end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> main_elapsed = main_end - main_start;
