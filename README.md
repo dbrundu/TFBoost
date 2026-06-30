@@ -113,6 +113,39 @@ TFB
 
 
 
+## Run with a container (Docker / Podman)
+The fastest way to run TFBoost without installing any dependency is the bundled
+container image. It starts from a base image that already ships **ROOT** (so ROOT
+is *not* recompiled), pulls in the remaining dependencies, builds the parallel
+(TBB) backends, and runs a chosen application against the data you provide. It
+works the same with `docker` or `podman`.
+
+Build the image from the repository root (the `Dockerfile` lives in `install/`):
+```bash
+podman build -f install/Dockerfile -t tfboost .
+```
+
+Then run it, mounting a host folder at `/data`. Put your input signals in
+`data/input/` and the results appear in `data/results/` (`plots/` + `data/`):
+```bash
+mkdir -p data/input              # drop your input .txt/.dat signals here
+podman run --rm -v "$PWD/data:/data" tfboost
+```
+
+By default this runs `analysis_tbb`. You can pick another application, point at a
+different input folder, or supply your own config:
+```bash
+podman run --rm -v "$PWD/data:/data" tfboost deconvolution_tbb
+podman run --rm -v "$PWD/data:/data" -e TFB_INPUT=/data/signals tfboost
+podman run --rm -v "$PWD/data:/data" -e TFB_CONFIG=/data/my.cfg  tfboost
+```
+
+With no `/data` mount the image still runs end-to-end against the bundled example
+signals, as a quick smoke test. See [install/DOCKER.md](install/DOCKER.md) for the
+full guide, build options (base image, HYDRA ref, CPU portability) and the
+runtime environment variables.
+
+
 ## Build and Run the examples
 An example of a simple analysis is available. The input files are obtained from an ideal silicon sensor and the files are in the `examples/input_files` directory. The configuration file named `config.cfg` is inside the `examples/` directory, while the rusults will be saved inside `<build>/results/`.  After the `cmake` command the example and can be run simply as:
 ```bash
