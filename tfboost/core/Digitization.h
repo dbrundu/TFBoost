@@ -19,22 +19,27 @@
  *
  *---------------------------------------------------------------------------*/
 /*
- * 
+ *  Digitization.h
+ *
+ *  Core signal-processing primitives: time (TDC) and voltage (ADC) digitization.
+ *  Free functions in namespace tfboost::core, called by the transform modules.
  *
  *  Created on: 07/05/2020
  *      Author: Davide Brundu
  */
- 
-#ifndef TFBOOST_DIGITIZER_H_
-#define TFBOOST_DIGITIZER_H_
+
+#ifndef TFBOOST_CORE_DIGITIZATION_H_
+#define TFBOOST_CORE_DIGITIZATION_H_
 
 #include <tfboost/Types.h>
 #include <tfboost/Utils.h>
 
 
-namespace tfboost { 
+namespace tfboost {
 
-namespace detail { 
+namespace core {
+
+namespace detail {
 
     /*
      * Re-sample a signal (spline) with a specified dT
@@ -42,35 +47,35 @@ namespace detail {
      * Fill the data and time containers
      */
     template<typename Iterable, typename SPLINE, typename RNG>
-    inline void DoTimeDigitization(Iterable& data, 
-                               Iterable& time, 
-                               SPLINE const& signal, 
-                               double const& dT, 
-                               double const& Tmax, 
-                               RNG& rng, 
+    inline void do_time_digitization(Iterable& data,
+                               Iterable& time,
+                               SPLINE const& signal,
+                               double const& dT,
+                               double const& Tmax,
+                               RNG& rng,
                                bool const& rndmphase=true){
-        
-        SAFE_EXIT( !data.empty() || !time.empty(), "In DigitizeSignal: the containers must be empty.")
+
+        SAFE_EXIT( !data.empty() || !time.empty(), "In do_time_digitization: the containers must be empty.")
 
         hydra_thrust::uniform_real_distribution<double> uniDist(0.0, 1.0);
 
         double offset = rndmphase? uniDist(rng) * dT : 0 ;
-        
+
         size_t Nsamples = Tmax/dT;
-        
+
         data.reserve(Nsamples);
         time.reserve(Nsamples);
 
-        data.push_back( 0.0 ); 
+        data.push_back( 0.0 );
         time.push_back( 0.0 );
-        
+
         for(size_t i=1; i<Nsamples; ++i){
             double t = offset + i*dT;
-            data.push_back( signal(t) ); 
+            data.push_back( signal(t) );
             time.push_back( t ); }
     }
 
-}
+} // namespace detail
 
 
 
@@ -81,21 +86,21 @@ namespace detail {
  * Resize the original containers properly
  */
 template<typename Iterable, typename RNG>
-inline void TimeDigitizeSignal(Iterable& data, 
-                           Iterable& time, 
-                            double const& dT, 
-                            double const& Tmax, 
-                            RNG& rng, 
-                            bool const& rndmphase=false){
+inline void time_digitize(Iterable& data,
+                          Iterable& time,
+                          double const& dT,
+                          double const& Tmax,
+                          RNG& rng,
+                          bool const& rndmphase=false){
 
-    HostSignal_t conv_dig;  
-    HostSignal_t time_dig; 
+    HostSignal_t conv_dig;
+    HostSignal_t time_dig;
 
     //time and data are the not digitized ones
     auto conv_spline = hydra::make_spline<double>(time, data );
 
-    tfboost::detail::DoTimeDigitization(conv_dig, time_dig, conv_spline, dT, Tmax, rng, rndmphase);
-                                
+    tfboost::core::detail::do_time_digitization(conv_dig, time_dig, conv_spline, dT, Tmax, rng, rndmphase);
+
 
     // override time and conv_data containers
     data.resize(conv_dig.size());
@@ -112,11 +117,11 @@ inline void TimeDigitizeSignal(Iterable& data,
  * Get the ADC digitized value given
  * an input value
  */
-inline double GetADCvalue(double const& value, 
-                          double const& min, 
-                          double const& max, 
-                          int const& nbits){
-  
+inline double adc_value(double const& value,
+                        double const& min,
+                        double const& max,
+                        int const& nbits){
+
   const double n     = std::pow(2,nbits);
   const double step  = (max-min)/n;
   return step*std::trunc(value/step);
@@ -126,24 +131,21 @@ inline double GetADCvalue(double const& value,
 
 
 /*
- * Apply an ADC digitization to a signal 
+ * Apply an ADC digitization to a signal
  */
 template<typename Iterable>
-inline void VoltageDigitizeSignal(Iterable& data, 
-                                  double const& ADCmin, 
-                                  double const& ADCmax, 
-                                  int const& ADCnbits){
+inline void voltage_digitize(Iterable& data,
+                             double const& ADCmin,
+                             double const& ADCmax,
+                             int const& ADCnbits){
 
-    for(auto& x : data) x = tfboost::GetADCvalue(x, ADCmin, ADCmax, ADCnbits);
+    for(auto& x : data) x = tfboost::core::adc_value(x, ADCmin, ADCmax, ADCnbits);
 
 }
 
 
+} // namespace core
 
+} // namespace tfboost
 
-} //namespace tfboost
-
-#endif
-
-
-
+#endif /* TFBOOST_CORE_DIGITIZATION_H_ */

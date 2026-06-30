@@ -105,11 +105,11 @@
 #include <tfboost/functions/TIA_IdealInt.h>
 #include <tfboost/functions/TIA_MOS.h>
 #include <tfboost/functions/ButterworthFilter.h>
-#include <tfboost/DoConvolution.h>
-#include <tfboost/Noise.h>
+#include <tfboost/core/Convolution.h>
+#include <tfboost/core/Noise.h>
 #include <tfboost/InputOutput.h>
 #include <tfboost/Algorithms.h>
-#include <tfboost/Digitizer.h>
+#include <tfboost/core/Digitization.h>
 
 
 namespace libconf = libconfig;

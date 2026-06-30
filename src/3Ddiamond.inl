@@ -119,11 +119,11 @@
 #include <tfboost/functions/TIA_IdealInt.h>
 #include <tfboost/functions/TIA_MOS.h>
 #include <tfboost/functions/ButterworthFilter.h>
-#include <tfboost/DoConvolution.h>
-#include <tfboost/Noise.h>
+#include <tfboost/core/Convolution.h>
+#include <tfboost/core/Noise.h>
 #include <tfboost/InputOutput.h>
 #include <tfboost/Algorithms.h>
-#include <tfboost/Digitizer.h>
+#include <tfboost/core/Digitization.h>
 
 
 namespace libconf = libconfig;
@@ -237,7 +237,7 @@ int main(int argv, char** argc)
 
   myFileZin.close();
 
-  tfboost::TimeDigitizeSignal( zin, ztime, dT, max, engine, false);  
+  tfboost::core::time_digitize( zin, ztime, dT, max, engine, false);  
   hydra::device::vector<double> Vzin( Nsamples);
   ztime[Nsamples-1]=dT*(Nsamples);
   zin[Nsamples-1]=zin[Nsamples-2];
@@ -707,30 +707,30 @@ int main(int argv, char** argc)
      auto signal_h = hydra::make_spline<double>(time, current_h ); 
 
   /*   //convolution with delta to round corners
-     tfboost::Do_Convolution(fft_backend, kernelD, signal_e, conv_delta_n, min, max, Nsamples);
-     tfboost::Do_Convolution(fft_backend, kernelD, signal_h, conv_delta_p, min, max, Nsamples);
+     tfboost::core::convolve(fft_backend, kernelD, signal_e, conv_delta_n, min, max, Nsamples);
+     tfboost::core::convolve(fft_backend, kernelD, signal_h, conv_delta_p, min, max, Nsamples);
    
     auto delta_e = hydra::make_spline<double>(time, conv_delta_n );
     auto delta_h = hydra::make_spline<double>(time, conv_delta_p );
 
     //convolution after delta
-    tfboost::Do_Convolution(fft_backend, kernel1, delta_e, conv_data_n, min, max, Nsamples);
-    tfboost::Do_Convolution(fft_backend, kernel2, delta_h, conv_data_p, min, max, Nsamples); */
+    tfboost::core::convolve(fft_backend, kernel1, delta_e, conv_data_n, min, max, Nsamples);
+    tfboost::core::convolve(fft_backend, kernel2, delta_h, conv_data_p, min, max, Nsamples); */
 
     if (RN >500.){
-    tfboost::Do_Convolution(fft_backend, kernel1, signal_e, conv_data_n, min, max, Nsamples);
+    tfboost::core::convolve(fft_backend, kernel1, signal_e, conv_data_n, min, max, Nsamples);
     }
 
     else if (RN<=500.){
-    tfboost::Do_Convolution(fft_backend, kernelD, signal_e, conv_data_n, min, max, Nsamples);
+    tfboost::core::convolve(fft_backend, kernelD, signal_e, conv_data_n, min, max, Nsamples);
     }
 
     if (RP >500.){
-    tfboost::Do_Convolution(fft_backend, kernel2, signal_h, conv_data_p, min, max, Nsamples); 
+    tfboost::core::convolve(fft_backend, kernel2, signal_h, conv_data_p, min, max, Nsamples); 
     }
 
     else if (RP<=500.){
-    tfboost::Do_Convolution(fft_backend, kernelD, signal_h, conv_data_p, min, max, Nsamples);
+    tfboost::core::convolve(fft_backend, kernelD, signal_h, conv_data_p, min, max, Nsamples);
     }
 
      //check scale factor
@@ -904,8 +904,8 @@ int main(int argv, char** argc)
   auto kernel1 = hydra::make_spline<double>(time_tfn, current_tfn );
   auto kernel2 = hydra::make_spline<double>(time_tfn, current_tfn );
 
-  tfboost::Do_Convolution(fft_backend, kernel1, signal_e, conv_data_e, min, max, Nsamples);
-  tfboost::Do_Convolution(fft_backend, kernel2, signal_h, conv_data_h, min, max, Nsamples);
+  tfboost::core::convolve(fft_backend, kernel1, signal_e, conv_data_e, min, max, Nsamples);
+  tfboost::core::convolve(fft_backend, kernel2, signal_h, conv_data_h, min, max, Nsamples);
 
   HostSignal_t conv_data(Nsamples);
 
@@ -925,7 +925,7 @@ int main(int argv, char** argc)
   auto signal = hydra::make_spline<double>(time, current);
   auto kernel1 = hydra::make_spline<double>(time_tfn, current_tfn );
 
-  tfboost::Do_Convolution(fft_backend, kernel1, signal, conv_data, min, max, Nsamples);
+  tfboost::core::convolve(fft_backend, kernel1, signal, conv_data, min, max, Nsamples);
 
   tfboost::SaveConvToFile(conv_data, time, dT, 
                             OutputDirectory + "/H3D_Currents/data_NOT_arbitrary/" + currentfilename );

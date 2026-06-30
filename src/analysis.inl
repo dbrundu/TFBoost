@@ -56,6 +56,10 @@
 #include <tfboost/Utils.h>
 #include <tfboost/core/Signal.h>
 #include <tfboost/transforms/ConvolutionModule.h>
+#include <tfboost/transforms/NoiseModule.h>
+#include <tfboost/transforms/FilterModule.h>
+#include <tfboost/transforms/TimeDigitizerModule.h>
+#include <tfboost/transforms/VoltageDigitizerModule.h>
 #include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
@@ -65,11 +69,8 @@
 #include <tfboost/functions/ExpModifiedGaussian.h>
 #include <tfboost/functions/RCFilter.h>
 #include <tfboost/functions/ButterworthFilter.h>
-#include <tfboost/DoConvolution.h>
-#include <tfboost/Noise.h>
 #include <tfboost/InputOutput.h>
 #include <tfboost/Algorithms.h>
-#include <tfboost/Digitizer.h>
 #include <tfboost/ConfigParser.h>
 #include <tfboost/Logger.h>
 #include <tfboost/Histograms.h>
@@ -217,9 +218,16 @@ int main(int argv, char** argc)
 
   /* ----------------------------------------------
    * Instantiate the signal-transformation modules
-   * selected by the configuration (run-time).
+   * selected by the configuration (run-time), and the
+   * context holding the shared random engines.
    * --------------------------------------------*/
-  tfboost::transforms::ConvolutionModule convolution( c.ID, cfg_tf, time_tf, current_tf );
+  tfboost::transforms::TransformContext       ctx{ engine, root_rng, S };
+
+  tfboost::transforms::ConvolutionModule      convolution( c.ID, cfg_tf, time_tf, current_tf );
+  tfboost::transforms::NoiseModule            noise_module( c );
+  tfboost::transforms::FilterModule           lowpass( c, tfboost::transforms::FilterKind::RC );
+  tfboost::transforms::TimeDigitizerModule    time_digitizer( c.sampling_dT, max, c.randomphase );
+  tfboost::transforms::VoltageDigitizerModule voltage_digitizer( c.ADCmin, c.ADCmax, c.ADCnbits );
   
   /* ----------------------------------------------
    * Count number of files in input directory
@@ -360,14 +368,6 @@ int main(int argv, char** argc)
     /* ----------------------------------------------
      * Performing the convolution
      * --------------------------------------------*/
-#if HYDRA_DEVICE_SYSTEM!=CUDA
-    auto fft_backend = hydra::fft::fftw_f64;
-#endif
-
-#if HYDRA_DEVICE_SYSTEM==CUDA
-    auto fft_backend = hydra::fft::cufft_f64;
-#endif
-
     if(c.MakeConvolution)
     {
       // convolve the input signal with the configured transfer function
@@ -375,21 +375,15 @@ int main(int argv, char** argc)
 
 
       // Introduce a Low Pass Filter
-      if(c.LowPassFilter && !c.DoMeasurementsWithNoise){
-          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, sig.dT());
-          auto conv_temp = sig.spline();
-          tfboost::Do_Convolution(fft_backend, flt, conv_temp, sig.amplitude(), min, max, sig.size());
-      }
+      if(c.LowPassFilter && !c.DoMeasurementsWithNoise)
+        lowpass.apply( sig, ctx );
 
 
       // Time Digitization of the signal
       // This step is done only if we are not requesting noise
       if(c.MakeTimeDigitization && !c.DoMeasurementsWithNoise)
       {
-        tfboost::TimeDigitizeSignal( sig.amplitude(), sig.time(), c.sampling_dT, max, engine, c.randomphase);
-
-        // the signal has been resampled: update its working dT
-        sig.setDT(c.sampling_dT);
+        time_digitizer.apply( sig, ctx );
         hist_convol.SetBins(sig.size(), min, maxplot);
       }
 
@@ -397,17 +391,14 @@ int main(int argv, char** argc)
       // Voltage Digitization of the signal
       // This step is done only if we are not requesting noise
       if(c.MakeVoltageDigitization && !c.DoMeasurementsWithNoise)
-        tfboost::VoltageDigitizeSignal( sig.amplitude(), c.ADCmin, c.ADCmax, c.ADCnbits);
+        voltage_digitizer.apply( sig, ctx );
 
     }
     else
     {
       // The input signal is already the convoluted one: `sig` holds it as is.
-      if(c.LowPassFilter && !c.DoMeasurementsWithNoise){
-          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, sig.dT());
-          auto conv_temp = sig.spline();
-          tfboost::Do_Convolution(fft_backend, flt, conv_temp, sig.amplitude(), min, max, sig.size());
-      }
+      if(c.LowPassFilter && !c.DoMeasurementsWithNoise)
+        lowpass.apply( sig, ctx );
     } // end MakeConvolution
 
 
@@ -471,7 +462,7 @@ int main(int argv, char** argc)
      
     
     if(c.MakeTheoreticalTOA){
-      auto prob_curve = tfboost::ComputeTOAcurve( TOA_CFD, TOA_CFD-100, TOA_CFD+100,
+      auto prob_curve = tfboost::core::compute_toa_curve( TOA_CFD, TOA_CFD-100, TOA_CFD+100,
                                                          c.CFD_fr, measures[_vpeak], c.sigma_noise,
                                                          idx, sig.amplitude(), "th_jitter.pdf");
                                                          
@@ -518,35 +509,26 @@ int main(int argv, char** argc)
       
       // if not from file, the noise is simulated
       // using white or red spectrum model
-      if(c.AddSimulatedNoise){
-          auto noise = tfboost::Noise(c.sigma_noise, c.UseRedNoise, c.r_rednoise);
-          noise.AddNoiseToSignal( sig.amplitude(), S(), c );
-      }
+      if(c.AddSimulatedNoise)
+        noise_module.apply( sig, ctx );
 
      // Introduce a Low Pass Filter
       // simulating an oscilloscope
-      if(c.LowPassFilter && !c.FilterOnlyNoise){
-          auto flt       = tfboost::RCFilter<double>( c.LowPassFrequency, c.LowPassOrder, sig.dT());
-          auto conv_temp = sig.spline();
-          tfboost::Do_Convolution(fft_backend, flt, conv_temp, sig.amplitude(), min, max, sig.size());
-      }
+      if(c.LowPassFilter && !c.FilterOnlyNoise)
+        lowpass.apply( sig, ctx );
 
 
      // Digitization of the signal
      // This step is done only if we are requesting noise
       if(c.MakeTimeDigitization){
-
-        tfboost::TimeDigitizeSignal( sig.amplitude(), sig.time(), c.sampling_dT, max, engine, c.randomphase);
-
-        // the signal has been resampled: update its working dT
-        sig.setDT(c.sampling_dT);
+        time_digitizer.apply( sig, ctx );
         hist_convol.SetBins(sig.size(), min, maxplot);
       }
 
        // Voltage Digitization of the signal
       // This step is done only if we are requesting noise
       if(c.MakeVoltageDigitization)
-        tfboost::VoltageDigitizeSignal( sig.amplitude(), c.ADCmin, c.ADCmax, c.ADCnbits);
+        voltage_digitizer.apply( sig, ctx );
 
 
       // if noise from file, the noise samples are read
@@ -557,7 +539,7 @@ int main(int argv, char** argc)
 
         HostSignal_t noise_h;
         tfboost::ReadSimple( c.NoiseDirectory+currentnoisefilename, 0, noise_h, sig.size(), 1e-3);
-        tfboost::AddNoiseToSignal(sig.amplitude(), noise_h, c);
+        tfboost::core::add_noise_samples(sig.amplitude(), noise_h, c);
       }
       
 

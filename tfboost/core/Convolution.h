@@ -19,15 +19,18 @@
  *
  *---------------------------------------------------------------------------*/
 /*
- * 
+ *  Convolution.h
+ *
+ *  Core signal-processing primitive: FFT-based (de)convolution.
+ *  Free functions in namespace tfboost::core, called by the transform modules.
  *
  *  Created on: 01/06/2020
- *      Author: Davide Brundu, Gianmatteo Cossu
+ *      Author: Davide Brundu
  */
 
 
-#ifndef TFBOOST_DO_CONVOLUTION_H_
-#define TFBOOST_DO_CONVOLUTION_H_
+#ifndef TFBOOST_CORE_CONVOLUTION_H_
+#define TFBOOST_CORE_CONVOLUTION_H_
 
 
 #include <cmath>
@@ -52,61 +55,68 @@
 #include <hydra/Convolution.h>
 #include <hydra/functions/ConvolutionFunctor.h>
 
-
+#include <tfboost/Utils.h>
 #include <tfboost/detail/external/hydra/DeConvolution.h>
 #include <tfboost/detail/external/hydra/functions/DeConvolutionFunctor.h>
 
 
 namespace tfboost {
 
+namespace core {
 
+/*
+ *  Convolve `signal` with `kernel` over [min, max] sampled on N points
+ *  (FFT-based) and write the result into `data`.
+ */
 template<typename FFT_BACKEND, typename KERNEL, typename SIGNAL, typename DATA>
-inline void Do_Convolution(FFT_BACKEND fft_backend, 
-                           KERNEL const& kernel, 
-                           SIGNAL const& signal,
-                           DATA& data, 
-                           double const& min,
-                           double const& max,
-                           size_t const& N)
+inline void convolve(FFT_BACKEND fft_backend,
+                     KERNEL const& kernel,
+                     SIGNAL const& signal,
+                     DATA& data,
+                     double const& min,
+                     double const& max,
+                     size_t const& N)
 {
-        SAFE_EXIT( data.size() != N, "In Do_Convolution(): wrong size of data container.")
-       
+        SAFE_EXIT( data.size() != N, "In tfboost::core::convolve(): wrong size of data container.")
+
         auto convolution = hydra::make_convolution<double>(  hydra::device::sys,  fft_backend, signal, kernel, min, max,  N, true, true );
 
         auto conv_data    = hydra::make_range(convolution.GetDeviceData(), convolution.GetDeviceData()+N);
-        
-        hydra::copy(conv_data, data);
-        
-        convolution.Dispose();
 
+        hydra::copy(conv_data, data);
+
+        convolution.Dispose();
 }
 
 
-
+/*
+ *  Deconvolve `conv` by `signal` over [min, max] sampled on N points
+ *  (FFT-based) and write the result into `data`.
+ */
 template<typename FFT_BACKEND, typename CONVOL, typename SIGNAL, typename DATA>
-inline void Do_DeConvolution(FFT_BACKEND fft_backend, 
-                           CONVOL const& conv, 
-                           SIGNAL const& signal, 
-                           DATA& data, 
-                           double const& min,
-                           double const& max,
-                           size_t const& N)
+inline void deconvolve(FFT_BACKEND fft_backend,
+                       CONVOL const& conv,
+                       SIGNAL const& signal,
+                       DATA& data,
+                       double const& min,
+                       double const& max,
+                       size_t const& N)
 {
-        SAFE_EXIT( data.size() != N, "In Do_Convolution(): wrong size of data container.")
-       
+        SAFE_EXIT( data.size() != N, "In tfboost::core::deconvolve(): wrong size of data container.")
+
         auto deconvolution = hydra::make_deconvolution<double>(  hydra::device::sys,  fft_backend, signal, conv, min, max,  N, true, true );
 
         auto conv_data    = hydra::make_range(deconvolution.GetDeviceData(), deconvolution.GetDeviceData()+N);
-        
+
         hydra::copy(conv_data, data);
-        
+
         deconvolution.Dispose();
 }
 
 
-}  // namespace tfboost
+} // namespace core
+
+} // namespace tfboost
 
 
-#endif /* DO_CONVOLUTION_H_ */
-
-
+#endif /* TFBOOST_CORE_CONVOLUTION_H_ */

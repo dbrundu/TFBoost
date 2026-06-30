@@ -21,7 +21,7 @@
 /*
  *  ConvolutionModule.h
  *
- *  Created on: 2026
+ *  Created on: 29/06/2026
  *      Author: Davide Brundu
  */
 
@@ -34,7 +34,7 @@
 #include <tfboost/Utils.h>
 #include <tfboost/core/Signal.h>
 #include <tfboost/transforms/ISignalTransform.h>
-#include <tfboost/DoConvolution.h>
+#include <tfboost/core/Convolution.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
 #include <tfboost/functions/TIA_BJT_2stages_GM.h>
@@ -105,7 +105,7 @@ public:
             auto kernel = hydra::make_spline<double>(fTimeTF, fCurrentTF);
             auto signal = sig.spline();
             if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-            tfboost::Do_Convolution(fft_backend, kernel, signal, out, min, max, N);
+            tfboost::core::convolve(fft_backend, kernel, signal, out, min, max, N);
         }
         else
         {
@@ -121,31 +121,31 @@ public:
                 case 0:{
                     auto kernel = tfboost::TIA_MOS<double>( fCfgTf );
                     if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-                    tfboost::Do_Convolution(fft_backend, kernel, signal_d, out, min, max, N);
+                    tfboost::core::convolve(fft_backend, kernel, signal_d, out, min, max, N);
                     }break;
 
                 case 1:{
                     auto kernel = tfboost::TIA_BJT_2stages<double>( fCfgTf );
                     if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-                    tfboost::Do_Convolution(fft_backend, kernel, signal_d, out, min, max, N);
+                    tfboost::core::convolve(fft_backend, kernel, signal_d, out, min, max, N);
                     }break;
 
                 case 2:{
                     auto kernel = tfboost::TIA_BJT_2stages_GM<double>( fCfgTf );
                     if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-                    tfboost::Do_Convolution(fft_backend, kernel, signal_d, out, min, max, N);
+                    tfboost::core::convolve(fft_backend, kernel, signal_d, out, min, max, N);
                     }break;
 
                 case 3:{
                     auto kernel = tfboost::TIA_BJT_1stage<double>( fCfgTf );
                     if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-                    tfboost::Do_Convolution(fft_backend, kernel, signal_d, out, min, max, N);
+                    tfboost::core::convolve(fft_backend, kernel, signal_d, out, min, max, N);
                     }break;
 
                 case 4:{
                     auto kernel = tfboost::TIA_IdealInt<double>( fCfgTf );
                     if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
-                    tfboost::Do_Convolution(fft_backend, kernel, signal_d, out, min, max, N);
+                    tfboost::core::convolve(fft_backend, kernel, signal_d, out, min, max, N);
                     }break;
 
                 default:
