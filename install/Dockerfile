@@ -42,6 +42,8 @@ ENV TFB_HOME=/opt/TFBoost \
     DEBIAN_FRONTEND=noninteractive
 
 # --- Dependencies (ROOT is already present in the base image) -----------------
+# Build toolchain + libraries, plus the Python/Tk runtime the GUI needs so the
+# same image can either run a backend directly or launch the Tkinter front-end.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         cmake \
@@ -51,6 +53,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libtclap-dev \
         libconfig++-dev \
         libfftw3-dev \
+        python3-tk \
+        python3-matplotlib \
+        python3-pandas \
+        python3-pil.imagetk \
     && rm -rf /var/lib/apt/lists/*
 
 # --- HYDRA headers ------------------------------------------------------------

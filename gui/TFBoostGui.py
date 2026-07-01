@@ -106,7 +106,7 @@ def openFileInput():
     global directory0
     directory0 = os.path.split(folder_selected1)[0] + '/' + os.path.split(folder_selected1)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
-    text1.place (x=280,y=112)
+    text1.place (x=250,y=112)
     text1.configure(state="normal")
     text1.insert('end', directory0)
     text1.configure(state="disabled")
@@ -132,7 +132,7 @@ def openFileOutput():
     global directory
     directory = os.path.split(folder_selected2)[0] + '/' + os.path.split(folder_selected2)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
-    text1.place (x=280,y=150)
+    text1.place (x=250,y=150)
     text1.configure(state="normal")
     text1.insert('end', directory)
     text1.configure(state="disabled")
@@ -152,7 +152,7 @@ def usesamecurve():
     #filelabel = Label(root, text=filechosen,font = ("Arial",8))
     #directory = os.path.split(filechosen)[0] + '/' + os.path.split(filechosen)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
-    text1.place (x=205,y=233,width=200)
+    text1.place (x=195,y=233,width=200)
     text1.configure(state="normal")
     text1.insert('end', os.path.split(filechosen.name)[1])
     text1.configure(state="disabled")
@@ -183,7 +183,7 @@ def noisefromfiles():
     #filelabel = Label(root, text=filechosen,font = ("Arial",8))
     directory2 = os.path.split(folder_selected3)[0] + '/' + os.path.split(folder_selected3)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
-    text1.place (x=170,y=470)
+    text1.place (x=160,y=470)
     text1.configure(state="normal")
     text1.insert('end', directory2)
     text1.configure(state="disabled")
@@ -330,7 +330,7 @@ def singlestg():
     rm3.place(x=250,y=470)
 
     # tau calculation
-    tau1 =Label(framesingle,text=' \u03C4    =',font = ("Modern",10))
+    tau1 =Label(framesingle,text='\u03C4    =',font = ("Modern",10))
     tau1.place(x=123,y=500)
     global tau_entry
     tau_entry = Entry(framesingle,font = ("Modern",10))
@@ -428,6 +428,7 @@ def csastg():
 
     framecsa.place(x=20,y=170)
     btn3.configure(bg="light blue")
+
 
     # png circuit
     logo6 =Label(framecsa,image=my_logo6)
@@ -536,7 +537,7 @@ def csastg():
     rm3.place(x=150,y=440)
 
     # tau calculation
-    tau1 =Label(framecsa,text=' \u03C4    =',font = ("Modern",10))
+    tau1 =Label(framecsa,text='\u03C4    =',font = ("Modern",10))
     tau1.place(x=23,y=470)
     global tau_entry
     tau_entry = Entry(framecsa,font = ("Modern",10))
@@ -545,7 +546,7 @@ def csastg():
     tau3.place(x=150,y=470)
 
     # zeta calculation
-    zeta1 =Label(framecsa,text=' \u03B6    =',font = ("Modern",10))
+    zeta1 =Label(framecsa,text='\u03B6    =',font = ("Modern",10))
     zeta1.place(x=23,y=500)
     global zeta_entry
     zeta_entry = Entry(framecsa,font = ("Modern",10))
@@ -641,6 +642,7 @@ def FromFile():
     
     frameFF.place(x=0,y=170)
     btn4.configure(bg="light blue")
+
 
     lab2 = Label(frameFF, text='Perform convolution with TFBoost using a transfer function from an existing file.',font = ("Modern",9))
     lab2.place(x=20,y=5)
@@ -1095,7 +1097,7 @@ def write3D() :
     dT.set(dt_entry.get())
     Ndz.set(ndz_entry.get())
 
-    text_file = open("../../etc/3Ddiamond.cfg", 'w+')
+    text_file = open("../etc/3Ddiamond.cfg", 'w+')
 
     text_file.write('\nConvolution        =true;\n')
     text_file.write('\nInputDirectory     =' + '"' + folder_selected1 + '";\n')
@@ -1133,12 +1135,8 @@ def write3D() :
     text_file.write('\nNlinestoskip       = 0;  \n')
 
     text_file.close()
-    
-    os.chdir('../../build')    
-    subprocess.run(["./3Ddiamond_tbb", "ls -l"])
-    print("Previous working directory: {0}".format(os.getcwd()))
-    os.chdir('../gui/wsl') 
-    print("Current working directory: {0}".format(os.getcwd()))
+
+    subprocess.run(["./3Ddiamond_tbb"], cwd="../build")
 
 
 def doublestg():
@@ -1174,7 +1172,8 @@ def doublestg():
   
     framedouble.place(x=20,y=170)
     btn2.configure(bg="light blue")
-    
+
+
 
     # r_pi show
     global rpi1,rpi2,rpi3, rF1,rF2,rF3
@@ -1324,7 +1323,7 @@ def doublestg():
     rm3.place(x=250,y=470)
 
     # tau calculation
-    tau1 =Label(framedouble,text=' \u03C4    =',font = ("Modern",10))
+    tau1 =Label(framedouble,text='\u03C4    =',font = ("Modern",10))
     tau1.place(x=123,y=500)
     global tau_entry
     tau_entry = Entry(framedouble,font = ("Modern",10))
@@ -1430,20 +1429,20 @@ def openTFgui():
         btn1 = Button(TF, text="Single stage TIA",command=singlestg,font = ("Arial",12))
         btn1.place(x=100,y=50)
 
-        btn2 = Button(TF, text="Dual stage TIA       ",command=doublestg,font = ("Arial",12))
+        btn2 = Button(TF, text="Dual stage TIA        ",command=doublestg,font = ("Arial",12))
         btn2.place(x=260,y=50)
 
         btn3 = Button(TF, text="Charge Sensitive Amplifier",command=csastg,font = ("Arial",12), width=20)
-        btn3.place(x=445,y=50)
+        btn3.place(x=435,y=50)
 
-        btn4 = Button(TF, text="From File           ",command=FromFile, font = ("Arial",12))
+        btn4 = Button(TF, text="From File             ",command=FromFile, font = ("Arial",12))
         btn4.place(x=100,y=100)
 
         btn5 = Button(TF, text="Waveform Analysis", command=WaveAnalysis, font = ("Arial",12))
         btn5.place(x=260,y=100)
 
         btn6 = Button(TF, text="3D Diamond model",command=diamond,font = ("Arial",12), width=20)
-        btn6.place(x=445,y=100)
+        btn6.place(x=435,y=100)
 
         my_canvas1 = Canvas(TF,width=750,height=1,bg='black')
         my_canvas1.place(x=20,y=150)
@@ -1550,12 +1549,12 @@ def plotcheck():
 
     global Radice
 
-    first_digit = re.search('\d', files1[index1])
+    first_digit = re.search(r'\d', files1[index1])
     Radice=str(files1[index1][0 : first_digit.start()])
 
     print(Radice)
 
-    data1 = pd.read_csv(path1+'/'+files1[index1],sep='\s+',header=None,skiprows=int(line2skip))
+    data1 = pd.read_csv(path1+'/'+files1[index1],sep=r'\s+',header=None,skiprows=int(line2skip))
     data1 = pd.DataFrame(data1)
    
     numcol = len(data1.columns)
@@ -1586,11 +1585,11 @@ def plotcheck():
     canvas.draw() # Draw the graph on the canvas?
 
     entrystep = Entry(CC,font=  ("Arial",12))
-    entrystep.place(x=380,y=350,width=90)    
+    entrystep.place(x=370,y=350,width=90)    
     entrystep.insert(END,format(step,"3.2e"))
 
     entryNsamp = Entry(CC,font=  ("Arial",12))
-    entryNsamp.place(x=380,y=390,width=90)    
+    entryNsamp.place(x=370,y=390,width=90)    
     entryNsamp.insert(END,int(Nsamp))
 
     dT=step
@@ -1598,7 +1597,7 @@ def plotcheck():
     global ext_entry 
 
     ext_entry = Entry(CC,font=  ("Arial",12))
-    ext_entry.place(x=380,y=430,width=90)    
+    ext_entry.place(x=370,y=430,width=90)    
     ext_entry .delete(0,END)
     ext_entry .insert(END,my_ext)
 
@@ -1607,7 +1606,7 @@ def plotcheck():
 def plotcheckTF():
 
     path1 =FromFilePath
-    data1 = pd.read_csv(path1,sep='\s+',header=None)
+    data1 = pd.read_csv(path1,sep=r'\s+',header=None)
     data1 = pd.DataFrame(data1)
 
     x1 = data1[0]
@@ -1635,11 +1634,11 @@ def plotcheckTF():
     canvas.draw() # Draw the graph on the canvas?
 
     entrystep = Entry(CTF,font=  ("Arial",12))
-    entrystep.place(x=380,y=350,width=90)    
+    entrystep.place(x=370,y=350,width=90)    
     entrystep.insert(END,format(stepTF,"3.2e"))
 
     entryNsamp = Entry(CTF,font=  ("Arial",12))
-    entryNsamp.place(x=380,y=390,width=90)    
+    entryNsamp.place(x=370,y=390,width=90)    
     entryNsamp.insert(END,int(Nsamp))
 
     if (stepTF!=step):
@@ -1670,12 +1669,12 @@ def check_current():
     my_canvas = Canvas(CC,width=750,height=1,bg='black')
     my_canvas.place(x=20,y=27)
 
-    nextPlotBtn = Button (CC, text=" Next \nInput File  ",command=plotcheck,font = ("Arial",9))
+    nextPlotBtn = Button (CC, text=" Next \nInput File  ",command=plotcheck,font = ("Arial",10))
     nextPlotBtn.place(x=705,y=295)
 
     global Lines2Skip_entry
     Lines2Skip_entry = Entry (CC,font= ("Arial",12))
-    Lines2Skip_entry.place(x=380,y=470,width=90) 
+    Lines2Skip_entry.place(x=370,y=470,width=90) 
     Lines2Skip_entry.insert(END,'0')
     
     plotcheck()
@@ -1683,7 +1682,7 @@ def check_current():
     label0 = Label(CC, text='dT =', font=  ("Arial",12))
     label0.place (x=322, y=350)
     label01 = Label(CC, text='s', font=  ("Arial",12))
-    label01.place (x=480, y=350)
+    label01.place (x=470, y=350)
 
     labelN = Label(CC, text='Nsamples =', font=  ("Arial",12))
     labelN.place (x=270, y=390)
@@ -1694,18 +1693,18 @@ def check_current():
     labelNlines = Label(CC, text='N° of lines to skip =', font=  ("Arial",12))
     labelNlines.place (x=218, y=470)
   
-    labelWarning0 = Label(CC, text='*****************************************   WARNING   ********************************** ', font=  ("Arial",12), fg='red')
-    labelWarning0.place(x=50,y=530)
+    labelWarning0 = Label(CC, text='*****************************************   WARNING   ***************************************** ', font=  ("Arial",12), fg='red')
+    labelWarning0.place(x=100,y=530)
     labelWarning = Label(CC, text='Please make sure  to set the correct timestep in the "dT" entry in the transfer function', font=  ("Arial",12), fg='red')
-    labelWarning.place(x=50,y=560)
+    labelWarning.place(x=100,y=560)
     labelWarning1 = Label(CC, text='section, and the number of samples in "N° Samples" for the duration of the signal.', font=  ("Arial",12), fg='red')
-    labelWarning1.place(x=50,y=590)
+    labelWarning1.place(x=100,y=590)
     labelWarning1b = Label(CC, text='If the Transfer Function "From File" is chosen make sure the timestep is the same.', font=  ("Arial",12), fg='red')
-    labelWarning1b.place(x=50,y=620)
+    labelWarning1b.place(x=100,y=620)
     labelWarning2b = Label(CC, text='If the waveforms are negative please use the scale factor to invert them.', font=  ("Arial",12), fg='red')
-    labelWarning2b.place(x=50,y=650)
-    labelWarning2 = Label(CC, text='**************************************************************************************** ', font=  ("Arial",12), fg='red')
-    labelWarning2.place(x=50,y=680)
+    labelWarning2b.place(x=100,y=650)
+    labelWarning2 = Label(CC, text='*************************************************************************************************** ', font=  ("Arial",12), fg='red')
+    labelWarning2.place(x=100,y=680)
 
     CC.mainloop()
 
@@ -1749,7 +1748,7 @@ def resamp():
 
 def writeCFG( ):
 
-    text_file = open("../../etc/configuration.cfg", 'w+')
+    text_file = open("../etc/configuration.cfg", 'w+')
     text_file.write('\nInputDirectory     =' + '"' + folder_selected1 + '";\n')
     text_file.write('\nOutputDirectory     =' + '"' + folder_selected2 + '";\n')
 
@@ -1765,8 +1764,8 @@ def writeCFG( ):
 
     if len(offset_entry.get()) == 0:
         text_file.write('\noffset             = 0; \n') 
-    elif len(maxfile_entry.get()) != 0:
-        text_file.write('\noffset             =' + offset_entry.get() + ';\n') 
+    elif len(offset_entry.get()) != 0:
+        text_file.write('\noffset             =' + offset_entry.get() + ';\n')
 
     if var3.get() == 0:
         text_file.write('\nUseSameCurve       = false;\n') 
@@ -2059,7 +2058,7 @@ def writeCFG( ):
 
         text_file.write('\nFromFile :{\n')
         text_file.write('ID        = 5;\n')
-        text_file.write('TFFile      = "../../examples/conv_input_files/3Ddiamond.txt";\n')
+        text_file.write('TFFile      = "../examples/conv_input_files/3Ddiamond.txt";\n')
         text_file.write('NlinesToSkip= 0;\n') 
         text_file.write('Nsamples        = ' + str(int(Nsamples.get())) +';\n') 
         text_file.write('Nbins       = 50;\n')
@@ -2087,9 +2086,7 @@ def writeCFG( ):
         shutil.rmtree(directory + '/data')
         os.makedirs(dir2)
     
-    os.chdir('../../build')    
-    subprocess.run(["./analysis_tbb", "ls -l"])
-    os.chdir('../gui/wsl')  
+    subprocess.run(["./analysis_tbb"], cwd="../build")
 
 
 my_logo = ImageTk.PhotoImage(Image.open("TFB_guiFiles/logo.png"))
@@ -2106,28 +2103,28 @@ my_button2 = Button(root, text="Choose directory for the output files:",command=
 my_button2.place(x=20,y=150)
 
 #---------------input file to process entry-----------------------------
-my_label4 = Label(root, text='Max input files to process:',font = ("Arial",9))
+my_label4 = Label(root, text='Maximum input files to process:',font = ("Arial",9))
 my_label4.place(x=20,y=200)
 
 maxfile_entry = Entry(root,font = ("Arial",10))
-maxfile_entry.place(x=180,y=198,width=60)
+maxfile_entry.place(x=200,y=198,width=60)
 maxfile_entry.insert(END,"25000")
 
 my_label5 = Label(root, text='Time offset in unit of dT:',font = ("Arial",9))
-my_label5.place(x=260,y=200)
+my_label5.place(x=280,y=200)
 
 offset_entry = Entry(root,font = ("Arial",10))
 offset_entry.place(x=420,y=198,width=40)
 offset_entry.insert(END,'0')
 
 my_label50 = Label(root, text='Scale factor for the currents:',font = ("Arial",9))
-my_label50.place(x=470,y=200)
+my_label50.place(x=490,y=200)
 
 scale_entry = Entry(root,font = ("Arial",10))
 scale_entry.place(x=650,y=198,width=40)
 scale_entry.insert(END,'1')
 
-my_label6 = Label(root, text='Always the same curve:',font = ("Arial",9))
+my_label6 = Label(root, text='Use always the same curve:',font = ("Arial",9))
 my_label6.place(x=20,y=235)
 
 var3 = IntVar()
@@ -2142,38 +2139,38 @@ my_canvas.place(x=20,y=265)
 my_label7 = Label(root, text='DIGITIZATION',font = ("Arial Bold",9))
 my_label7.place(x=20,y=267)
 
-my_label6 = Label(root, text='Time Sampling:',font = ("Arial",9))
+my_label6 = Label(root, text='Time Digitization:',font = ("Arial",9))
 my_label6.place(x=20,y=287)
 var4 = IntVar()
 var4.set(1)
 Checkbutton(root, variable=var4,font = ("Arial",8)).place(x=115, y=286)
 
 my_label6 = Label(root, text='Random phase:',font = ("Arial",9))
-my_label6.place(x=145,y=287)
+my_label6.place(x=140,y=287)
 var4b = IntVar()
-Checkbutton(root, variable=var4b,font = ("Arial",8)).place(x=240, y=286)
+Checkbutton(root, variable=var4b,font = ("Arial",8)).place(x=230, y=286)
 
 my_label6 = Label(root, text='dT :',font = ("Arial",9))
-my_label6.place(x=265,y=287)
+my_label6.place(x=275,y=287)
 dt_dgt = Entry(root,font = ("Arial",10))
-dt_dgt.place(x=295,y=286,width=60)
+dt_dgt.place(x=305,y=286,width=50)
 dt_dgt.insert(END,'20e-12')
 
-my_label6 = Label(root, text='Voltage Sampling:',font = ("Arial",9))
-my_label6.place(x=370,y=287)
+my_label6 = Label(root, text='   Voltage Digitization:',font = ("Arial",9))
+my_label6.place(x=360,y=287)
 var5 = IntVar()
 var5.set(1)
 Checkbutton(root, variable=var5,font = ("Arial",8)).place(x=480, y=286)
 my_label6 = Label(root, text='ADC step (V):',font = ("Arial",9))
-my_label6.place(x=515,y=287)
+my_label6.place(x=510,y=287)
 adc_max = Entry(root,font = ("Arial",10))
-adc_max.place(x=600,y=286,width=40)
+adc_max.place(x=590,y=286,width=40)
 adc_max.insert(END,'0.01')
 
 my_label6 = Label(root, text='ADC n° Bit:',font = ("Arial",9))
-my_label6.place(x=655,y=287)
+my_label6.place(x=650,y=287)
 adc_bit = Entry(root,font = ("Arial",10))
-adc_bit.place(x=730,y=286,width=30)
+adc_bit.place(x=720,y=286,width=20)
 adc_bit.insert(END,'8')
 
 #---------------THRESHOLDS-----------------------------
@@ -2183,14 +2180,14 @@ my_canvas1.place(x=20,y=315)
 my_label7 = Label(root, text='INITIAL THRESHOLDS',font = ("Arial Bold",9))
 my_label7.place(x=20,y=317)
 
-my_label6 = Label(root, text='Leading Edge noise-off (V):',font = ("Arial",9))
-my_label6.place(x=190,y=337)
+my_label6 = Label(root, text='   Leading Edge noise-off (V):',font = ("Arial",9))
+my_label6.place(x=200,y=337)
 LE_noff = Entry(root,font = ("Arial",10))
 LE_noff.place(x=370,y=337,width=40)
 LE_noff.insert(END,'0.0')
 
-my_label6 = Label(root, text='Leading Edge noise-on (V):',font = ("Arial",9))
-my_label6.place(x=450,y=337)
+my_label6 = Label(root, text='   Leading Edge noise-on (V):',font = ("Arial",9))
+my_label6.place(x=460,y=337)
 LE_non = Entry(root,font = ("Arial",10))
 LE_non.place(x=630,y=337,width=40)
 LE_non.insert(END,'0.0')
@@ -2206,15 +2203,15 @@ my_label6 = Label(root, text='Save output files:',font = ("Arial",9))
 my_label6.place(x=20,y=390)
 var6 = IntVar()
 var6.set(1)
-Checkbutton(root, variable=var6,font = ("Arial",8)).place(x=130, y=389)
+Checkbutton(root, variable=var6,font = ("Arial",8)).place(x=120, y=389)
 
-my_label6 = Label(root, text='Linear Fit near Threshold:',font = ("Arial",9))
+my_label6 = Label(root, text='   Linear Fit near Threshold:',font = ("Arial",9))
 my_label6.place(x=220,y=390)
 var7 = IntVar()
 var7.set(1)
 Checkbutton(root, variable=var7,font = ("Arial",8)).place(x=375, y=389)
 
-my_label6 = Label(root, text='Gaussian Fit near Vmax:',font = ("Arial",9))
+my_label6 = Label(root, text='   Gaussian Fit near Vmax:',font = ("Arial",9))
 my_label6.place(x=460,y=390)
 var8 = IntVar()
 var8.set(1)
@@ -2233,7 +2230,7 @@ var9 = IntVar()
 Checkbutton(root, variable=var9,font = ("Arial",8)).place(x=90, y=439)
 
 my_label6 = Label(root, text='Use RED NOISE:',font = ("Arial",9))
-my_label6.place(x=130,y=440)
+my_label6.place(x=140,y=440)
 var10 = IntVar()
 Checkbutton(root, variable=var10,font = ("Arial",8)).place(x=235, y=439)
 
@@ -2241,10 +2238,10 @@ my_label6 = Label(root, text='sigma (V):',font = ("Arial",9))
 my_label6.place(x=310,y=440)
 noise_entry = Entry(root,font = ("Arial",10))
 noise_entry.place(x=375,y=440,width=50)
-noise_entry.insert(END,'0.002')
+noise_entry.insert(END,'0.0028')
 
-my_label6 = Label(root, text='Correlation factor r :',font = ("Arial",9))
-my_label6.place(x=460,y=440)
+my_label6 = Label(root, text='   correlation factor r :',font = ("Arial",9))
+my_label6.place(x=470,y=440)
 noiseR_entry = Entry(root,font = ("Arial",10))
 noiseR_entry.place(x=590,y=440,width=50)
 noiseR_entry.insert(END,'0.985')
@@ -2252,7 +2249,7 @@ noiseR_entry.insert(END,'0.985')
 my_label6 = Label(root, text='Add noise from files:',font = ("Arial",9))
 my_label6.place(x=20,y=471)
 var11 = IntVar()
-Checkbutton(root, variable=var11,command = noisefromfiles,font = ("Arial",8)).place(x=145, y=470)
+Checkbutton(root, variable=var11,command = noisefromfiles,font = ("Arial",8)).place(x=135, y=470)
 
 #---------------OTHER OPTIONS-----------------------------
 my_canvas2 = Canvas(root,width=750,height=1,bg='black')
@@ -2265,11 +2262,11 @@ my_label9.place(x=20,y=507)
 my_label6 = Label(root, text='Gaussian Time Reference:',font = ("Arial",9))
 my_label6.place(x=20,y=527)
 var12 = IntVar()
-Checkbutton(root, variable=var12,font = ("Arial",8)).place(x=180, y=526)
+Checkbutton(root, variable=var12,font = ("Arial",8)).place(x=170, y=526)
 my_label6 = Label(root, text='sigma :',font = ("Arial",9))
 my_label6.place(x=20,y=547)
 TR_entry = Entry(root,font = ("Arial",10))
-TR_entry.place(x=75,y=547,width=60)
+TR_entry.place(x=65,y=547,width=50)
 TR_entry.insert(END,'15e-12')
 
 my_label6 = Label(root, text='|  Low Pass Filter:',font = ("Arial",9))
@@ -2291,7 +2288,7 @@ filterN_entry.insert(END,'2')
 my_label6 = Label(root, text='|  Filter cut-off Frequency:',font = ("Arial",9))
 my_label6.place(x=355,y=587)
 filterF_entry = Entry(root,font = ("Arial",10))
-filterF_entry.place(x=515,y=586,width=40)
+filterF_entry.place(x=495,y=586,width=40)
 filterF_entry.insert(END,'1e9')
 
 #---------------MAKE CONVOLUTION-----------------------------

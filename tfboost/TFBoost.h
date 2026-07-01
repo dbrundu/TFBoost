@@ -30,7 +30,7 @@
  
 
 #define PROJECT_NAME "TFBoost"
-#define PROJECT_VERSION "0.2-alpha"
+#define PROJECT_VERSION "1.0"
     
 
     

@@ -62,6 +62,31 @@ podman run --rm -v "$PWD/data:/data" -e TFB_CONFIG=/data/my.cfg tfboost
 podman run --rm -it -v "$PWD/data:/data" tfboost shell
 ```
 
+### Launching the GUI from the container
+
+The image also carries the Python/Tk front-end. `./start.sh` is the easy path
+(it detects the runtime, builds the image and wires up X11). To do it by hand you
+must give the container access to the host X server:
+
+```bash
+xhost +local:                               # allow local X connections
+podman run --rm \
+    -e DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    --security-opt label=disable \          # needed on SELinux (Fedora); harmless elsewhere
+    -v "$PWD/data:/data" \
+    tfboost gui
+xhost -local:                               # revoke when done
+```
+
+Notes / troubleshooting:
+- `--security-opt label=disable` lets a rootless-podman container reach the X
+  socket on SELinux systems; on Docker/non-SELinux it is a harmless no-op.
+- On Wayland this uses XWayland (the `/tmp/.X11-unix` socket), which works for
+  Tkinter. If windows do not appear, check `echo $DISPLAY` is set on the host and
+  that `xhost +local:` succeeded.
+- Use `./start.sh` to avoid getting these flags right by hand.
+
 ### Runtime environment variables
 
 | Var | Default | Effect |

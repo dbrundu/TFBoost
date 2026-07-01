@@ -40,3 +40,9 @@ dev/*
 
 # LargeDataFiles
 *.root
+
+# Native-route dependency cache (start.sh)
+.deps/
+
+# Runtime data dir created by start.sh / the container (user inputs + results)
+data/

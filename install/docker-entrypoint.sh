@@ -13,6 +13,10 @@
 #                                              else the config's own value)
 #   TFB_OUTPUT   output directory             (default: /data/results)
 #
+# Special first-argument modes:
+#   gui           launch the Tkinter GUI (needs an X server; see start.sh)
+#   shell / bash  drop into an interactive shell
+#
 # Examples:
 #   podman run --rm -v "$PWD/data:/data" tfboost
 #   podman run --rm -v "$PWD/data:/data" -e TFB_INPUT=/data/signals tfboost
@@ -27,8 +31,13 @@ BUILD_DIR="${TFB_HOME}/build"
 # --- argument handling --------------------------------------------------------
 case "${1:-}" in
     bash|sh|shell)        exec /bin/bash ;;
+    gui)
+        # The GUI writes ../etc/*.cfg and launches ../build binaries relative to
+        # its own directory, so it must run from ${TFB_HOME}/gui.
+        cd "${TFB_HOME}/gui"
+        exec python3 TFBoostGui.py ;;
     help|-h|--help)
-        sed -n '3,30p' "$0"
+        sed -n '3,33p' "$0"
         exit 0 ;;
     "" )                  : ;;                      # use TFB_TARGET / default
     -* )                  : ;;                      # leading flag: leave for binary

@@ -1,6 +1,6 @@
 ## TFBoost
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-![Version](https://img.shields.io/badge/version-v0.3--alpha-yellowgreen)
+![Version](https://img.shields.io/badge/version-v1.0-brightgreen)
 ![Issues](https://img.shields.io/github/issues/dbrundu/TFBoost)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4265385.svg)](https://doi.org/10.5281/zenodo.4265385)
 
@@ -8,7 +8,7 @@
 
 <img src="logo.png" width="500">
 
-TFBoost (Transfer Function Booster) is a C++20 compliant application and library, based on [HYDRA v.3](https://github.com/MultithreadCorner/Hydra) framework, with a functional software architecture ("Functional Core, Imperative Shell" pattern), to perform convolution between a waveform signal, e.g. a voltage or current signal from a physical sensor, and a transfer function describing a signal analyzer system, e.g. a readout or front-end electronics. The convolution is computed in massively parallel platforms on Linux systems. The transfer function can be modelled starting from a file, as a set of sampling points, or can be chosen from a set of fully configurable analytical functions defined within the library.
+TFBoost (Transfer Function Booster) is a C++20 compliant application and library, based on the [HYDRA](https://github.com/MultithreadCorner/Hydra) framework, with a functional software architecture ("Functional Core, Imperative Shell" pattern), to perform convolution between a waveform signal, e.g. a voltage or current signal from a physical sensor, and a transfer function describing a signal analyzer system, e.g. a readout or front-end electronics. The convolution is computed in massively parallel platforms on Linux systems. The transfer function can be modelled starting from a file, as a set of sampling points, or can be chosen from a set of fully configurable analytical functions defined within the library.
 
 The available transfer functions are:
 - Two Transimpedance, with 1 and 2 stages,
@@ -27,8 +27,28 @@ TFBoost has also a Graphical User Interface written in Python3:
 Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, developed within the TIMESPOT collaboration to simulate the response of solid state sensors, TFBoost is part of a complete software framework for simulation of signals in solid state detectors, from the generation in the sensor to the output of the readout electronics.
 
 
+## Quick start
+
+Clone the repository and run the launcher — it takes you straight to a running TFBoost GUI:
+
+```bash
+git clone https://github.com/gianmatteocossu/TFBoost.git
+cd TFBoost
+./start.sh
+```
+
+`start.sh` chooses the best available route automatically:
+
+- **If `podman` or `docker` is installed** it builds a self-contained image — ROOT and every dependency are bundled, nothing else to install — and launches the **GUI** from it. The first build pulls a ROOT base image and can take a few minutes; later runs reuse the image.
+- **Otherwise** it installs the system dependencies (Fedora `dnf` or Debian/Ubuntu `apt`), builds TFBoost, and launches the GUI natively.
+
+Handy options: `./start.sh --native` (skip the container), `./start.sh --rebuild` (force a fresh image/build), `./start.sh --analysis` (container route: run the analysis backend headlessly on `./data` instead of the GUI). Input signals you want the container to see go in `./data/input`; results appear in `./data/results`. See [install/DOCKER.md](install/DOCKER.md) for container details and GUI/X11 troubleshooting.
+
+The rest of this document covers manual dependency installation and building, for full control over the toolchain.
+
+
 ## Dependencies
-TFBoost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/) (C++ bindings), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/) and [FFTW3](http://www.fftw.org/). For the best performances at least TBB or OMP backends are needed. Optionally [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. A C++ compiler with C++14 support ([GCC >= v.8](https://gcc.gnu.org/), Clang or ICC) and [CMake >= v.3.24](https://cmake.org/) are needed.
+TFBoost depends on [HYDRA](https://github.com/MultithreadCorner/Hydra) (header-only, tested with 4.x), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/) (C++ bindings), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/) and [FFTW3](http://www.fftw.org/). For the best performances at least TBB or OMP backends are needed. Optionally [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. A C++20-capable compiler (recent [GCC](https://gcc.gnu.org/), Clang or ICC) and [CMake >= v.3.24](https://cmake.org/) are needed.
 
 Two of these dependencies are header-only / source distributions and are *not* installed through the system package manager:
 
@@ -57,12 +77,10 @@ OpenMP support ships with GCC/Clang, so no extra package is needed for the OMP b
 > **Note on recent TBB (oneTBB):** modern distributions ship oneTBB (>= 2021), which still works but no longer provides the legacy `tbb/tbb_stddef.h` header. The bundled `cmake/FindTBB.cmake` already handles this; if you use an older/custom TBB finder and configuration fails on a missing `tbb_stddef.h`, this is the cause.
 
 
-## Disclaimer
-TFBoost is currently an `alpha` version and is under development. Please report any problems throught GitHub Issues if necessary. The current design is in a preliminary stage, the final design will be composed of semi-independent modules and algorithms that can be instantiated and chained in run time, depending on the configuration provided by the user.
-
-
-## Installation, Build and Run
-The first step is checkout [HYDRA v.3](https://github.com/MultithreadCorner/Hydra) and TFBoost:
+## Manual installation and build
+If you prefer to build by hand (rather than using `./start.sh`), first install
+the [dependencies](#dependencies) above, then checkout
+[HYDRA](https://github.com/MultithreadCorner/Hydra) and TFBoost:
 ```bash
 mkdir <TFBoostDev>
 cd <TFBoostDev>
@@ -70,13 +88,12 @@ git clone https://github.com/MultithreadCorner/Hydra.git Hydra
 git clone https://github.com/gianmatteocossu/TFBoost.git TFBoost
 ```
 
-Then you have to setup the proper enveironment variables:
+Then set up the proper environment variables (use a C++20-capable compiler and a
+ROOT whose environment has been sourced):
 ```bash
-export CC=/usr/bin/gcc-8
-export CXX=/usr/bin/g++-8
-export ROOTSYS=<path-to-root-build>
+export CC=$(command -v gcc) CXX=$(command -v g++)
+export ROOTSYS=<path-to-root>            # after: source <path-to-root>/bin/thisroot.sh
 export HYDRA_INCLUDE_DIR=<path-to-hydra>
-...
 ```
 
 Starting from the TFBoost folder, please create a `build` directory for convenience and run the cmake command:
@@ -96,33 +113,32 @@ to build all the applications needed for the GUI:
 ```bash
 make analysis_tbb deconvolution_tbb resampling_tbb 3Ddiamond_tbb
 ```
-to run TFBoost using the GUI, open a terminal in the folder 'TFBoost GUI' and type:
+to run TFBoost using the GUI, open a terminal in the `gui/` folder and type:
 ```bash
+cd gui
 python3 TFBoostGui.py
 ```
-
-## Installation under Ubuntu Linux
-To install TFBoost on Ubuntu the following scripts can be used:
-[TFBoost install](https://downgit.github.io/#/home?url=https://github.com/dbrundu/TFBoost/tree/master/install)
-
-Follow the instruction in file README.md.<br />
-After everything is set, the GUI will open simply typing in a terminal:
-```bash
-TFB
-```
-
-
 
 ## Run with a container (Docker / Podman)
 The fastest way to run TFBoost without installing any dependency is the bundled
 container image. It starts from a base image that already ships **ROOT** (so ROOT
 is *not* recompiled), pulls in the remaining dependencies, builds the parallel
-(TBB) backends, and runs a chosen application against the data you provide. It
+(TBB) backends, and can either run a chosen backend or launch the **GUI**. It
 works the same with `docker` or `podman`.
+
+`./start.sh` already does the build + GUI launch for you; the commands below are
+for driving the image directly.
 
 Build the image from the repository root (the `Dockerfile` lives in `install/`):
 ```bash
 podman build -f install/Dockerfile -t tfboost .
+```
+
+Launch the GUI from the container (needs an X server; `start.sh` wires this up):
+```bash
+xhost +local:
+podman run --rm -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    --security-opt label=disable -v "$PWD/data:/data" tfboost gui
 ```
 
 Then run it, mounting a host folder at `/data`. Put your input signals in
@@ -152,6 +168,17 @@ An example of a simple analysis is available. The input files are obtained from 
 make simple_analysis_tbb
 ./simple_analysis_tbb 
 ```
+
+## Publications
+
+TFBoost has been developed and used within the TIMESPOT collaboration. If you use it in your work, please cite the reference paper (the first entry below):
+
+- D. Brundu *et al.*, "Modeling of Solid State Detectors Using Advanced Multi-Threading: The TCoDe and TFBoost Simulation Packages", *Frontiers in Physics* (2022). [10.3389/fphy.2022.804752](https://doi.org/10.3389/fphy.2022.804752)
+- G. Cossu *et al.*, "Front-end Electronics for Timing with pico-second precision using 3D Trench Silicon Sensors", *Journal of Instrumentation* (2023). [10.1088/1748-0221/18/01/P01039](https://doi.org/10.1088/1748-0221/18/01/P01039)
+- F. Borgato *et al.*, "Charged-particle timing with 10 ps accuracy using TimeSPOT 3D trench-type silicon pixels", *Frontiers in Physics* (2023). [10.3389/fphy.2023.1117575](https://doi.org/10.3389/fphy.2023.1117575)
+- G. Cossu *et al.*, "Intrinsic timing properties of ideal 3D-trench silicon sensor with fast front-end electronics", *Journal of Instrumentation* (2023). [10.1088/1748-0221/18/07/P07014](https://doi.org/10.1088/1748-0221/18/07/P07014)
+- A. Lai *et al.*, "TimeSPOT developments on charged-particle silicon sensors for high intensity 4D-Tracking", *Frontiers in Sensors* (2025). [10.3389/fsens.2025.1619719](https://doi.org/10.3389/fsens.2025.1619719)
+
 
 ## Authors
 TFBoost was created by [Davide Brundu](https://github.com/dbrundu) and [Gian Matteo Cossu](https://github.com/gianmatteocossu/TFBoost), within the TIMESPOT collaboration.
