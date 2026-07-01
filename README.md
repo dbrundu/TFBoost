@@ -32,7 +32,7 @@ Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, deve
 Clone the repository and run the launcher — it takes you straight to a running TFBoost GUI:
 
 ```bash
-git clone https://github.com/gianmatteocossu/TFBoost.git
+git clone https://github.com/dbrundu/TFBoost.git
 cd TFBoost
 ./start.sh
 ```
