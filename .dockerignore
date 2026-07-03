@@ -1,0 +1,11 @@
+# Keep the Docker build context small. The image rebuilds from source, so the
+# host build tree, VCS metadata and large doc/image assets are not needed.
+.git
+build
+*.png
+Doxyfile
+docs
+HANDOFF.md
+CLAUDE.md
+.Rhistory
+.vscode

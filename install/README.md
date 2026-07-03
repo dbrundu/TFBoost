@@ -1,36 +1,34 @@
-## Dependencies and TFBoost installation
-TFBoost depends on [HYDRA >= v.3.2.1](https://github.com/MultithreadCorner/Hydra), [ROOT >= v.6.14](https://github.com/root-project/root), [libconfig >= v1.5](https://hyperrealm.github.io/libconfig/), [TCLAP >= v1.2.1](http://tclap.sourceforge.net/). For the best performances at least TBB or OMP backends are needed. Optionally  [CUDA >= 10.0](https://developer.nvidia.com/cuda-toolkit) is needed for nVidia GPUs. [GCC >= v.8](https://gcc.gnu.org/) is needed. 
-If you want to install ROOT and other dependencies first, do the following first steps, otherwise you can skip them and install directly Hydra and TFBoost: 
+# install/
 
+Files that support getting TFBoost up and running. The easiest entry point is
+the [`start.sh`](../start.sh) launcher at the repository root — it uses the
+pieces here automatically.
 
-1. Download all the scripts in this folder where you want to install the application
+- **[`Dockerfile`](Dockerfile)** — builds a self-contained image from a base that
+  already ships ROOT, adds the remaining dependencies (HYDRA, TBB, TCLAP,
+  libconfig, FFTW) and the Python/Tk GUI runtime, compiles the TBB backends, and
+  can run a backend or launch the GUI.
+- **[`docker-entrypoint.sh`](docker-entrypoint.sh)** — the image entrypoint:
+  runs a chosen backend against data mounted at `/data`, or launches the GUI
+  (`gui` mode), or drops to a shell.
+- **[`DOCKER.md`](DOCKER.md)** — full guide to building and running the container
+  (backends, the GUI over X11, build options, environment variables).
 
-2. If you need to install ROOT open a terminal and run the following command, otherwise skip this step. A local version of ROOT CERN will be installed in the current folder and the script automatically add a `source .../thisroot.sh` line to your `.bashrc` file, in order to run ROOT just by typing `root` in a terminal.
+## Getting started
+
+From the repository root:
+
 ```bash
-bash installRoot
+./start.sh            # container if podman/docker is present, else native build
 ```
 
-3. If you need to install the other dependencies (gcc8, libconfig, TCLAP, TBB etc.), run the following command, otherwise skip this step.
+If you have `podman` or `docker`, you can also drive the image directly:
+
 ```bash
-bash packages
+podman build -f install/Dockerfile -t tfboost .
+podman run --rm -v "$PWD/data:/data" tfboost          # run the analysis backend
 ```
 
-4. Finally to install Hydra and TFBoost run the following commands:
-```bash
-bash TFBoost_installer
-```
-or, if you are using Ubuntu with Windows Linux Subsystem, the following one:
-```bash
-bash TFBoost_installer_WSL
-```
-After TFBoost is configured and built, you can run it 
-with the GUI typing in a terminal: 
-```bash
-TFB
-```
-You can launch also the C++ application directly from terminal: you have to setup first the proper configuration using the file `configuration.cgf` inside the `etc/` folder, then build and run the application as:
-```bash
-make analysis_tbb
-./analysis_tbb 
-```
-
+To build entirely by hand (installing ROOT and the other dependencies yourself),
+see the **Dependencies** and **Manual installation and build** sections of the
+top-level [README](../README.md).

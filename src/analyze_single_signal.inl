@@ -98,18 +98,17 @@
 // TFBOOST
 #include <tfboost/Types.h>
 #include <tfboost/Utils.h>
-#include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
 #include <tfboost/functions/TIA_BJT_2stages_GM.h>
 #include <tfboost/functions/TIA_IdealInt.h>
 #include <tfboost/functions/TIA_MOS.h>
 #include <tfboost/functions/ButterworthFilter.h>
-#include <tfboost/DoConvolution.h>
-#include <tfboost/Noise.h>
+#include <tfboost/core/Convolution.h>
+#include <tfboost/core/Noise.h>
 #include <tfboost/InputOutput.h>
 #include <tfboost/Algorithms.h>
-#include <tfboost/Digitizer.h>
+#include <tfboost/core/Digitization.h>
 
 
 namespace libconf = libconfig;

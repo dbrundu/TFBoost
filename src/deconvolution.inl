@@ -98,7 +98,6 @@
 // TFBOOST
 #include <tfboost/Types.h>
 #include <tfboost/Utils.h>
-#include <tfboost/ITCoDe.h>
 #include <tfboost/functions/TIA_BJT_1stage.h>
 #include <tfboost/functions/TIA_BJT_2stages.h>
 #include <tfboost/functions/TIA_BJT_2stages_GM.h>
@@ -107,11 +106,11 @@
 #include <tfboost/functions/RCFilter.h>
 #include <tfboost/functions/ButterworthFilter.h>
 #include <tfboost/functions/RCFilter.h>
-#include <tfboost/DoConvolution.h>
-#include <tfboost/Noise.h>
+#include <tfboost/core/Convolution.h>
+#include <tfboost/core/Noise.h>
 #include <tfboost/InputOutput.h>
 #include <tfboost/Algorithms.h>
-#include <tfboost/Digitizer.h>
+#include <tfboost/core/Digitization.h>
 
 
 namespace libconf = libconfig;
@@ -238,7 +237,7 @@ int main(int argv, char** argc)
   SAFE_EXIT( current.size() != Nsamples , "In deconvolution.inl: size of container not equal to Nsamples. ")
 
   // time digitization to fix variable time step (LTSPice)
-  tfboost::TimeDigitizeSignal( current, time, dT, max, engine, false);
+  tfboost::core::time_digitize( current, time, dT, max, engine, false);
 
   // recreate a time vector with fixed timestep
   for(int i=0; i<Nsamples; i++){time[i]=i*dT;}
@@ -315,7 +314,7 @@ int main(int argv, char** argc)
   SAFE_EXIT( voltage2.size() != Nsamples , "In deconvolution.inl: size of container not equal to Nsamples. ")
   
   // time digitization to fix variable time step (LTSPice)
-  tfboost::TimeDigitizeSignal( voltage2, time2, dT, max, engine, false);  
+  tfboost::core::time_digitize( voltage2, time2, dT, max, engine, false);  
 
   // make spline with same time array of current and save it in "kernel"
   auto kernel = hydra::make_spline<double>(time, voltage2);
@@ -336,14 +335,14 @@ int main(int argv, char** argc)
   hydra::host::vector<double>   conv_data_h(Nsamples);
         
   if(deconvolution){
-    tfboost::Do_DeConvolution(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
+    tfboost::core::deconvolve(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
   } else {
-    tfboost::Do_Convolution(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
+    tfboost::core::convolve(fft_backend, kernel, signal, conv_data_h, min, max, Nsamples);
   }  
   
   if(filter){
     auto conv_temp = hydra::make_spline<double>(time, conv_data_h);
-    tfboost::Do_Convolution(fft_backend, flt, conv_temp, conv_data_h, min, max, Nsamples);
+    tfboost::core::convolve(fft_backend, flt, conv_temp, conv_data_h, min, max, Nsamples);
   }
   
 
