@@ -29,20 +29,22 @@ Within the [TCoDe](https://github.com/MultithreadCorner/TCode) application, deve
 
 ## Quick start
 
-Clone the repository and run the launcher — it takes you straight to a running TFBoost GUI:
+Clone the repository and run the launcher:
 
 ```bash
 git clone https://github.com/dbrundu/TFBoost.git
 cd TFBoost
-./start.sh
+./start.sh                                  # example run (bundled config + inputs)
+./start.sh -c my.cfg                        # run the analysis with your config
+./start.sh -c my.cfg -i ./sig -o ./out      # + custom input/output directories
 ```
 
-`start.sh` chooses the best available route automatically:
+By default `start.sh` runs the **analysis backend** and picks the best route automatically:
 
-- **If `podman` or `docker` is installed** it builds a self-contained image — ROOT and every dependency are bundled, nothing else to install — and launches the **GUI** from it. The first build pulls a ROOT base image and can take a few minutes; later runs reuse the image.
-- **Otherwise** it installs the system dependencies (Fedora `dnf` or Debian/Ubuntu `apt`), builds TFBoost, and launches the GUI natively.
+- **If `podman` or `docker` is installed** it builds a self-contained image — ROOT and every dependency are bundled, nothing else to install — and runs the backend inside it. The first build pulls a ROOT base image and can take a few minutes; later runs reuse the image.
+- **Otherwise** it installs the system dependencies (Fedora `dnf` or Debian/Ubuntu `apt`), builds TFBoost, and runs it natively.
 
-Handy options: `./start.sh --native` (skip the container), `./start.sh --rebuild` (force a fresh image/build), `./start.sh --analysis` (container route: run the analysis backend headlessly on `./data` instead of the GUI). Input signals you want the container to see go in `./data/input`; results appear in `./data/results`. See [install/DOCKER.md](install/DOCKER.md) for container details and GUI/X11 troubleshooting.
+The config file supplies the transfer function and analysis parameters; input signals come from `--input` (default `./data/input`) and results go to `--output` (default `./data/results`). Other options: `./start.sh --gui` (launch the Tkinter GUI instead), `--native` (skip the container), `--rebuild` (force a fresh image/build). See [install/DOCKER.md](install/DOCKER.md) for container details and GUI/X11 notes.
 
 The rest of this document covers manual dependency installation and building, for full control over the toolchain.
 
@@ -126,8 +128,8 @@ is *not* recompiled), pulls in the remaining dependencies, builds the parallel
 (TBB) backends, and can either run a chosen backend or launch the **GUI**. It
 works the same with `docker` or `podman`.
 
-`./start.sh` already does the build + GUI launch for you; the commands below are
-for driving the image directly.
+`./start.sh` already builds the image and runs the analysis for you (`--gui` for
+the GUI); the commands below are for driving the image directly.
 
 Build the image from the repository root (the `Dockerfile` lives in `install/`):
 ```bash

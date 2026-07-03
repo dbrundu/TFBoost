@@ -42,11 +42,13 @@ import math
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
+import tfb_ui
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import shutil
 import re
 
 root = tk.Tk();
+tfb_ui.apply_font_scaling(root)
 root.title('TFBoost GUI')
 root.geometry("800x750")
 root.resizable(0, 0)
@@ -103,6 +105,8 @@ Radice = StringVar()
 def openFileInput():
     global folder_selected1
     folder_selected1 = filedialog.askdirectory()
+    if not folder_selected1:          # dialog cancelled
+        return
     global directory0
     directory0 = os.path.split(folder_selected1)[0] + '/' + os.path.split(folder_selected1)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
@@ -112,7 +116,7 @@ def openFileInput():
     text1.configure(state="disabled")
 
     inputfile_selected.set(1)
-    warn0 = Label(root, text='INPUT FOLDER SELECTED!               ',font = ("Modern",9), fg='green')
+    warn0 = Label(root, text='INPUT FOLDER SELECTED!               ',font = ("Arial",9), fg='green')
     warn0.place(x=20,y=645)
 
     fileslist = os.listdir(directory0)
@@ -129,6 +133,8 @@ def openFileInput():
 def openFileOutput():
     global folder_selected2
     folder_selected2 = filedialog.askdirectory()
+    if not folder_selected2:          # dialog cancelled
+        return
     global directory
     directory = os.path.split(folder_selected2)[0] + '/' + os.path.split(folder_selected2)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
@@ -149,6 +155,8 @@ def openFileOutput():
 def usesamecurve():
     global filechosen
     filechosen = filedialog.askopenfile(initialdir="", title="Select a File")
+    if not filechosen:                # dialog cancelled
+        return
     #filelabel = Label(root, text=filechosen,font = ("Arial",8))
     #directory = os.path.split(filechosen)[0] + '/' + os.path.split(filechosen)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
@@ -160,6 +168,8 @@ def usesamecurve():
 def FromFileopen():
     global FromFilePath
     FromFilePath = filedialog.askopenfile(initialdir="", title="Select a File")
+    if not FromFilePath:              # dialog cancelled
+        return
     #filelabel = Label(root, text=filechosen,font = ("Arial",8))
     directoryFile = os.path.split(FromFilePath.name)[0] + '/' +os.path.split(FromFilePath.name)[1]
     text1 = Text(frameFF, state='disabled', width=50, height=1)
@@ -175,11 +185,15 @@ def FromFileopen():
 def Diamondopen():
     global DiamondPath
     DiamondPath = filedialog.askopenfile(initialdir="", title="Select a File")
+    if not DiamondPath:               # dialog cancelled
+        return
     #filelabel = Label(root, text=filechosen,font = ("Arial",8)
 
 def noisefromfiles():
     global folder_selected3
     folder_selected3 = filedialog.askdirectory()
+    if not folder_selected3:          # dialog cancelled
+        return
     #filelabel = Label(root, text=filechosen,font = ("Arial",8))
     directory2 = os.path.split(folder_selected3)[0] + '/' + os.path.split(folder_selected3)[1]
     text1 = Text(root, state='disabled', width=50, height=1)
@@ -222,120 +236,120 @@ def singlestg():
     logo2.place(x=20,y=0)
     
 
-    TF_label2 = Label(framesingle, text='Single Stage TIA with Bipolar transistor',font = ("Modern",9))
+    TF_label2 = Label(framesingle, text='Single Stage TIA with Bipolar transistor',font = ("Arial",9))
     TF_label2.place(x=380,y=20,width=400)
-    TF_label3 = Label(framesingle, text='only critical damping case is considered',font = ("Modern",9))
+    TF_label3 = Label(framesingle, text='only critical damping case is considered',font = ("Arial",9))
     TF_label3.place(x=380,y=40,width=400)
 
     #png equation
     logo4 =Label(framesingle,image=my_logo4)
     logo4.place(x=500,y=70)
 
-    link1 = Label(framesingle, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
+    link1 = Label(framesingle, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Arial",8))
     link1.place(x=380,y=150,width=400)
     link1.bind("<Button-1>", lambda e: callback("https://arxiv.org/abs/2008.09867"))
 
-    rpi1 =Label(framesingle,text='r   =',font = ("Modern",10))
-    rpi2 =Label(framesingle,text=' \u03C0',font = ("Modern",6))
+    rpi1 =Label(framesingle,text='r   =',font = ("Arial",10))
+    rpi2 =Label(framesingle,text=' \u03C0',font = ("Arial",6))
     rpi1.place(x=135,y=200)
     rpi2.place(x=140,y=210)
     global rpi_entry 
-    rpi_entry = Entry(framesingle,font = ("Modern",10))
+    rpi_entry = Entry(framesingle,font = ("Arial",10))
     rpi_entry.place(x=170,y=200,width=60)
     rpi_entry.insert(END,'220')
-    rpi3 =Label(framesingle,text='\u03A9',font = ("Modern",10))
+    rpi3 =Label(framesingle,text='\u03A9',font = ("Arial",10))
     rpi3.place(x=230,y=200)
 
     # R_F show
-    rF1 =Label(framesingle,text='R    =',font = ("Modern",10))
-    rF2 =Label(framesingle,text=' f',font = ("Modern",6))
+    rF1 =Label(framesingle,text='R    =',font = ("Arial",10))
+    rF2 =Label(framesingle,text=' f',font = ("Arial",6))
     rF1.place(x=127,y=230)
     rF2.place(x=140,y=240)
     global rF_entry
-    rF_entry = Entry(framesingle,font = ("Modern",10))
+    rF_entry = Entry(framesingle,font = ("Arial",10))
     rF_entry.place(x=170,y=230,width=60)
     rF_entry.insert(END,'4300')
-    rF3 =Label(framesingle,text='\u03A9',font = ("Modern",10))
+    rF3 =Label(framesingle,text='\u03A9',font = ("Arial",10))
     rF3.place(x=230,y=230)
 
     # R_C show
-    rC1 =Label(framesingle,text='R    =',font = ("Modern",10))
-    rC2 =Label(framesingle,text=' C',font = ("Modern",6))
+    rC1 =Label(framesingle,text='R    =',font = ("Arial",10))
+    rC2 =Label(framesingle,text=' C',font = ("Arial",6))
     rC1.place(x=127,y=260)
     rC2.place(x=140,y=270)
     global rC_entry
-    rC_entry = Entry(framesingle,font = ("Modern",10))
+    rC_entry = Entry(framesingle,font = ("Arial",10))
     rC_entry.place(x=170,y=260,width=60)
     rC_entry.insert(END,'50')
-    rC3 =Label(framesingle,text='\u03A9',font = ("Modern",10))
+    rC3 =Label(framesingle,text='\u03A9',font = ("Arial",10))
     rC3.place(x=230,y=260)
 
     # C_in show
-    Cin1 =Label(framesingle,text='C    =',font = ("Modern",10))
-    Cin2 =Label(framesingle,text=' in',font = ("Modern",6))
+    Cin1 =Label(framesingle,text='C    =',font = ("Arial",10))
+    Cin2 =Label(framesingle,text=' in',font = ("Arial",6))
     Cin1.place(x=127,y=290)
     Cin2.place(x=140,y=300)
     global Cin_entry
-    Cin_entry = Entry(framesingle,font = ("Modern",10))
+    Cin_entry = Entry(framesingle,font = ("Arial",10))
     Cin_entry.place(x=170,y=290,width=60)
     Cin_entry.insert(END,'2e-12')
-    Cin3 =Label(framesingle,text='F',font = ("Modern",10))
+    Cin3 =Label(framesingle,text='F',font = ("Arial",10))
     Cin3.place(x=230,y=290)
 
     # C_f show
-    Cf1 =Label(framesingle,text='C    =',font = ("Modern",10))
-    Cf2 =Label(framesingle,text=' f',font = ("Modern",6))
+    Cf1 =Label(framesingle,text='C    =',font = ("Arial",10))
+    Cf2 =Label(framesingle,text=' f',font = ("Arial",6))
     Cf1.place(x=127,y=320)
     Cf2.place(x=140,y=330)
     global Cf_entry
-    Cf_entry = Entry(framesingle,font = ("Modern",10))
+    Cf_entry = Entry(framesingle,font = ("Arial",10))
     Cf_entry.place(x=170,y=320,width=60)
     Cf_entry.insert(END,'50e-15')
-    Cf3 =Label(framesingle,text='F',font = ("Modern",10))
+    Cf3 =Label(framesingle,text='F',font = ("Arial",10))
     Cf3.place(x=230,y=320)
 
     # C_L show
-    CL1 =Label(framesingle,text='C    =',font = ("Modern",10))
-    CL2 =Label(framesingle,text=' L',font = ("Modern",6))
+    CL1 =Label(framesingle,text='C    =',font = ("Arial",10))
+    CL2 =Label(framesingle,text=' L',font = ("Arial",6))
     CL1.place(x=127,y=350)
     CL2.place(x=140,y=360)
     global CL_entry
-    CL_entry = Entry(framesingle,font = ("Modern",10))
+    CL_entry = Entry(framesingle,font = ("Arial",10))
     CL_entry.place(x=170,y=350,width=60)
     CL_entry.insert(END,'4e-12')
-    CL3 =Label(framesingle,text='F',font = ("Modern",10))
+    CL3 =Label(framesingle,text='F',font = ("Arial",10))
     CL3.place(x=230,y=350)
 
     # gm show
-    gm1 =Label(framesingle,text='g    =',font = ("Modern",10))
-    gm2 =Label(framesingle,text='m',font = ("Modern",6))
+    gm1 =Label(framesingle,text='g    =',font = ("Arial",10))
+    gm2 =Label(framesingle,text='m',font = ("Arial",6))
     gm1.place(x=127,y=380)
     gm2.place(x=140,y=390)
     global gm_entry
-    gm_entry = Entry(framesingle,font = ("Modern",10))
+    gm_entry = Entry(framesingle,font = ("Arial",10))
     gm_entry.place(x=170,y=380,width=60)
     gm_entry.insert(END,'0.5')
-    gm3 =Label(framesingle,text='S',font = ("Modern",10))
+    gm3 =Label(framesingle,text='S',font = ("Arial",10))
     gm3.place(x=230,y=380)
 
     # R_m calculation
-    rm1 =Label(framesingle,text='R     =',font = ("Modern",10))
-    rm2 =Label(framesingle,text='m0',font = ("Modern",6))
+    rm1 =Label(framesingle,text='R     =',font = ("Arial",10))
+    rm2 =Label(framesingle,text='m0',font = ("Arial",6))
     rm1.place(x=123,y=470)
     rm2.place(x=137,y=480)
     global rm_entry
-    rm_entry = Entry(framesingle,font = ("Modern",10))
+    rm_entry = Entry(framesingle,font = ("Arial",10))
     rm_entry.place(x=170,y=470,width=75)
-    rm3 =Label(framesingle,text='\u03A9',font = ("Modern",10))
+    rm3 =Label(framesingle,text='\u03A9',font = ("Arial",10))
     rm3.place(x=250,y=470)
 
     # tau calculation
-    tau1 =Label(framesingle,text='\u03C4    =',font = ("Modern",10))
+    tau1 =Label(framesingle,text='\u03C4    =',font = ("Arial",10))
     tau1.place(x=123,y=500)
     global tau_entry
-    tau_entry = Entry(framesingle,font = ("Modern",10))
+    tau_entry = Entry(framesingle,font = ("Arial",10))
     tau_entry.place(x=170,y=500,width=75)
-    tau3 =Label(framesingle,text='s',font = ("Modern",10))
+    tau3 =Label(framesingle,text='s',font = ("Arial",10))
     tau3.place(x=250,y=500)
 
     global btnRM1
@@ -343,57 +357,57 @@ def singlestg():
     btnRM1.place(x=500,y=440)
 
     # NSAMPLES show
-    nsamples =Label(framesingle,text='N° Samples  =',font = ("Modern",10))
+    nsamples =Label(framesingle,text='N° Samples  =',font = ("Arial",10))
     nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(framesingle,font = ("Modern",10))
+    nsamples_entry = Entry(framesingle,font = ("Arial",10))
     nsamples_entry.place(x=550,y=200,width=70)
     nsamples_entry.insert(END,'16384')
 
     # dT show
-    dt1 =Label(framesingle,text='dT  =',font = ("Modern",10))
+    dt1 =Label(framesingle,text='dT  =',font = ("Arial",10))
     dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(framesingle,font = ("Modern",10))
+    dt_entry = Entry(framesingle,font = ("Arial",10))
     dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(0,format(step,"3.2e"))
-    dt3 =Label(framesingle,text='s',font = ("Modern",10))
+    dt3 =Label(framesingle,text='s',font = ("Arial",10))
     dt3.place(x=630,y=230)
 
     # Bound show
-    bound1 =Label(framesingle,text='Bound Fit integer  =',font = ("Modern",10))
+    bound1 =Label(framesingle,text='Bound Fit integer  =',font = ("Arial",10))
     bound1.place(x=405,y=260)
     global bound_entry
-    bound_entry = Entry(framesingle,font = ("Modern",10))
+    bound_entry = Entry(framesingle,font = ("Arial",10))
     bound_entry.place(x=550,y=260,width=70)
     bound_entry.insert(END,'5')
 
     # Leading Edge show
-    LE1 =Label(framesingle,text='Leading Edge threshold  =',font = ("Modern",10))
+    LE1 =Label(framesingle,text='Leading Edge threshold  =',font = ("Arial",10))
     LE1.place(x=365,y=290)
     global LE_entry
-    LE_entry = Entry(framesingle,font = ("Modern",10))
+    LE_entry = Entry(framesingle,font = ("Arial",10))
     LE_entry.place(x=550,y=290,width=70)
     LE_entry.insert(END,'0.01')
-    LE3 =Label(framesingle,text='V',font = ("Modern",10))
+    LE3 =Label(framesingle,text='V',font = ("Arial",10))
     LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(framesingle,text='CFD threshold fraction  =',font = ("Modern",10))
+    CFD1 =Label(framesingle,text='CFD threshold fraction  =',font = ("Arial",10))
     CFD1.place(x=372,y=320)
     global CFD_entry
-    CFD_entry = Entry(framesingle,font = ("Modern",10))
+    CFD_entry = Entry(framesingle,font = ("Arial",10))
     CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(framesingle,text='ARC method delay  =',font = ("Modern",10))
+    ARC1 =Label(framesingle,text='ARC method delay  =',font = ("Arial",10))
     ARC1.place(x=397,y=350)
     global ARC_entry
-    ARC_entry = Entry(framesingle,font = ("Modern",10))
+    ARC_entry = Entry(framesingle,font = ("Arial",10))
     ARC_entry.place(x=550,y=350,width=70)
     ARC_entry.insert(END,'200e-12')
-    ARC1 =Label(framedouble,text='s',font = ("Modern",10))
+    ARC1 =Label(framedouble,text='s',font = ("Arial",10))
     ARC1.place(x=630,y=350)
 
 
@@ -434,122 +448,122 @@ def csastg():
     logo6 =Label(framecsa,image=my_logo6)
     logo6.place(x=20,y=0)
 
-    TF_label2 = Label(framecsa, text='Single Stage MOS Charge Sensitive Amplifier',font = ("Modern",9))
+    TF_label2 = Label(framecsa, text='Single Stage MOS Charge Sensitive Amplifier',font = ("Arial",9))
     TF_label2.place(x=380,y=20,width=400)
-    TF_label3 = Label(framecsa, text='all damping behavior are possible with values provided',font = ("Modern",9))
+    TF_label3 = Label(framecsa, text='all damping behavior are possible with values provided',font = ("Arial",9))
     TF_label3.place(x=380,y=40,width=400)
 
     #png equation
     logo4 =Label(framecsa,image=my_logoCSA)
     logo4.place(x=460,y=75)
 
-    link1 = Label(framecsa, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
+    link1 = Label(framecsa, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Arial",8))
     link1.place(x=380,y=150,width=400)
     link1.bind("<Button-1>", lambda e: callback("https://arxiv.org/abs/2008.09867"))
 
 
     # R_F show
-    rF1 =Label(framecsa,text='R    =',font = ("Modern",10))
-    rF2 =Label(framecsa,text=' f',font = ("Modern",6))
+    rF1 =Label(framecsa,text='R    =',font = ("Arial",10))
+    rF2 =Label(framecsa,text=' f',font = ("Arial",6))
     rF1.place(x=127,y=230)
     rF2.place(x=140,y=240)
     global rF_entry
-    rF_entry = Entry(framecsa,font = ("Modern",10))
+    rF_entry = Entry(framecsa,font = ("Arial",10))
     rF_entry.place(x=170,y=230,width=60)
     rF_entry.insert(END,'3e6')
-    rF3 =Label(framecsa,text='\u03A9',font = ("Modern",10))
+    rF3 =Label(framecsa,text='\u03A9',font = ("Arial",10))
     rF3.place(x=230,y=230)
 
     # R_C show
-    rC1 =Label(framecsa,text='R    =',font = ("Modern",10))
-    rC2 =Label(framecsa,text=' C',font = ("Modern",6))
+    rC1 =Label(framecsa,text='R    =',font = ("Arial",10))
+    rC2 =Label(framecsa,text=' C',font = ("Arial",6))
     rC1.place(x=127,y=260)
     rC2.place(x=140,y=270)
     global rC_entry
-    rC_entry = Entry(framecsa,font = ("Modern",10))
+    rC_entry = Entry(framecsa,font = ("Arial",10))
     rC_entry.place(x=170,y=260,width=60)
     rC_entry.insert(END,'570e3')
-    rC3 =Label(framecsa,text='\u03A9',font = ("Modern",10))
+    rC3 =Label(framecsa,text='\u03A9',font = ("Arial",10))
     rC3.place(x=230,y=260)
 
     # C_in show
-    Cin1 =Label(framecsa,text='C    =',font = ("Modern",10))
-    Cin2 =Label(framecsa,text=' in',font = ("Modern",6))
+    Cin1 =Label(framecsa,text='C    =',font = ("Arial",10))
+    Cin2 =Label(framecsa,text=' in',font = ("Arial",6))
     Cin1.place(x=127,y=290)
     Cin2.place(x=140,y=300)
     global Cin_entry
-    Cin_entry = Entry(framecsa,font = ("Modern",10))
+    Cin_entry = Entry(framecsa,font = ("Arial",10))
     Cin_entry.place(x=170,y=290,width=60)
     Cin_entry.insert(END,'100e-15')
-    Cin3 =Label(framecsa,text='F',font = ("Modern",10))
+    Cin3 =Label(framecsa,text='F',font = ("Arial",10))
     Cin3.place(x=230,y=290)
 
     # C_f show
-    Cf1 =Label(framecsa,text='C    =',font = ("Modern",10))
-    Cf2 =Label(framecsa,text=' f',font = ("Modern",6))
+    Cf1 =Label(framecsa,text='C    =',font = ("Arial",10))
+    Cf2 =Label(framecsa,text=' f',font = ("Arial",6))
     Cf1.place(x=127,y=320)
     Cf2.place(x=140,y=330)
     global Cf_entry
-    Cf_entry = Entry(framecsa,font = ("Modern",10))
+    Cf_entry = Entry(framecsa,font = ("Arial",10))
     Cf_entry.place(x=170,y=320,width=60)
     Cf_entry.insert(END,'5e-15')
-    Cf3 =Label(framecsa,text='F',font = ("Modern",10))
+    Cf3 =Label(framecsa,text='F',font = ("Arial",10))
     Cf3.place(x=230,y=320)
 
     # C_L show
-    CL1 =Label(framecsa,text='C    =',font = ("Modern",10))
-    CL2 =Label(framecsa,text=' L',font = ("Modern",6))
+    CL1 =Label(framecsa,text='C    =',font = ("Arial",10))
+    CL2 =Label(framecsa,text=' L',font = ("Arial",6))
     CL1.place(x=127,y=350)
     CL2.place(x=140,y=360)
     global CL_entry
-    CL_entry = Entry(framecsa,font = ("Modern",10))
+    CL_entry = Entry(framecsa,font = ("Arial",10))
     CL_entry.place(x=170,y=350,width=60)
     CL_entry.insert(END,'21e-15')
-    CL3 =Label(framecsa,text='F',font = ("Modern",10))
+    CL3 =Label(framecsa,text='F',font = ("Arial",10))
     CL3.place(x=230,y=350)
 
     # gm show
-    gm1 =Label(framecsa,text='g    =',font = ("Modern",10))
-    gm2 =Label(framecsa,text='m',font = ("Modern",6))
+    gm1 =Label(framecsa,text='g    =',font = ("Arial",10))
+    gm2 =Label(framecsa,text='m',font = ("Arial",6))
     gm1.place(x=127,y=380)
     gm2.place(x=140,y=390)
     global gm_entry
-    gm_entry = Entry(framecsa,font = ("Modern",10))
+    gm_entry = Entry(framecsa,font = ("Arial",10))
     gm_entry.place(x=170,y=380,width=60)
     gm_entry.insert(END,'55e-6')
-    gm3 =Label(framecsa,text='S',font = ("Modern",10))
+    gm3 =Label(framecsa,text='S',font = ("Arial",10))
     gm3.place(x=230,y=380)
 
     # R_m calculation
-    rm1 =Label(framecsa,text='R     =',font = ("Modern",10))
-    rm2 =Label(framecsa,text='m0',font = ("Modern",6))
+    rm1 =Label(framecsa,text='R     =',font = ("Arial",10))
+    rm2 =Label(framecsa,text='m0',font = ("Arial",6))
     rm1.place(x=23,y=440)
     rm2.place(x=37,y=450)
     global rm_entry
-    rm_entry = Entry(framecsa,font = ("Modern",10))
+    rm_entry = Entry(framecsa,font = ("Arial",10))
     rm_entry.place(x=70,y=440,width=75)
-    rm3 =Label(framecsa,text='\u03A9',font = ("Modern",10))
+    rm3 =Label(framecsa,text='\u03A9',font = ("Arial",10))
     rm3.place(x=150,y=440)
 
-    rm_entry = Entry(framecsa,font = ("Modern",10))
+    rm_entry = Entry(framecsa,font = ("Arial",10))
     rm_entry.place(x=70,y=440,width=75)
-    rm3 =Label(framecsa,text='\u03A9',font = ("Modern",10))
+    rm3 =Label(framecsa,text='\u03A9',font = ("Arial",10))
     rm3.place(x=150,y=440)
 
     # tau calculation
-    tau1 =Label(framecsa,text='\u03C4    =',font = ("Modern",10))
+    tau1 =Label(framecsa,text='\u03C4    =',font = ("Arial",10))
     tau1.place(x=23,y=470)
     global tau_entry
-    tau_entry = Entry(framecsa,font = ("Modern",10))
+    tau_entry = Entry(framecsa,font = ("Arial",10))
     tau_entry.place(x=70,y=470,width=75)
-    tau3 =Label(framecsa,text='s',font = ("Modern",10))
+    tau3 =Label(framecsa,text='s',font = ("Arial",10))
     tau3.place(x=150,y=470)
 
     # zeta calculation
-    zeta1 =Label(framecsa,text='\u03B6    =',font = ("Modern",10))
+    zeta1 =Label(framecsa,text='\u03B6    =',font = ("Arial",10))
     zeta1.place(x=23,y=500)
     global zeta_entry
-    zeta_entry = Entry(framecsa,font = ("Modern",10))
+    zeta_entry = Entry(framecsa,font = ("Arial",10))
     zeta_entry.place(x=70,y=500,width=75)
   
     global btnRM
@@ -557,57 +571,57 @@ def csastg():
     btnRM.place(x=500,y=440)
 
     # NSAMPLES show
-    nsamples =Label(framecsa,text='N° Samples  =',font = ("Modern",10))
+    nsamples =Label(framecsa,text='N° Samples  =',font = ("Arial",10))
     nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(framecsa,font = ("Modern",10))
+    nsamples_entry = Entry(framecsa,font = ("Arial",10))
     nsamples_entry.place(x=550,y=200,width=70)
     nsamples_entry.insert(END,'262144')
 
     # dT show
-    dt1 =Label(framecsa,text='dT  =',font = ("Modern",10))
+    dt1 =Label(framecsa,text='dT  =',font = ("Arial",10))
     dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(framecsa,font = ("Modern",10))
+    dt_entry = Entry(framecsa,font = ("Arial",10))
     dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(0,format(step,"3.2e"))
-    dt3 =Label(framecsa,text='s',font = ("Modern",10))
+    dt3 =Label(framecsa,text='s',font = ("Arial",10))
     dt3.place(x=630,y=230)
 
     # Bound show
-    bound1 =Label(framecsa,text='Bound Fit integer  =',font = ("Modern",10))
+    bound1 =Label(framecsa,text='Bound Fit integer  =',font = ("Arial",10))
     bound1.place(x=405,y=260)
     global bound_entry
-    bound_entry = Entry(framecsa,font = ("Modern",10))
+    bound_entry = Entry(framecsa,font = ("Arial",10))
     bound_entry.place(x=550,y=260,width=70)
     bound_entry.insert(END,'5')
 
     # Leading Edge show
-    LE1 =Label(framecsa,text='Leading Edge threshold  =',font = ("Modern",10))
+    LE1 =Label(framecsa,text='Leading Edge threshold  =',font = ("Arial",10))
     LE1.place(x=365,y=290)
     global LE_entry
-    LE_entry = Entry(framecsa,font = ("Modern",10))
+    LE_entry = Entry(framecsa,font = ("Arial",10))
     LE_entry.place(x=550,y=290,width=70)
     LE_entry.insert(END,'0.01')
-    LE3 =Label(framecsa,text='V',font = ("Modern",10))
+    LE3 =Label(framecsa,text='V',font = ("Arial",10))
     LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(framecsa,text='CFD threshold fraction  =',font = ("Modern",10))
+    CFD1 =Label(framecsa,text='CFD threshold fraction  =',font = ("Arial",10))
     CFD1.place(x=372,y=320)
     global CFD_entry
-    CFD_entry = Entry(framecsa,font = ("Modern",10))
+    CFD_entry = Entry(framecsa,font = ("Arial",10))
     CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(framecsa,text='ARC method delay  =',font = ("Modern",10))
+    ARC1 =Label(framecsa,text='ARC method delay  =',font = ("Arial",10))
     ARC1.place(x=397,y=350)
     global ARC_entry
-    ARC_entry = Entry(framecsa,font = ("Modern",10))
+    ARC_entry = Entry(framecsa,font = ("Arial",10))
     ARC_entry.place(x=550,y=350,width=70)
     ARC_entry.insert(END,'5e-9')
-    ARC1 =Label(framecsa,text='s',font = ("Modern",10))
+    ARC1 =Label(framecsa,text='s',font = ("Arial",10))
     ARC1.place(x=630,y=350)
     
 
@@ -644,11 +658,11 @@ def FromFile():
     btn4.configure(bg="light blue")
 
 
-    lab2 = Label(frameFF, text='Perform convolution with TFBoost using a transfer function from an existing file.',font = ("Modern",9))
+    lab2 = Label(frameFF, text='Perform convolution with TFBoost using a transfer function from an existing file.',font = ("Arial",9))
     lab2.place(x=20,y=5)
-    lab2b = Label(frameFF, text='The transfer function can be calculated using the "Make Deconvolution" option.',font = ("Modern",9))
+    lab2b = Label(frameFF, text='The transfer function can be calculated using the "Make Deconvolution" option.',font = ("Arial",9))
     lab2b.place(x=20,y=25)
-    lab2c = Label(frameFF, text='If the timestep is different than the one of the input files, use the "Make Resampling" option.',font = ("Modern",9))
+    lab2c = Label(frameFF, text='If the timestep is different than the one of the input files, use the "Make Resampling" option.',font = ("Arial",9))
     lab2c.place(x=20,y=45)
 
 
@@ -660,57 +674,57 @@ def FromFile():
     btn_samp.place(x=50,y=300)
 
     # NSAMPLES show
-    nsamples =Label(frameFF,text='N° Samples  =',font = ("Modern",10))
+    nsamples =Label(frameFF,text='N° Samples  =',font = ("Arial",10))
     nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(frameFF,font = ("Modern",10))
+    nsamples_entry = Entry(frameFF,font = ("Arial",10))
     nsamples_entry.place(x=550,y=200,width=70)
     nsamples_entry.insert(END,'16384')
 
     # dT show
-    dt1 =Label(frameFF,text='dT  =',font = ("Modern",10))
+    dt1 =Label(frameFF,text='dT  =',font = ("Arial",10))
     dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(frameFF,font = ("Modern",10))
+    dt_entry = Entry(frameFF,font = ("Arial",10))
     dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(0,format(step,"3.2e"))
-    dt3 =Label(frameFF,text='s',font = ("Modern",10))
+    dt3 =Label(frameFF,text='s',font = ("Arial",10))
     dt3.place(x=630,y=230)
 
     # Bound show
-    bound1 =Label(frameFF,text='Bound Fit integer  =',font = ("Modern",10))
+    bound1 =Label(frameFF,text='Bound Fit integer  =',font = ("Arial",10))
     bound1.place(x=405,y=260)
     global bound_entry
-    bound_entry = Entry(frameFF,font = ("Modern",10))
+    bound_entry = Entry(frameFF,font = ("Arial",10))
     bound_entry.place(x=550,y=260,width=70)
     bound_entry.insert(END,'5')
 
     # Leading Edge show
-    LE1 =Label(frameFF,text='Leading Edge threshold  =',font = ("Modern",10))
+    LE1 =Label(frameFF,text='Leading Edge threshold  =',font = ("Arial",10))
     LE1.place(x=365,y=290)
     global LE_entry
-    LE_entry = Entry(frameFF,font = ("Modern",10))
+    LE_entry = Entry(frameFF,font = ("Arial",10))
     LE_entry.place(x=550,y=290,width=70)
     LE_entry.insert(END,'0.01')
-    LE3 =Label(frameFF,text='V',font = ("Modern",10))
+    LE3 =Label(frameFF,text='V',font = ("Arial",10))
     LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(frameFF,text='CFD threshold fraction  =',font = ("Modern",10))
+    CFD1 =Label(frameFF,text='CFD threshold fraction  =',font = ("Arial",10))
     CFD1.place(x=372,y=320)
     global CFD_entry
-    CFD_entry = Entry(frameFF,font = ("Modern",10))
+    CFD_entry = Entry(frameFF,font = ("Arial",10))
     CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(frameFF,text='ARC method delay  =',font = ("Modern",10))
+    ARC1 =Label(frameFF,text='ARC method delay  =',font = ("Arial",10))
     ARC1.place(x=397,y=350)
     global ARC_entry
-    ARC_entry = Entry(frameFF,font = ("Modern",10))
+    ARC_entry = Entry(frameFF,font = ("Arial",10))
     ARC_entry.place(x=550,y=350,width=70)
     ARC_entry.insert(END,'200e-12')
-    ARC1 =Label(frameFF,text='s',font = ("Modern",10))
+    ARC1 =Label(frameFF,text='s',font = ("Arial",10))
     ARC1.place(x=630,y=350)
     
 
@@ -747,65 +761,65 @@ def WaveAnalysis():
     frameWA.place(x=20,y=170)
     btn5.configure(bg="light blue")
 
-    lab2 = Label(frameWA, text='Perform a waveform analysis with TFBoost. No convolution is done, only the measurements.',font = ("Modern",9))
+    lab2 = Label(frameWA, text='Perform a waveform analysis with TFBoost. No convolution is done, only the measurements.',font = ("Arial",9))
     lab2.place(x=20,y=5)
-    lab2c = Label(frameWA, text='make sure the time step is the same of the input files',font = ("Modern",9))
+    lab2c = Label(frameWA, text='make sure the time step is the same of the input files',font = ("Arial",9))
     lab2c.place(x=20,y=25)
 
     btnRM4b.place(x=50,y=300)
 
     # NSAMPLES show
-    nsamples =Label(frameWA,text='N° Samples  =',font = ("Modern",10))
+    nsamples =Label(frameWA,text='N° Samples  =',font = ("Arial",10))
     nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(frameWA,font = ("Modern",10))
+    nsamples_entry = Entry(frameWA,font = ("Arial",10))
     nsamples_entry.place(x=550,y=200,width=70)
     nsamples_entry.insert(END,'16384')
 
     # dT show
-    dt1 =Label(frameWA,text='dT  =',font = ("Modern",10))
+    dt1 =Label(frameWA,text='dT  =',font = ("Arial",10))
     dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(frameWA,font = ("Modern",10))
+    dt_entry = Entry(frameWA,font = ("Arial",10))
     dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(0,format(step,"3.2e"))
-    dt3 =Label(frameWA,text='s',font = ("Modern",10))
+    dt3 =Label(frameWA,text='s',font = ("Arial",10))
     dt3.place(x=630,y=230)
 
         # Bound show
-    bound1 =Label(frameWA,text='Bound Fit integer  =',font = ("Modern",10))
+    bound1 =Label(frameWA,text='Bound Fit integer  =',font = ("Arial",10))
     bound1.place(x=405,y=260)
     global bound_entry
-    bound_entry = Entry(frameWA,font = ("Modern",10))
+    bound_entry = Entry(frameWA,font = ("Arial",10))
     bound_entry.place(x=550,y=260,width=70)
     bound_entry.insert(END,'5')
 
     # Leading Edge show
-    LE1 =Label(frameWA,text='Leading Edge threshold  =',font = ("Modern",10))
+    LE1 =Label(frameWA,text='Leading Edge threshold  =',font = ("Arial",10))
     LE1.place(x=365,y=290)
     global LE_entry
-    LE_entry = Entry(frameWA,font = ("Modern",10))
+    LE_entry = Entry(frameWA,font = ("Arial",10))
     LE_entry.place(x=550,y=290,width=70)
     LE_entry.insert(END,'0.01')
-    LE3 =Label(frameWA,text='V',font = ("Modern",10))
+    LE3 =Label(frameWA,text='V',font = ("Arial",10))
     LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(frameWA,text='CFD threshold fraction  =',font = ("Modern",10))
+    CFD1 =Label(frameWA,text='CFD threshold fraction  =',font = ("Arial",10))
     CFD1.place(x=372,y=320)
     global CFD_entry
-    CFD_entry = Entry(frameWA,font = ("Modern",10))
+    CFD_entry = Entry(frameWA,font = ("Arial",10))
     CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(frameWA,text='ARC method delay  =',font = ("Modern",10))
+    ARC1 =Label(frameWA,text='ARC method delay  =',font = ("Arial",10))
     ARC1.place(x=397,y=350)
     global ARC_entry
-    ARC_entry = Entry(frameWA,font = ("Modern",10))
+    ARC_entry = Entry(frameWA,font = ("Arial",10))
     ARC_entry.place(x=550,y=350,width=70)
     ARC_entry.insert(END,'200e-12')
-    ARC1 =Label(frameWA,text='s',font = ("Modern",10))
+    ARC1 =Label(frameWA,text='s',font = ("Arial",10))
     ARC1.place(x=630,y=350)
   
     
@@ -846,11 +860,11 @@ def diamond():
     btn6.configure(bg="light blue")
 
 
-    lab2 = Label(frame3D, text='Perform the convolution of a set of currents of an ideal 3D Diamond Detector ',font = ("Modern",9))
+    lab2 = Label(frame3D, text='Perform the convolution of a set of currents of an ideal 3D Diamond Detector ',font = ("Arial",9))
     lab2.place(x=20,y=5)
-    lab2c = Label(frame3D, text='with a transfer function that consider highly resistive columns electrodes.',font = ("Modern",9))
+    lab2c = Label(frame3D, text='with a transfer function that consider highly resistive columns electrodes.',font = ("Arial",9))
     lab2c.place(x=20,y=25)
-    link1 = Label(frame3D, text='click here for a description of the model.', fg="blue", cursor="hand2",font = ("Modern",9))
+    link1 = Label(frame3D, text='click here for a description of the model.', fg="blue", cursor="hand2",font = ("Arial",9))
     link1.place(x=20,y=45)
     link1.bind("<Button-1>", lambda e: callback("https://github.com/gianmatteocossu/TFBoost/blob/master/3dDiamondModel.pdf"))
 
@@ -858,58 +872,58 @@ def diamond():
     
 
     # R_n show
-    Rn1 =Label(frame3D,text='R    =',font = ("Modern",10))
-    Rn2 =Label(frame3D,text=' n',font = ("Modern",6))
+    Rn1 =Label(frame3D,text='R    =',font = ("Arial",10))
+    Rn2 =Label(frame3D,text=' n',font = ("Arial",6))
     Rn1.place(x=27,y=110)
     Rn2.place(x=40,y=120)
     global Rn_entry
-    Rn_entry = Entry(frame3D,font = ("Modern",10))
+    Rn_entry = Entry(frame3D,font = ("Arial",10))
     Rn_entry.place(x=70,y=110,width=60)
     Rn_entry.insert(END,'100e3')
-    Rn3 =Label(frame3D,text='\u03A9',font = ("Modern",10))
+    Rn3 =Label(frame3D,text='\u03A9',font = ("Arial",10))
     Rn3.place(x=130,y=110)
 
 
     # R_p show
-    Rp1 =Label(frame3D,text='R    =',font = ("Modern",10))
-    Rp2 =Label(frame3D,text=' p',font = ("Modern",6))
+    Rp1 =Label(frame3D,text='R    =',font = ("Arial",10))
+    Rp2 =Label(frame3D,text=' p',font = ("Arial",6))
     Rp1.place(x=27,y=140)
     Rp2.place(x=40,y=150)
     global Rp_entry
-    Rp_entry = Entry(frame3D,font = ("Modern",10))
+    Rp_entry = Entry(frame3D,font = ("Arial",10))
     Rp_entry.place(x=70,y=140,width=60)
     Rp_entry.insert(END,'100e3')
-    Rp3 =Label(frame3D,text='\u03A9',font = ("Modern",10))
+    Rp3 =Label(frame3D,text='\u03A9',font = ("Arial",10))
     Rp3.place(x=130,y=140)
 
 
     # Cd show
-    Cd1 =Label(frame3D,text='C    =',font = ("Modern",10))
-    Cd2 =Label(frame3D,text=' D',font = ("Modern",6))
+    Cd1 =Label(frame3D,text='C    =',font = ("Arial",10))
+    Cd2 =Label(frame3D,text=' D',font = ("Arial",6))
     Cd1.place(x=27,y=170)
     Cd2.place(x=40,y=180)
     global Cd_entry
-    Cd_entry = Entry(frame3D,font = ("Modern",10))
+    Cd_entry = Entry(frame3D,font = ("Arial",10))
     Cd_entry.place(x=70,y=170,width=60)
     Cd_entry.insert(END,'30e-15')
-    Cd3 =Label(frame3D,text='F',font = ("Modern",10))
+    Cd3 =Label(frame3D,text='F',font = ("Arial",10))
     Cd3.place(x=130,y=170)
 
     # Ndz show
-    ndz1 =Label(frame3D,text=' Ndz =',font = ("Modern",10))
+    ndz1 =Label(frame3D,text=' Ndz =',font = ("Arial",10))
     ndz1.place(x=27,y=200)
     global ndz_entry
-    ndz_entry = Entry(frame3D,font = ("Modern",10))
+    ndz_entry = Entry(frame3D,font = ("Arial",10))
     ndz_entry.place(x=70,y=200,width=60)
     ndz_entry.insert(END,'20')
     
     # Zin
-    zin1 =Label(frame3D,text='Zin:',font = ("Modern",10))
+    zin1 =Label(frame3D,text='Zin:',font = ("Arial",10))
     zin1.place(x=27,y=250)
     global varzin
     varzin =IntVar()
     varzin.set(0)
-    zinb =Checkbutton(frame3D,variable=varzin,font = ("Modern",10))
+    zinb =Checkbutton(frame3D,variable=varzin,font = ("Arial",10))
     zinb.place(x=150,y=250)
 
     # Zin button input file
@@ -917,38 +931,38 @@ def diamond():
     btnZin.place(x=27,y=275)
 
     # Arbitrary tracks
-    arb1 =Label(frame3D,text='Arbitrary Tracks:',font = ("Modern",10))
+    arb1 =Label(frame3D,text='Arbitrary Tracks:',font = ("Arial",10))
     arb1.place(x=27,y=310)
     global varArb
     varArb =IntVar()
     varArb.set(1)
-    arbb =Checkbutton(frame3D,variable=varArb,font = ("Modern",10))
+    arbb =Checkbutton(frame3D,variable=varArb,font = ("Arial",10))
     arbb.place(x=150,y=310)
 
     # Number of Tracks
-    tra1 =Label(frame3D,text='Number of Tracks:',font = ("Modern",10))
+    tra1 =Label(frame3D,text='Number of Tracks:',font = ("Arial",10))
     tra1.place(x=27,y=330)
     global trab
-    trab =Entry(frame3D,font = ("Modern",10))
+    trab =Entry(frame3D,font = ("Arial",10))
     trab.place(x=158,y=330,width=40)
     trab.insert(END,'1000')
 
     # NSAMPLES show
-    nsamples =Label(frame3D,text='N° Samples  =',font = ("Modern",10))
+    nsamples =Label(frame3D,text='N° Samples  =',font = ("Arial",10))
     nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(frame3D,font = ("Modern",10))
+    nsamples_entry = Entry(frame3D,font = ("Arial",10))
     nsamples_entry.place(x=550,y=200,width=70)
     nsamples_entry.insert(END,'16384')
 
     # dT show
-    dt1 =Label(frame3D,text='dT  =',font = ("Modern",10))
+    dt1 =Label(frame3D,text='dT  =',font = ("Arial",10))
     dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(frame3D,font = ("Modern",10))
+    dt_entry = Entry(frame3D,font = ("Arial",10))
     dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(0,format(step,"3.2e"))
-    dt3 =Label(frame3D,text='s',font = ("Modern",10))
+    dt3 =Label(frame3D,text='s',font = ("Arial",10))
     dt3.place(x=630,y=230)
 
 
@@ -1033,22 +1047,22 @@ def rmcsa() :
     zeta_entry.insert(END,my_formatter.format(zeta))
 
     # label for dumping condition
-    damp1 =Label(framecsa,text='Condition:',font = ("Modern",10))
+    damp1 =Label(framecsa,text='Condition:',font = ("Arial",10))
     damp1.place(x=200,y=440)
 
     if (zeta > 1.2):
         cond='OVERDAMPED                       \n                          '
-        damp2 =Label(framecsa,text=cond,font = ("Modern",11), fg='red')
+        damp2 =Label(framecsa,text=cond,font = ("Arial",10), fg='red')
         damp2.place(x=270,y=440)
 
     if (zeta < 0.8):
         cond='UNDERDAMPED                      \n                          '
-        damp2 =Label(framecsa,text=cond,font = ("Modern",11), fg='red')
+        damp2 =Label(framecsa,text=cond,font = ("Arial",10), fg='red')
         damp2.place(x=270,y=440)
 
     if (zeta > 0.8 and zeta < 1.2):
         cond='CRITICALLY DAMPED\n(0.8<\u03B6<1.2)'
-        damp2 =Label(framecsa,text=cond,font = ("Modern",11), fg='red')
+        damp2 =Label(framecsa,text=cond,font = ("Arial",10), fg='red')
         damp2.place(x=270,y=440)
     
     if(stat2==1):
@@ -1188,163 +1202,163 @@ def doublestg():
     logo2 =Label(framedouble,image=my_logo2)
     logo2.place(x=20,y=0)
 
-    TF_label2 = Label(framedouble, text='Double Stage TIA defined as a single stage TIA',font = ("Modern",9))
+    TF_label2 = Label(framedouble, text='Double Stage TIA defined as a single stage TIA',font = ("Arial",9))
     TF_label2.place(x=380,y=20,width=400)
-    TF_label3 = Label(framedouble, text='followed by a single pole voltage gain transfer function',font = ("Modern",9))
+    TF_label3 = Label(framedouble, text='followed by a single pole voltage gain transfer function',font = ("Arial",9))
     TF_label3.place(x=380,y=40,width=400)
 
     #png equation
     logo3 =Label(framedouble,image=my_logo3)
     logo3.place(x=470,y=70)
 
-    link1 = Label(framedouble, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Modern",8))
+    link1 = Label(framedouble, text='see link: "High-resolution timing electronics for fast pixel sensors "', fg="blue", cursor="hand2",font = ("Arial",8))
     link1.place(x=380,y=150,width=400)
     link1.bind("<Button-1>", lambda e: callback("https://arxiv.org/abs/2008.09867"))
 
 
-    rpi1 =Label(framedouble,text='r   =',font = ("Modern",10))
-    rpi2 =Label(framedouble,text=' \u03C0',font = ("Modern",6))
+    rpi1 =Label(framedouble,text='r   =',font = ("Arial",10))
+    rpi2 =Label(framedouble,text=' \u03C0',font = ("Arial",6))
     rpi1.place(x=135,y=200)
     rpi2.place(x=140,y=210)
     global rpi_entry 
-    rpi_entry = Entry(framedouble,font = ("Modern",10))
+    rpi_entry = Entry(framedouble,font = ("Arial",10))
     rpi_entry.place(x=170,y=200,width=60)
     rpi_entry.insert(END,'220')
-    rpi3 =Label(framedouble,text='\u03A9',font = ("Modern",10))
+    rpi3 =Label(framedouble,text='\u03A9',font = ("Arial",10))
     rpi3.place(x=230,y=200)
 
     # R_F show
-    rF1 =Label(framedouble,text='R    =',font = ("Modern",10))
-    rF2 =Label(framedouble,text=' f',font = ("Modern",6))
+    rF1 =Label(framedouble,text='R    =',font = ("Arial",10))
+    rF2 =Label(framedouble,text=' f',font = ("Arial",6))
     rF1.place(x=127,y=230)
     rF2.place(x=140,y=240)
     global rF_entry
-    rF_entry = Entry(framedouble,font = ("Modern",10))
+    rF_entry = Entry(framedouble,font = ("Arial",10))
     rF_entry.place(x=170,y=230,width=60)
     rF_entry.insert(END,'4300')
-    rF3 =Label(framedouble,text='\u03A9',font = ("Modern",10))
+    rF3 =Label(framedouble,text='\u03A9',font = ("Arial",10))
     rF3.place(x=230,y=230)
 
     # R_C show
-    rC1 =Label(framedouble,text='R    =',font = ("Modern",10))
-    rC2 =Label(framedouble,text=' C',font = ("Modern",6))
+    rC1 =Label(framedouble,text='R    =',font = ("Arial",10))
+    rC2 =Label(framedouble,text=' C',font = ("Arial",6))
     rC1.place(x=127,y=260)
     rC2.place(x=140,y=270)
     global rC_entry
-    rC_entry = Entry(framedouble,font = ("Modern",10))
+    rC_entry = Entry(framedouble,font = ("Arial",10))
     rC_entry.place(x=170,y=260,width=60)
     rC_entry.insert(END,'50')
-    rC3 =Label(framedouble,text='\u03A9',font = ("Modern",10))
+    rC3 =Label(framedouble,text='\u03A9',font = ("Arial",10))
     rC3.place(x=230,y=260)
 
     # C_in show
-    Cin1 =Label(framedouble,text='C    =',font = ("Modern",10))
-    Cin2 =Label(framedouble,text=' in',font = ("Modern",6))
+    Cin1 =Label(framedouble,text='C    =',font = ("Arial",10))
+    Cin2 =Label(framedouble,text=' in',font = ("Arial",6))
     Cin1.place(x=127,y=290)
     Cin2.place(x=140,y=300)
     global Cin_entry
-    Cin_entry = Entry(framedouble,font = ("Modern",10))
+    Cin_entry = Entry(framedouble,font = ("Arial",10))
     Cin_entry.place(x=170,y=290,width=60)
     Cin_entry.insert(END,'2e-12')
-    Cin3 =Label(framedouble,text='F',font = ("Modern",10))
+    Cin3 =Label(framedouble,text='F',font = ("Arial",10))
     Cin3.place(x=230,y=290)
 
     # C_f show
-    Cf1 =Label(framedouble,text='C    =',font = ("Modern",10))
-    Cf2 =Label(framedouble,text=' f',font = ("Modern",6))
+    Cf1 =Label(framedouble,text='C    =',font = ("Arial",10))
+    Cf2 =Label(framedouble,text=' f',font = ("Arial",6))
     Cf1.place(x=127,y=320)
     Cf2.place(x=140,y=330)
     global Cf_entry
-    Cf_entry = Entry(framedouble,font = ("Modern",10))
+    Cf_entry = Entry(framedouble,font = ("Arial",10))
     Cf_entry.place(x=170,y=320,width=60)
     Cf_entry.insert(END,'50e-15')
-    Cf3 =Label(framedouble,text='F',font = ("Modern",10))
+    Cf3 =Label(framedouble,text='F',font = ("Arial",10))
     Cf3.place(x=230,y=320)
 
     # C_L show
-    CL1 =Label(framedouble,text='C    =',font = ("Modern",10))
-    CL2 =Label(framedouble,text=' L',font = ("Modern",6))
+    CL1 =Label(framedouble,text='C    =',font = ("Arial",10))
+    CL2 =Label(framedouble,text=' L',font = ("Arial",6))
     CL1.place(x=127,y=350)
     CL2.place(x=140,y=360)
     global CL_entry
-    CL_entry = Entry(framedouble,font = ("Modern",10))
+    CL_entry = Entry(framedouble,font = ("Arial",10))
     CL_entry.place(x=170,y=350,width=60)
     CL_entry.insert(END,'4e-12')
-    CL3 =Label(framedouble,text='F',font = ("Modern",10))
+    CL3 =Label(framedouble,text='F',font = ("Arial",10))
     CL3.place(x=230,y=350)
 
     # gm show
-    gm1 =Label(framedouble,text='g    =',font = ("Modern",10))
-    gm2 =Label(framedouble,text='m',font = ("Modern",6))
+    gm1 =Label(framedouble,text='g    =',font = ("Arial",10))
+    gm2 =Label(framedouble,text='m',font = ("Arial",6))
     gm1.place(x=127,y=380)
     gm2.place(x=140,y=390)
     global gm_entry
-    gm_entry = Entry(framedouble,font = ("Modern",10))
+    gm_entry = Entry(framedouble,font = ("Arial",10))
     gm_entry.place(x=170,y=380,width=60)
     gm_entry.insert(END,'0.5')
-    gm3 =Label(framedouble,text='S',font = ("Modern",10))
+    gm3 =Label(framedouble,text='S',font = ("Arial",10))
     gm3.place(x=230,y=380)
 
     # G0 show
     global G1
     global G2
-    G1 =Label(framedouble,text='G    =',font = ("Modern",10))
-    G2 =Label(framedouble,text='0',font = ("Modern",6))
+    G1 =Label(framedouble,text='G    =',font = ("Arial",10))
+    G2 =Label(framedouble,text='0',font = ("Arial",6))
     G1.place(x=127,y=410)
     G2.place(x=140,y=420)
     global G_entry
-    G_entry = Entry(framedouble,font = ("Modern",10))
+    G_entry = Entry(framedouble,font = ("Arial",10))
     G_entry.place(x=170,y=410,width=60)
     G_entry.insert(END,'10')
-    #G3 =Label(framedouble,text='S',font = ("Modern",10))
+    #G3 =Label(framedouble,text='S',font = ("Arial",10))
     #G3.place(x=230,y=590)
 
     # tau2 show
     global tauo_entry
-    tauo1 =Label(framedouble,text='\u03C4    =',font = ("Modern",10))
-    tauo2 =Label(framedouble,text='*',font = ("Modern",7))
+    tauo1 =Label(framedouble,text='\u03C4    =',font = ("Arial",10))
+    tauo2 =Label(framedouble,text='*',font = ("Arial",7))
     tauo1.place(x=130,y=440)
     tauo2.place(x=140,y=438)
-    tauo_entry = Entry(framedouble,font = ("Modern",10))
+    tauo_entry = Entry(framedouble,font = ("Arial",10))
     tauo_entry.place(x=170,y=440,width=75)
     tauo_entry.insert(END,'150e-12')
-    tauo3 =Label(framedouble,text='s',font = ("Modern",10))
+    tauo3 =Label(framedouble,text='s',font = ("Arial",10))
     tauo3.place(x=250,y=440)
 
     # R_m calculation
-    rm1 =Label(framedouble,text='R     =',font = ("Modern",10))
-    rm2 =Label(framedouble,text='m0',font = ("Modern",6))
+    rm1 =Label(framedouble,text='R     =',font = ("Arial",10))
+    rm2 =Label(framedouble,text='m0',font = ("Arial",6))
     rm1.place(x=123,y=470)
     rm2.place(x=137,y=480)
     global rm_entry
-    rm_entry = Entry(framedouble,font = ("Modern",10))
+    rm_entry = Entry(framedouble,font = ("Arial",10))
     rm_entry.place(x=170,y=470,width=75)
-    rm3 =Label(framedouble,text='\u03A9',font = ("Modern",10))
+    rm3 =Label(framedouble,text='\u03A9',font = ("Arial",10))
     rm3.place(x=250,y=470)
 
     # tau calculation
-    tau1 =Label(framedouble,text='\u03C4    =',font = ("Modern",10))
+    tau1 =Label(framedouble,text='\u03C4    =',font = ("Arial",10))
     tau1.place(x=123,y=500)
     global tau_entry
-    tau_entry = Entry(framedouble,font = ("Modern",10))
+    tau_entry = Entry(framedouble,font = ("Arial",10))
     tau_entry.place(x=170,y=500,width=75)
-    tau3 =Label(framedouble,text='s',font = ("Modern",10))
+    tau3 =Label(framedouble,text='s',font = ("Arial",10))
     tau3.place(x=250,y=500)
 
     # G0Rm0 calculation
 
-    grm1 =Label(framedouble,text='R     =',font = ("Modern",10))
-    grm2 =Label(framedouble,text='m0',font = ("Modern",6))
+    grm1 =Label(framedouble,text='R     =',font = ("Arial",10))
+    grm2 =Label(framedouble,text='m0',font = ("Arial",6))
     grm1.place(x=123,y=530)
     grm2.place(x=137,y=540)
-    gG1 =Label(framedouble,text='G',font = ("Modern",10))
-    gG2 =Label(framedouble,text='0',font = ("Modern",6))
+    gG1 =Label(framedouble,text='G',font = ("Arial",10))
+    gG2 =Label(framedouble,text='0',font = ("Arial",6))
     gG1.place(x=100,y=530)
     gG2.place(x=115,y=540)
     global gmr_entry
-    gmr_entry = Entry(framedouble,font = ("Modern",10))
+    gmr_entry = Entry(framedouble,font = ("Arial",10))
     gmr_entry.place(x=170,y=530,width=75)
-    grm3 =Label(framedouble,text='\u03A9',font = ("Modern",10))
+    grm3 =Label(framedouble,text='\u03A9',font = ("Arial",10))
     grm3.place(x=250,y=530)
     
     global btnRM
@@ -1352,57 +1366,57 @@ def doublestg():
     btnRM.place(x=500,y=440)
 
     # NSAMPLES show
-    nsamples =Label(framedouble,text='N° Samples  =',font = ("Modern",10))
+    nsamples =Label(framedouble,text='N° Samples  =',font = ("Arial",10))
     nsamples.place(x=440,y=200)
     global nsamples_entry 
-    nsamples_entry = Entry(framedouble,font = ("Modern",10))
+    nsamples_entry = Entry(framedouble,font = ("Arial",10))
     nsamples_entry.place(x=550,y=200,width=70)
     nsamples_entry.insert(END,'16384')
 
     # dT show
-    dt1 =Label(framedouble,text='dT  =',font = ("Modern",10))
+    dt1 =Label(framedouble,text='dT  =',font = ("Arial",10))
     dt1.place(x=500,y=230)
     global dt_entry
-    dt_entry = Entry(framedouble,font = ("Modern",10))
+    dt_entry = Entry(framedouble,font = ("Arial",10))
     dt_entry.place(x=550,y=230,width=70)
     dt_entry.insert(0,format(step,"3.2e"))
-    dt3 =Label(framedouble,text='s',font = ("Modern",10))
+    dt3 =Label(framedouble,text='s',font = ("Arial",10))
     dt3.place(x=630,y=230)
 
     # Bound show
-    bound1 =Label(framedouble,text='Bound Fit integer  =',font = ("Modern",10))
+    bound1 =Label(framedouble,text='Bound Fit integer  =',font = ("Arial",10))
     bound1.place(x=405,y=260)
     global bound_entry
-    bound_entry = Entry(framedouble,font = ("Modern",10))
+    bound_entry = Entry(framedouble,font = ("Arial",10))
     bound_entry.place(x=550,y=260,width=70)
     bound_entry.insert(END,'5')
 
     # Leading Edge show
-    LE1 =Label(framedouble,text='Leading Edge threshold  =',font = ("Modern",10))
+    LE1 =Label(framedouble,text='Leading Edge threshold  =',font = ("Arial",10))
     LE1.place(x=365,y=290)
     global LE_entry
-    LE_entry = Entry(framedouble,font = ("Modern",10))
+    LE_entry = Entry(framedouble,font = ("Arial",10))
     LE_entry.place(x=550,y=290,width=70)
     LE_entry.insert(END,'0.01')
-    LE3 =Label(framedouble,text='V',font = ("Modern",10))
+    LE3 =Label(framedouble,text='V',font = ("Arial",10))
     LE3.place(x=630,y=290)
 
     # CFD show
-    CFD1 =Label(framedouble,text='CFD threshold fraction  =',font = ("Modern",10))
+    CFD1 =Label(framedouble,text='CFD threshold fraction  =',font = ("Arial",10))
     CFD1.place(x=372,y=320)
     global CFD_entry
-    CFD_entry = Entry(framedouble,font = ("Modern",10))
+    CFD_entry = Entry(framedouble,font = ("Arial",10))
     CFD_entry.place(x=550,y=320,width=70)
     CFD_entry.insert(END,'0.35')
 
     # ARC method show
-    ARC1 =Label(framedouble,text='ARC method delay  =',font = ("Modern",10))
+    ARC1 =Label(framedouble,text='ARC method delay  =',font = ("Arial",10))
     ARC1.place(x=397,y=350)
     global ARC_entry
-    ARC_entry = Entry(framedouble,font = ("Modern",10))
+    ARC_entry = Entry(framedouble,font = ("Arial",10))
     ARC_entry.place(x=550,y=350,width=70)
     ARC_entry.insert(END,'200e-12')
-    ARC1 =Label(framedouble,text='s',font = ("Modern",10))
+    ARC1 =Label(framedouble,text='s',font = ("Arial",10))
     ARC1.place(x=630,y=350)
 
     
@@ -1420,7 +1434,7 @@ def openTFgui():
         TF.tk.call('wm', 'iconphoto', TF._w, tk.PhotoImage(file='TFB_guiFiles/logoico.png'))
 
         TF.title("Configure Transfer Function") 
-        TF_label = Label(TF, text='SELECT TRANSFER FUNCTION',font = ("Modern",9))
+        TF_label = Label(TF, text='SELECT TRANSFER FUNCTION',font = ("Arial",9))
         TF_label.place(x=20,y=10)
         my_canvas = Canvas(TF,width=750,height=1,bg='black')
         my_canvas.place(x=20,y=27)
@@ -1472,7 +1486,7 @@ def openTFgui():
         btnRM2 = Button(TF, text="Get CSA Values\n and \n SET Transfer Function",command=rmcsa,font = ("Arial",9))
 
         global FF_label
-        FF_label = Label(frameFF, text='',font = ("Modern",9))
+        FF_label = Label(frameFF, text='',font = ("Arial",9))
 
         global btnRM3
         btnRM3 = Button(frameFF, text="SET \nTransfer Function",command=rm,font = ("Arial",9), width=15)
@@ -1529,7 +1543,7 @@ def openTFgui():
         doublestg()
 
     if(inputfile_selected.get()==0):
-        warn = Label(root, text='PLEASE SELECT AN INPUT FOLDER',font = ("Modern",9), fg='red')
+        warn = Label(root, text='PLEASE SELECT AN INPUT FOLDER',font = ("Arial",9), fg='red')
         warn.place(x=20,y=645)
     TF.mainloop()
 
@@ -1642,13 +1656,13 @@ def plotcheckTF():
     entryNsamp.insert(END,int(Nsamp))
 
     if (stepTF!=step):
-        label9 = Label(frameFF, text='Warning: Transfer function dT does not match input files dT \n do a resampling of the transfer function or resample all the input files', font=  ("Arial",11),fg='red')
+        label9 = Label(frameFF, text='Warning: Transfer function dT does not match input files dT \n do a resampling of the transfer function or resample all the input files', font=  ("Arial",10),fg='red')
         label9.place (x=180, y=130)
         dt_entry.delete(0,END)
         dt_entry.insert(END,format(step,"3.2e"))
 
     if (stepTF==step):
-        label9 = Label(frameFF, text='                          TRANSFER FUNCTION TIME STEP OK!!                      \n                                                                                          ', font=  ("Arial",11),fg='green')
+        label9 = Label(frameFF, text='                          TRANSFER FUNCTION TIME STEP OK!!                      \n                                                                                          ', font=  ("Arial",10),fg='green')
         label9.place (x=180, y=130)
         dt_entry.delete(0,END)
         dt_entry.insert(0,format(step,"3.2e"))
@@ -1664,7 +1678,7 @@ def check_current():
     CC.tk.call('wm', 'iconphoto', CC._w, tk.PhotoImage(file='TFB_guiFiles/logoico.png'))
 
     CC.title("Check input files") 
-    TF_label = Label(CC, text='CHECK INPUT FILES TO ANALYZE',font = ("Modern",9))
+    TF_label = Label(CC, text='CHECK INPUT FILES TO ANALYZE',font = ("Arial",9))
     TF_label.place(x=20,y=10)
     my_canvas = Canvas(CC,width=750,height=1,bg='black')
     my_canvas.place(x=20,y=27)
@@ -1716,7 +1730,7 @@ def check_TransferFunction():
     CTF.tk.call('wm', 'iconphoto', CTF._w, tk.PhotoImage(file='TFB_guiFiles/logoico.png'))
 
     CTF.title("Check Transfer Function") 
-    TF_label = Label(CTF, text='CHECK TRANSFER FUNCTION TO USE',font = ("Modern",9))
+    TF_label = Label(CTF, text='CHECK TRANSFER FUNCTION TO USE',font = ("Arial",9))
     TF_label.place(x=20,y=10)
     my_canvas = Canvas(CTF,width=750,height=1,bg='black')
     my_canvas.place(x=20,y=27)
@@ -2093,7 +2107,7 @@ my_logo = ImageTk.PhotoImage(Image.open("TFB_guiFiles/logo.png"))
 logo =Label(image=my_logo)
 logo.place(x=20,y=10)
 
-my_label7 = Label(root, text='TFBOOST CONFIGURATION GUI',font = ("Modern",9))
+my_label7 = Label(root, text='TFBOOST CONFIGURATION GUI',font = ("Arial",9))
 my_label7.place(x=20,y=85)
 
 my_button = Button(root, text="Choose directory for the input files:  ",command=openFileInput,font = ("Arial",9))
@@ -2303,7 +2317,7 @@ my_label11.place(x=85,y=650)
 var15 = IntVar()
 Checkbutton(root, variable=var15,font = ("Arial",9)).place(x=335, y=649) """
 
-make_btn = Button(root, text='MAKE NEW ANALYSIS',command=openTFgui,font = ("Arial",13))
+make_btn = Button(root, text='MAKE NEW ANALYSIS',command=openTFgui,font = ("Arial",12))
 make_btn.place(x=400,y=645)
 
 btn_write = Button(root, text=" RUN ",command=writeCFG,font = ("Arial",16))

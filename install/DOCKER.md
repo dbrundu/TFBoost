@@ -64,28 +64,48 @@ podman run --rm -it -v "$PWD/data:/data" tfboost shell
 
 ### Launching the GUI from the container
 
-The image also carries the Python/Tk front-end. `./start.sh` is the easy path
-(it detects the runtime, builds the image and wires up X11). To do it by hand you
-must give the container access to the host X server:
+The image also carries the Python/Tk front-end. **`./start.sh` is the easy path**
+— it detects the runtime, builds the image and wires up X11 for you. To do it by
+hand, the container needs both the X socket and an authorization cookie. Passing
+the socket alone gives *"Authorization required, but no authorization protocol
+specified"*, because the X server wants a cookie. The portable fix is to export
+an Xauthority entry with a wildcard hostname:
 
 ```bash
-xhost +local:                               # allow local X connections
+# Build a cookie the container can use (wildcard hostname => matches inside it):
+XAUTH=$(mktemp)
+xauth nlist "$DISPLAY" | sed -e 's/^..../ffff/' | xauth -f "$XAUTH" nmerge -
+chmod 644 "$XAUTH"
+
 podman run --rm \
     -e DISPLAY \
+    -e XAUTHORITY=/tmp/.Xauthority \
+    -v "$XAUTH:/tmp/.Xauthority:ro" \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    --security-opt label=disable \          # needed on SELinux (Fedora); harmless elsewhere
+    --security-opt label=disable \
     -v "$PWD/data:/data" \
     tfboost gui
-xhost -local:                               # revoke when done
+
+rm -f "$XAUTH"
 ```
 
 Notes / troubleshooting:
+- The `sed 's/^..../ffff/'` rewrites the cookie's address family to *FamilyWild*,
+  so it authenticates regardless of the hostname the container presents — this is
+  what fixes the "Authorization required" error.
 - `--security-opt label=disable` lets a rootless-podman container reach the X
-  socket on SELinux systems; on Docker/non-SELinux it is a harmless no-op.
+  socket and the mounted cookie on SELinux systems (Fedora); on Docker/non-SELinux
+  it is a harmless no-op.
 - On Wayland this uses XWayland (the `/tmp/.X11-unix` socket), which works for
-  Tkinter. If windows do not appear, check `echo $DISPLAY` is set on the host and
-  that `xhost +local:` succeeded.
-- Use `./start.sh` to avoid getting these flags right by hand.
+  Tkinter. If windows still do not appear, check `echo $DISPLAY` is set on the host.
+- **Window too small / cramped on a HiDPI or fractionally-scaled display?** The
+  GUI has a fixed-pixel layout designed for ~96 dpi, and XWayland reports a fake
+  96 dpi so nothing auto-scales. Pass `-e TFB_UI_SCALE=1.5` (or `1.25`, `2.0`, …)
+  to scale the whole UI — window, widgets and fonts — uniformly. `start.sh` sets
+  this automatically from your largest configured monitor scale
+  (`~/.config/monitors.xml`); override with `TFB_UI_SCALE=1.25 ./start.sh`.
+- `./start.sh` does all of the above automatically (X11 auth + UI scaling, with
+  `xhost +local:` as an extra fallback) — prefer it.
 
 ### Runtime environment variables
 

@@ -42,8 +42,10 @@ import math
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
+import tfb_ui
 
 decW = tk.Tk();
+tfb_ui.apply_font_scaling(decW)
 decW.title('TFBoost Deconvolution GUI')
 decW.geometry("800x750")
 decW.resizable(0, 0)
@@ -52,9 +54,11 @@ decW.tk.call('wm', 'iconphoto', decW._w, tk.PhotoImage(file='TFB_guiFiles/logoic
 def selectinput():
     global filechosen
     filechosen = filedialog.askopenfile(initialdir="", title="Select a File")
+    if not filechosen:                # dialog cancelled
+        return
     #filelabel = Label(root, text=filechosen,font = ("Arial",))
     #directory = os.path.split(filechosen)[0] + '/' + os.path.split(filechosen)[1]
-    text1 = Text(decW, state='disabled',font = ("Arial",11), width=50, height=1)
+    text1 = Text(decW, state='disabled',font = ("Arial",10), width=50, height=1)
     text1.place (x=185,y=173,width=200)
     text1.configure(state="normal")
     text1.insert('end', os.path.split(filechosen.name)[1])
@@ -64,9 +68,11 @@ def selectinput():
 def selectoutput():
     global filechosen1
     filechosen1 = filedialog.askopenfile(initialdir="", title="Select a File")
+    if not filechosen1:               # dialog cancelled
+        return
     #filelabel = Label(root, text=filechosen,font = ("Arial",))
     #directory = os.path.split(filechosen)[0] + '/' + os.path.split(filechosen)[1]
-    text1 = Text(decW, state='disabled',font = ("Arial",11), width=50, height=1)
+    text1 = Text(decW, state='disabled',font = ("Arial",10), width=50, height=1)
     text1.place (x=185,y=213,width=200)
     text1.configure(state="normal")
     text1.insert('end', os.path.split(filechosen1.name)[1])
@@ -75,9 +81,11 @@ def selectoutput():
 def selectinputspline():
     global filechosen2
     filechosen2 = filedialog.askopenfile(initialdir="", title="Select a File")
+    if not filechosen2:               # dialog cancelled
+        return
     #filelabel = Label(root, text=filechosen,font = ("Arial",))
     #directory = os.path.split(filechosen)[0] + '/' + os.path.split(filechosen)[1]
-    text1 = Text(decW, state='disabled',font = ("Arial",11), width=50, height=1)
+    text1 = Text(decW, state='disabled',font = ("Arial",10), width=50, height=1)
     text1.place (x=185,y=663,width=200)
     text1.configure(state="normal")
     text1.insert('end', os.path.split(filechosen2.name)[1])
@@ -112,8 +120,10 @@ def tokenget(event) :
 def openFileOutput():
     global folder_selected3
     folder_selected3 = filedialog.askdirectory()
+    if not folder_selected3:          # dialog cancelled
+        return
     directory = os.path.split(folder_selected3)[0] + '/' + os.path.split(folder_selected3)[1]
-    text1 = Text(decW, state='disabled', width=50, height=1, font = ("Arial",11))
+    text1 = Text(decW, state='disabled', width=50, height=1, font = ("Arial",10))
     text1.place (x=200,y=493)
     text1.configure(state="normal")
     text1.insert('end', directory)
@@ -237,61 +247,61 @@ my_logo = ImageTk.PhotoImage(Image.open("TFB_guiFiles/logo.png"))
 logo =Label(image=my_logo)
 logo.place(x=20,y=10)
 
-my_label7 = Label(decW, text='TFBOOST DECONVOLUTION GUI',font = ("Modern",9))
+my_label7 = Label(decW, text='TFBOOST DECONVOLUTION GUI',font = ("Arial",9))
 my_label7.place(x=20,y=85)
 
 my_canvas0 = Canvas(decW,width=750,height=1,bg='black')
 my_canvas0.place(x=20,y=100)
 
-lab2 = Label(decW, text='Perform deconvolution with TFBoost using a input signal and the corresponding output signal:',font = ("Modern",9))
+lab2 = Label(decW, text='Perform deconvolution with TFBoost using a input signal and the corresponding output signal:',font = ("Arial",9))
 lab2.place(x=30,y=120)
-lab2b = Label(decW, text='(the time step is set to 1ps by default)',font = ("Modern",9))
+lab2b = Label(decW, text='(the time step is set to 1ps by default)',font = ("Arial",9))
 lab2b.place(x=30,y=140)
 
-btnIN = Button(decW,text='Choose Input file:',command = selectinput,font = ("Arial",11), width=15)
+btnIN = Button(decW,text='Choose Input file:',command = selectinput,font = ("Arial",10), width=15)
 btnIN.place(x=30,y=170)
 
-btnOUT = Button(decW,text='Choose Output file:',command = selectoutput,font = ("Arial",11), width=15)
+btnOUT = Button(decW,text='Choose Output file:',command = selectoutput,font = ("Arial",10), width=15)
 btnOUT.place(x=30,y=210)
 
-lab3 = Label(decW,text='Lines to skip in input file:',font = ("Arial",11))
+lab3 = Label(decW,text='Lines to skip in input file:',font = ("Arial",10))
 lab3.place(x=30,y=260)
 
-LTskip = Entry(decW,font = ("Arial",11))
+LTskip = Entry(decW,font = ("Arial",10))
 LTskip .place(x=200,y=260,width=40)
 LTskip .insert(END,'0')
 
-lab3b = Label(decW,text='Lines to skip in output file:',font = ("Arial",11))
+lab3b = Label(decW,text='Lines to skip in output file:',font = ("Arial",10))
 lab3b.place(x=300,y=260)
 
-LTskip2 = Entry(decW,font = ("Arial",11))
+LTskip2 = Entry(decW,font = ("Arial",10))
 LTskip2 .place(x=470,y=260,width=40)
 LTskip2 .insert(END,'0')
 
-lab3c = Label(decW,text='LTSpice signals:',font = ("Arial",11))
+lab3c = Label(decW,text='LTSpice signals:',font = ("Arial",10))
 lab3c.place(x=535,y=260)
 varlt = IntVar()
-Checkbutton(decW, variable=varlt,command=ltspiceDEC,font = ("Arial",11)).place(x=645, y=258)
+Checkbutton(decW, variable=varlt,command=ltspiceDEC,font = ("Arial",10)).place(x=645, y=258)
 
-lab4 = Label(decW,text='Scale factor:',font = ("Arial",11))
+lab4 = Label(decW,text='Scale factor:',font = ("Arial",10))
 lab4.place(x=30,y=290)
 
-scaleF = Entry(decW,font = ("Arial",11))
+scaleF = Entry(decW,font = ("Arial",10))
 scaleF .place(x=200,y=290,width=40)
 scaleF .insert(END,'1')
 
 
 #choose the token#################################
-lab5 = Label(decW,text='Token1:',font = ("Arial",11))
+lab5 = Label(decW,text='Token1:',font = ("Arial",10))
 lab5.place(x=30,y=320)
 
 #choose the token of the output file #################################
-lab5b = Label(decW,text='Token2:',font = ("Arial",11))
+lab5b = Label(decW,text='Token2:',font = ("Arial",10))
 lab5b.place(x=350,y=320)
 
-tokendrop = ttk.Combobox(decW, width = 10, font=("Arial",11))
+tokendrop = ttk.Combobox(decW, width = 10, font=("Arial",10))
 
-tokendrop2 = ttk.Combobox(decW, width = 10, font=("Arial",11))
+tokendrop2 = ttk.Combobox(decW, width = 10, font=("Arial",10))
   
   
 # Adding combobox drop down list
@@ -326,12 +336,12 @@ tokendrop2.bind("<<ComboboxSelected>>", tokenget)
 
 
 # set Nsamples #################################
-lab6 = Label(decW,text='Nsamples:',font = ("Arial",11))
+lab6 = Label(decW,text='Nsamples:',font = ("Arial",10))
 lab6.place(x=30,y=350)
 
 n1 = StringVar()
 nsamplesdrop = ttk.Combobox(decW, width = 10,
-                            textvariable = n1, font=("Arial",11))
+                            textvariable = n1, font=("Arial",10))
   
 # Adding combobox drop down list
 nsamplesdrop['values'] = ('8192', 
@@ -346,47 +356,47 @@ nsamplesdrop.current(2)
 
 nsamplesdrop.place(x=200,y=350)
 
-lab6b = Label(decW,text='dT:',font = ("Arial",11))
+lab6b = Label(decW,text='dT:',font = ("Arial",10))
 lab6b.place(x=380,y=350)
 
-dTdec = Entry(decW,font = ("Arial",11))
+dTdec = Entry(decW,font = ("Arial",10))
 dTdec .place(x=415,y=350,width=70)
 dTdec .insert(END,'1e-12')
 
 #POSTPROCESSING FILTER
-my_label6 = Label(decW, text='Filter transfer function:',font = ("Arial",11))
+my_label6 = Label(decW, text='Filter transfer function:',font = ("Arial",10))
 my_label6.place(x=30,y=380)
 var13 = IntVar()
-Checkbutton(decW, variable=var13,font = ("Arial",11)).place(x=192, y=380)
+Checkbutton(decW, variable=var13,font = ("Arial",10)).place(x=192, y=380)
 var13.set(1)
 
-my_label7 = Label(decW, text='Filter Order n°:',font = ("Arial",11))
+my_label7 = Label(decW, text='Filter Order n°:',font = ("Arial",10))
 my_label7.place(x=30,y=410)
-filterN_entry = Entry(decW,font = ("Arial",11))
+filterN_entry = Entry(decW,font = ("Arial",10))
 filterN_entry.place(x=200,y=410,width=40)
 filterN_entry.insert(END,'10')
 
-my_label8 = Label(decW, text='Filter cut-off Frequency:',font = ("Arial",11))
+my_label8 = Label(decW, text='Filter cut-off Frequency:',font = ("Arial",10))
 my_label8.place(x=30,y=440)
-filterF_entry = Entry(decW,font = ("Arial",11))
+filterF_entry = Entry(decW,font = ("Arial",10))
 filterF_entry.place(x=200,y=440,width=40)
 filterF_entry.insert(END,'10e9')
 
-my_button2 = Button(decW, text="Set output folder:",command=openFileOutput,font = ("Arial",11), width=15)
+my_button2 = Button(decW, text="Set output folder:",command=openFileOutput,font = ("Arial",10), width=15)
 my_button2.place(x=30,y=490)
 
-nameLab = Label(decW, text='Set output Filename:',font = ("Arial",11))
+nameLab = Label(decW, text='Set output Filename:',font = ("Arial",10))
 nameLab.place(x=30,y=530)
 
-nameentry = Entry(decW,font = ("Arial",11))
+nameentry = Entry(decW,font = ("Arial",10))
 nameentry.place(x=200,y=530)
 nameentry.insert(END,'filename.txt')
 
 
-btnRun = Button(decW, text="Make \n deconvolution",command=writeCFG,font = ("Arial",13))
+btnRun = Button(decW, text="Make \n deconvolution",command=writeCFG,font = ("Arial",12))
 btnRun.place(x=490,y=380)
 
-btnRes = Button(decW, text="Plot \n results", command= run_results, font = ("Arial",13))
+btnRes = Button(decW, text="Plot \n results", command= run_results, font = ("Arial",12))
 btnRes.place(x=650,y=380)
 
 

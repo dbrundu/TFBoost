@@ -41,9 +41,11 @@ import math
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
+import tfb_ui
 import sys
 
 resW = tk.Tk();
+tfb_ui.apply_font_scaling(resW)
 resW.title('TFBoost GUI')
 resW.geometry("800x750")
 resW.resizable(0, 0)
@@ -84,6 +86,8 @@ if (sys.argv[2]!=''):
 def openFileInput():
     global folder_selected1
     folder_selected1 = filedialog.askdirectory()
+    if not folder_selected1:          # dialog cancelled
+        return
     directory0 = os.path.split(folder_selected1)[0] + '/' + os.path.split(folder_selected1)[1]
     text1 = Text(resW, state='disabled', width=50, height=1)
     text1.place (x=300,y=112)
@@ -96,6 +100,8 @@ def openFileInput():
 def openFileOutput():
     global folder_selected2
     folder_selected2 = filedialog.askdirectory()
+    if not folder_selected2:          # dialog cancelled
+        return
     directory = os.path.split(folder_selected2)[0] + '/' + os.path.split(folder_selected2)[1]
     text1 = Text(resW, state='disabled', width=50, height=1)
     text1.place (x=300,y=150)
@@ -171,7 +177,7 @@ logo.place(x=20,y=10)
 my_canvas = Canvas(resW,width=750,height=1,bg='black')
 my_canvas.place(x=20,y=105)
 
-my_label7 = Label(resW, text='TFBOOST RESULTS GUI',font = ("Modern",9))
+my_label7 = Label(resW, text='TFBOOST RESULTS GUI',font = ("Arial",9))
 my_label7.place(x=20,y=85)
 
 my_button = Button(resW, text="Choose directory for the input currents:",command=openFileInput,font = ("Arial",9))
@@ -187,7 +193,7 @@ res_btn.place(x=270,y=200)
 my_canvas = Canvas(resW,width=750,height=1,bg='black')
 my_canvas.place(x=20,y=260)
 
-my_label7 = Label(resW, text='HISTOGRAMS WITHOUT NOISE',font = ("Modern",9))
+my_label7 = Label(resW, text='HISTOGRAMS WITHOUT NOISE',font = ("Arial",9))
 my_label7.place(x=20,y=270)
 
 # Histogram viewer buttons, built from a table to avoid repeating one function
@@ -215,7 +221,7 @@ for text, macro, x, y in hist_nonoise:
 my_canvas = Canvas(resW,width=750,height=1,bg='black')
 my_canvas.place(x=20,y=460)
 
-my_label7 = Label(resW, text='HISTOGRAMS WITH NOISE',font = ("Modern",9))
+my_label7 = Label(resW, text='HISTOGRAMS WITH NOISE',font = ("Arial",9))
 my_label7.place(x=20,y=470)
 
 hist_noise = [

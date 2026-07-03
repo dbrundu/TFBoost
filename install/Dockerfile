@@ -57,6 +57,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-matplotlib \
         python3-pandas \
         python3-pil.imagetk \
+        fonts-liberation \
+        fonts-dejavu-core \
+        fontconfig \
     && rm -rf /var/lib/apt/lists/*
 
 # --- HYDRA headers ------------------------------------------------------------
