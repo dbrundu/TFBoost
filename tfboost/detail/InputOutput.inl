@@ -19,103 +19,102 @@
  *
  *---------------------------------------------------------------------------*/
 /*
- * 
+ *
  *
  *  Created on: 07/05/2020
  *      Author: Davide Brundu
  */
- 
+
 #ifndef TFBOOST_READ_CONVOLUTION_INL_
 #define TFBOOST_READ_CONVOLUTION_INL_
 
-    
+#include <concepts>
+
 #include <tfboost/Utils.h>
-#include <tfboost/detail/Traits.h>
-    
-    
-namespace tfboost {
 
+namespace tfboost
+{
 
-namespace detail {
-
-
-
-    inline void PushBack_helper(std::vector<double>& data) {}
-
-    template<typename Iterable, typename ...Iterables>
-    inline void PushBack_helper(std::vector<double>& data, Iterable& first, Iterables&... args)
+    namespace detail
     {
-        first.push_back( data.back() );
-        if(!data.empty()) data.pop_back();
-        
-        PushBack_helper(data, args...);
-    }
 
+        inline void PushBack_helper(std::vector<double> &data) {}
 
+        template <typename Iterable, typename... Iterables>
+        inline void PushBack_helper(std::vector<double> &data, Iterable &first, Iterables &...args)
+        {
+            first.push_back(data.back());
+            if (!data.empty())
+                data.pop_back();
 
+            PushBack_helper(data, args...);
+        }
 
-    template<typename ...Iterables, size_t N> 
-    inline typename std::enable_if< N==sizeof...(Iterables) && 
-                             tfboost::detail::all_true<std::is_floating_point<typename Iterables::value_type>::value...>::value, void>::type
-    PushBackTokens(TString const& line,
-                   TString const& token, 
-                   std::array<int,N> const& columns, 
-                   Iterables&... args)
-    {
-        TObjArray *tokens = line.Tokenize( token.Data() );
-        
-        size_t Ncolumns = tokens->GetEntriesFast();
-        
-        SAFE_EXIT(Ncolumns < N, "No sufficient columns in file. Exit.")
-        
-        for(auto k : columns) { 
-            SAFE_EXIT(Ncolumns < (size_t)k, "Requested to read a column not present in file. Exit.") }
-        
-        std::vector<double> data(N);
-        
-        for(size_t i=0; i<N; ++i){
-            int col = columns[i];
-            TString data_str  = ((TObjString*) tokens->At( col ) )->GetString();
-            data[i] = atof(data_str); }
-        
-        std::reverse(data.begin(), data.end() );
+        template <typename... Iterables, size_t N>
+        requires(
+            (N == sizeof...(Iterables)) &&
+            (std::floating_point<typename Iterables::value_type> && ...)
+        )
+        inline void
+        PushBackTokens(TString const &line,
+                       TString const &token,
+                       std::array<int, N> const &columns,
+                       Iterables &...args)
+        {
+            TObjArray *tokens = line.Tokenize(token.Data());
 
-        PushBack_helper(data, args...);
-        
-        tokens->Delete();
-        delete tokens;
-    }
-    
-    
-    
-    
-    template<typename Iterable> 
-    inline typename std::enable_if< std::is_floating_point<typename Iterable::value_type>::value, void>::type
-    PushBackTokens(TString const& line,
-                   TString const& token, 
-                   int const& column, 
-                   Iterable& arg)
-    {
-        TObjArray *tokens = line.Tokenize( token.Data() );
-        
-        size_t Ncolumns = tokens->GetEntriesFast();
-        
-        SAFE_EXIT(Ncolumns < 1, "No sufficient columns in file. Exit.")
-        SAFE_EXIT(Ncolumns < (size_t)column, "Requested to read a column not present in file. Exit.") 
-        
-        TString data_str  = ((TObjString*) tokens->At( column ) )->GetString();
-        double data = atof(data_str); 
-        
-        arg.push_back(data);
-        
-        tokens->Delete();
-        delete tokens;
-    }
-    
-} //end detail
+            size_t Ncolumns = tokens->GetEntriesFast();
 
+            SAFE_EXIT(Ncolumns < N, "No sufficient columns in file. Exit.")
 
-} //namespace tfboost
-    
-    
+            for (auto k : columns)
+            {
+                SAFE_EXIT(Ncolumns < (size_t)k, "Requested to read a column not present in file. Exit.")
+            }
+
+            std::vector<double> data(N);
+
+            for (size_t i = 0; i < N; ++i)
+            {
+                int col = columns[i];
+                TString data_str = ((TObjString *)tokens->At(col))->GetString();
+                data[i] = atof(data_str);
+            }
+
+            std::reverse(data.begin(), data.end());
+
+            PushBack_helper(data, args...);
+
+            tokens->Delete();
+            delete tokens;
+        }
+
+        template <typename Iterable>
+        requires std::floating_point<typename Iterable::value_type>
+        inline void
+        PushBackTokens(TString const &line,
+                       TString const &token,
+                       int const &column,
+                       Iterable &arg)
+        {
+            TObjArray *tokens = line.Tokenize(token.Data());
+
+            size_t Ncolumns = tokens->GetEntriesFast();
+
+            SAFE_EXIT(Ncolumns < 1, "No sufficient columns in file. Exit.")
+            SAFE_EXIT(Ncolumns < (size_t)column, "Requested to read a column not present in file. Exit.")
+
+            TString data_str = ((TObjString *)tokens->At(column))->GetString();
+            double data = atof(data_str);
+
+            arg.push_back(data);
+
+            tokens->Delete();
+            delete tokens;
+        }
+
+    } // end detail
+
+} // namespace tfboost
+
 #endif

@@ -33,6 +33,7 @@
 
 #include <tfboost/Types.h>
 #include <tfboost/Utils.h>
+#include <tfboost/Concepts.h>
 
 
 namespace tfboost {
@@ -46,7 +47,7 @@ namespace detail {
      * and a random phase clock.
      * Fill the data and time containers
      */
-    template<typename Iterable, typename SPLINE, typename RNG>
+    template<typename Iterable, Spline SPLINE, RandomEngine RNG>
     inline void do_time_digitization(Iterable& data,
                                Iterable& time,
                                SPLINE const& signal,
@@ -85,7 +86,7 @@ namespace detail {
  * and a random phase clock.
  * Resize the original containers properly
  */
-template<typename Iterable, typename RNG>
+template<typename Iterable, RandomEngine RNG>
 inline void time_digitize(Iterable& data,
                           Iterable& time,
                           double const& dT,

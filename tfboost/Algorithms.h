@@ -30,6 +30,7 @@
 
 #include <tfboost/Types.h>
 #include <tfboost/Utils.h>
+#include <tfboost/Concepts.h>
 
 
 namespace tfboost { 
@@ -44,7 +45,7 @@ namespace algo {
  * is greater than the threshold Vthr
  * If not found returns 0
  */
-template<typename Iterable>
+template<SignalContainer Iterable>
 inline size_t LeadingEdge(Iterable const& vout, double const& Vthr)
 {
     auto trigger = [=] (double v) { return v > Vthr; };
@@ -61,7 +62,7 @@ inline size_t LeadingEdge(Iterable const& vout, double const& Vthr)
  * specified by a fraction of the signal amplitude
  * If not found returns 0
  */
-template<typename Iterable>
+template<SignalContainer Iterable>
 inline size_t ConstantFraction(Iterable const& vout, double const& fraction, double const& vmax)
 {
     return LeadingEdge(vout , vmax*fraction);
@@ -75,7 +76,7 @@ inline size_t ConstantFraction(Iterable const& vout, double const& fraction, dou
  * is greater than 2 thresholds, Vthr1 and Vthr2
  * If not found returns 0
  */
-template<typename Iterable>
+template<SignalContainer Iterable>
 inline double TimeOverThr(Iterable vout, Iterable const& time, double const& Vthr1, double const& Vthr2)
 {
 
@@ -98,7 +99,7 @@ inline double TimeOverThr(Iterable vout, Iterable const& time, double const& Vth
  * corresponding to the maximum signal value
  * If not found returns 0
  */
-template<typename Iterable>
+template<SignalContainer Iterable>
 inline size_t GetTimeAtPeak(Iterable const& vout)
 {
     auto it = hydra_thrust::max_element( vout.begin() , vout.end() );
@@ -116,7 +117,7 @@ inline size_t GetTimeAtPeak(Iterable const& vout)
  * Return the the maximum signal value
  * If not found returns -1
  */
-template<typename Iterable>
+template<SignalContainer Iterable>
 inline double GetVAtPeak(Iterable const& vout)
 {
     const size_t i = GetTimeAtPeak(vout);
@@ -134,7 +135,7 @@ inline double GetVAtPeak(Iterable const& vout)
  * (i.e. without noise) at a specific position
  * If out of range exit with -1
  */
-template<typename Iterable>
+template<SignalContainer Iterable>
 inline double SlopeOnThrs(Iterable const& vout, size_t const& Tth)
 {
 
@@ -162,7 +163,7 @@ inline double CorrectTOA(double const& toa, double const& tot, double const& a, 
 
 
 
-template<typename Iterable>
+template<SignalContainer Iterable>
 inline double TimeCentroid(Iterable const& vout, Iterable const& time){
 
   ERROR_RETURN( vout.size()!=time.size(), "Error in TimeCentroid. Exit with -1.", -1. )
@@ -193,7 +194,7 @@ inline double TimeCentroid(Iterable const& vout, Iterable const& time){
  * is done to get the correct slope. It uses 2*half_fit_range
  * to perform the fit.
  */
-template<typename Iterable, typename Iterablet>
+template<SignalContainer Iterable, SignalContainer Iterablet>
 inline doublePair_t LinearFitNearThr(double   const& Thr, 
                                     Iterable  const& data, 
                                     Iterablet const& time,
@@ -235,7 +236,7 @@ inline doublePair_t LinearFitNearThr(double   const& Thr,
  * A gaussian fit is done 
  * to get the correct max value
  */
-template<typename Iterable, typename Iterablet>
+template<SignalContainer Iterable, SignalContainer Iterablet>
 inline doublePair_t GaussianFitNearVmax(Iterable const& data, 
                                        Iterablet const& time, 
                                        size_t    const& half_fit_range, 
@@ -278,7 +279,7 @@ inline doublePair_t GaussianFitNearVmax(Iterable const& data,
  * - apply a LE at half the obtained max value (interpolated)
  * If error returns (-1.0 , 0)
  */
-template<typename Iterable, typename Iterablet>
+template<SignalContainer Iterable, SignalContainer Iterablet>
 inline doubleTriple_t TimeRefMethod(Iterable const& vout, 
                                  Iterablet const& time,
                                  double const& vmax,

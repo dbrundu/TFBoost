@@ -30,7 +30,6 @@
 
     
 #include <tfboost/Utils.h>
-#include <tfboost/detail/Traits.h>
 #include <tfboost/detail/InputOutput.inl>
     
     

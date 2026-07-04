@@ -32,6 +32,7 @@
 
 #include <tfboost/Types.h>
 #include <tfboost/Utils.h>
+#include <tfboost/Concepts.h>
 #include <tfboost/core/Signal.h>
 #include <tfboost/transforms/ISignalTransform.h>
 #include <tfboost/core/Convolution.h>
@@ -106,11 +107,12 @@ private:
             if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
             if(sig)
             {
-#if HYDRA_DEVICE_SYSTEM!=CUDA
+                #if HYDRA_DEVICE_SYSTEM!=CUDA
                 auto fft_backend = hydra::fft::fftw_f64;
-#else
+                #else
                 auto fft_backend = hydra::fft::cufft_f64;
-#endif
+                #endif
+
                 const size_t N = sig->size();
                 HostSignal_t out(N);
                 auto signal = sig->spline();
@@ -136,17 +138,17 @@ private:
      *  Convolve `sig` (as a device-resident spline) with an analytic `kernel`,
      *  optionally filling the kernel-shape histogram first.
      */
-    template<typename KERNEL>
+    template<TransferFunction KERNEL>
     void do_analytic(KERNEL const& kernel, core::Signal* sig, TH1D* kernelHist) const
     {
         if(kernelHist) tfboost::FillHistWithFunction( *kernelHist, kernel);
         if(!sig) return;
 
-#if HYDRA_DEVICE_SYSTEM!=CUDA
+        #if HYDRA_DEVICE_SYSTEM!=CUDA
         auto fft_backend = hydra::fft::fftw_f64;
-#else
+        #else
         auto fft_backend = hydra::fft::cufft_f64;
-#endif
+        #endif
 
         const size_t N = sig->size();
 
